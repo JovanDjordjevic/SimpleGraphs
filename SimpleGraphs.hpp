@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <vector>
 #include <optional>
+#include <fstream>
+#include <sstream>
 
 #define GRAPH_ERROR(message) std::cerr << "ERROR: " << message << std::endl; 
 
@@ -22,7 +24,7 @@ namespace GraphClasses {
         Unweighted
     };
 
-    template <typename DataType, typename WeightType>
+    template <typename DataType, typename WeightType = int>
     class Graph {
         public:
             Graph(GraphType graphType = GraphType::Unset, GraphWeights graphWeights = GraphWeights::Unset);
@@ -30,9 +32,11 @@ namespace GraphClasses {
             void configureDirections(GraphType graphType);
             void configureWeights(GraphWeights graphWeights);
             bool isConfigured();
+            void clearGraph();
 
             void readFromTxt(const char* filePath);
             void writeToTxt(const char* filePath);
+            void exportToTxt(const char* filePath); // TODO: export in format that SimpleGraphs can read
 
             void addNode(DataType node);
             void addEdge(DataType startNode, DataType neighborNode); // for unweighted graphs 
@@ -92,7 +96,7 @@ namespace GraphClasses {
                     out << "|\t [" << val.neighbor << "], edge weight: " << val.weight.value() << std::endl;
                 }
             }
-            else {
+            else { // unweighted
                 for(auto&  val : kvPair.second) {
                    out << "|\t [" << val.neighbor << "]" << std::endl;
                 }
@@ -123,13 +127,78 @@ namespace GraphClasses {
         return false;
     }
 
-    // samo ubacuje cvor, bez ikakvih grana i tezina
+    template <typename DataType, typename WeightType>
+    void Graph<DataType, WeightType>::clearGraph() {
+        m_neighbors.clear(); // TODO: check if this is enough
+    }
+
+    template <typename DataType, typename WeightType>
+    void Graph<DataType, WeightType>::readFromTxt(const char* filePath) {   
+        if (!isConfigured())  {   
+            GRAPH_ERROR("Graph type and weight must be configured before reading from file!");
+            exit(EXIT_FAILURE);
+        }
+
+        clearGraph();
+        
+        std::ifstream file(filePath);
+        if (!file)  {
+            GRAPH_ERROR("Invalid file!");
+            exit(EXIT_FAILURE);
+        }
+
+        DataType node;
+        DataType neighbor;
+        WeightType weight;
+
+        std::string line;
+
+        while(getline(file, line)) {   
+            std::istringstream lineStream(line);
+            lineStream >> node;
+            m_neighbors[node]; // this line is neccessary becasue of isolated nodes
+
+            if (m_graphWeights == GraphWeights::Weighted) {
+                while(lineStream >> neighbor >> weight) {
+                    if (m_graphType == GraphType::Directed) {
+                          m_neighbors[node].emplace_back(neighbor, weight);  
+                    }
+                    else { // undirected
+                        m_neighbors[node].emplace_back(neighbor, weight);
+                        m_neighbors[neighbor].emplace_back(node, weight);
+                    }
+                }
+            } 
+            else { // unweighted
+                while(lineStream >> neighbor) {
+                    if (m_graphType == GraphType::Directed) {
+                          m_neighbors[node].emplace_back(neighbor);
+                    }
+                    else  { // undirected
+                        m_neighbors[node].emplace_back(neighbor);
+                        m_neighbors[neighbor].emplace_back(node);
+                    }
+                }
+            }
+        }
+
+        file.close();
+    }
+
+    template <typename DataType, typename WeightType>
+    void Graph<DataType, WeightType>::writeToTxt(const char* filePath) {
+        std::ofstream file(filePath);
+
+        file << (*this);
+
+        file.close();
+    }
+
     template <typename DataType, typename WeightType>
     void Graph<DataType, WeightType>::addNode(DataType node) {
         m_neighbors[node];
     }
 
-    // mozda spoji oba addEdge overloada u jednu funkc
     template <typename DataType, typename WeightType>
     void Graph<DataType, WeightType>::addEdge(DataType startNode, DataType neighborNode) {
         if (m_graphWeights == GraphWeights::Weighted)
