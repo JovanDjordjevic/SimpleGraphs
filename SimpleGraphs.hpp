@@ -7,6 +7,7 @@
 #include <optional>
 #include <fstream>
 #include <sstream>
+#include <stack>
 
 #define GRAPH_ERROR(message) std::cerr << "ERROR: " << message << std::endl; 
 
@@ -48,7 +49,7 @@ namespace GraphClasses {
             template<typename DataType, typename WeightType> 
             friend std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<DataType, WeightType>& g);
             
-        private:
+        public:
             GraphType m_graphType;
             GraphWeights m_graphWeights;
             
@@ -70,6 +71,8 @@ namespace GraphClasses {
 namespace GraphAlgorithms {
     // TODO:
     // bfs, dfs
+    template<typename DataType, typename WeightType> 
+    void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
     // dijkstra
     // belman-ford
     // flojd-varsal
@@ -248,7 +251,7 @@ namespace GraphClasses {
                 // std::cout << "start->end edge erased" << std::endl;
                 ((*it_start).second).erase(it);
             } 
-            it++;
+            ++it;
         }
          
         if (m_graphType == GraphType::Undirected) {
@@ -259,7 +262,7 @@ namespace GraphClasses {
                     // std::cout << "end->start edge erased" << std::endl;
                     ((*it_end).second).erase(it);
                 } 
-                it++;
+                ++it;
             }
         }
         
@@ -270,7 +273,40 @@ namespace GraphClasses {
 
 
 namespace GraphAlgorithms {
-    // ...
+    template<typename DataType, typename WeightType> 
+    void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
+        std::unordered_map<DataType, bool> visited;
+        for(auto& kv : g.m_neighbors) {
+            visited[kv.first] = false;
+        }
+        
+        std::stack<DataType> stack;
+        stack.emplace(startNode);
+
+        while (!stack.empty()) {
+            DataType currentNode = stack.top();
+            stack.pop();
+
+            if (!visited[currentNode]) {
+                out << "[" << currentNode << "] ";
+                visited[currentNode] = true;
+            }
+
+            auto it = std::cbegin(g.m_neighbors[currentNode]);
+            auto end = std::cend(g.m_neighbors[currentNode]);
+            while (it != end) {
+                if (!visited[(*it).neighbor]) {
+                    stack.emplace((*it).neighbor);
+                }
+
+                ++it;
+            }
+        }
+        out << std::endl;
+
+        return;
+    }
+
 } // namespace GraphAlgorithms
 
 #endif  //__SIMPLE_GRAPHS__
