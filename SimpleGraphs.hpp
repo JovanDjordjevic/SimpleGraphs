@@ -41,6 +41,7 @@ namespace GraphClasses {
             void addNode(DataType node);
             void addEdge(DataType startNode, DataType neighborNode); // for unweighted graphs 
             void addEdge(DataType startNode, DataType neighborNode, WeightType edgeWeight); // for weighted graphs
+            void deleteEdge(DataType startNode, DataType endNode);
             
             // ...
 
@@ -201,8 +202,7 @@ namespace GraphClasses {
 
     template <typename DataType, typename WeightType>
     void Graph<DataType, WeightType>::addEdge(DataType startNode, DataType neighborNode) {
-        if (m_graphWeights == GraphWeights::Weighted)
-        {
+        if (m_graphWeights == GraphWeights::Weighted) {
             GRAPH_ERROR("Graph is weighed and edge weight must be specified! ");
             exit(EXIT_FAILURE);
         }
@@ -218,8 +218,7 @@ namespace GraphClasses {
 
     template <typename DataType, typename WeightType>
     void Graph<DataType, WeightType>::addEdge(DataType startNode, DataType neighborNode, WeightType edgeWeight) {
-        if (m_graphWeights == GraphWeights::Unweighted)
-        {
+        if (m_graphWeights == GraphWeights::Unweighted) {
             GRAPH_ERROR("Graph is not weighed but you are trying to specify edge weight!");
             exit(EXIT_FAILURE);
         }
@@ -231,6 +230,40 @@ namespace GraphClasses {
             m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
             m_neighbors[neighborNode].emplace_back(startNode, edgeWeight);
         }
+    }
+
+    template <typename DataType, typename WeightType>
+    void Graph<DataType, WeightType>::deleteEdge(DataType startNode, DataType endNode) {
+        auto it_start = m_neighbors.find(startNode);
+        auto it_end = m_neighbors.find(endNode);
+        if (it_start == std::end(m_neighbors) || it_end == std::end(m_neighbors)) {
+            // std::cout << "Edge does not exist" << std::endl;
+            return;
+        }
+
+        auto it = std::begin((*it_start).second);
+        auto end = std::end((*it_start).second);
+        while(it != end) {
+            if ((*it).neighbor == endNode) {
+                // std::cout << "start->end edge erased" << std::endl;
+                ((*it_start).second).erase(it);
+            } 
+            it++;
+        }
+         
+        if (m_graphType == GraphType::Undirected) {
+            auto it = std::begin((*it_end).second);
+            auto end = std::end((*it_end).second);
+            while(it != end) {
+                if ((*it).neighbor == startNode) {
+                    // std::cout << "end->start edge erased" << std::endl;
+                    ((*it_end).second).erase(it);
+                } 
+                it++;
+            }
+        }
+        
+        return;
     }
 
 } //namespace GraphClasses
