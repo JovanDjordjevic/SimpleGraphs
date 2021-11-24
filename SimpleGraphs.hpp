@@ -164,6 +164,7 @@ namespace GraphClasses {
 
             if (m_graphWeights == GraphWeights::Weighted) {
                 while(lineStream >> neighbor >> weight) {
+                    m_neighbors[neighbor]; // this line is neccessary in case neighbor node is only mentioned as neighbor of another node
                     if (m_graphType == GraphType::Directed) {
                           m_neighbors[node].emplace_back(neighbor, weight);  
                     }
@@ -175,6 +176,7 @@ namespace GraphClasses {
             } 
             else { // unweighted
                 while(lineStream >> neighbor) {
+                    m_neighbors[neighbor]; // this line is neccessary in case neighbor node is only mentioned as neighbor of another node
                     if (m_graphType == GraphType::Directed) {
                           m_neighbors[node].emplace_back(neighbor);
                     }
