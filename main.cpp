@@ -16,8 +16,10 @@ int main () {
 
     g.readFromTxt(fileName);
 
+    //int start = 1;
     std::string start = "node1";
-    GraphAlgorithms::dfs(g, start);
+    //GraphAlgorithms::dfs(g, start);
+    GraphAlgorithms::bfs(g, start);
 
     std::cout << g << std::endl;
 
