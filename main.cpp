@@ -20,7 +20,8 @@ int main () {
     std::cout << g << std::endl;
 
     // g.deleteEdge(1, 2);
-    g.deleteEdge("node1", "node2");
+    // g.deleteEdge("node1", "node2");
+    g.deleteNode("node4");
 
     std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
     std::cout << g << std::endl;

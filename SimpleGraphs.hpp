@@ -270,9 +270,29 @@ namespace GraphClasses {
         return;
     }
     
+    // removes a node and all edges to/from said node
     template <typename DataType, typename WeightType>
     void Graph<DataType, WeightType>::deleteNode(DataType node) {
-        // TODO
+        if (m_neighbors.find(node) == m_neighbors.end()) {
+            // std::cout << "Node does not exist" << std::endl;
+            return;
+        }   
+
+        m_neighbors[node].clear(); // needed?
+        m_neighbors.erase(node);
+
+        for(auto& kv : m_neighbors) {
+            auto it_begin = std::begin(kv.second);
+            auto it_end = std::end(kv.second);
+            while(it_begin != it_end) {
+                if ((*it_begin).neighbor == node) {
+                    kv.second.erase(it_begin);
+                }
+                ++it_begin;
+            }
+        }
+
+        return;
     }
 
     template <typename DataType, typename WeightType>
