@@ -42,6 +42,9 @@ namespace GraphClasses {
             void addEdge(DataType startNode, DataType neighborNode); // for unweighted graphs 
             void addEdge(DataType startNode, DataType neighborNode, WeightType edgeWeight); // for weighted graphs
             void deleteEdge(DataType startNode, DataType endNode);
+            void deleteNode(DataType node); // TODO
+            size_t getNodeCount();
+            size_t getEdgeCount();
             
             // ...
 
@@ -232,6 +235,7 @@ namespace GraphClasses {
         }
     }
 
+    // NOTE: will delete all edges that connect start and end nodes in case of a multigraph
     template <typename DataType, typename WeightType>
     void Graph<DataType, WeightType>::deleteEdge(DataType startNode, DataType endNode) {
         auto it_start = m_neighbors.find(startNode);
@@ -248,7 +252,7 @@ namespace GraphClasses {
                 // std::cout << "start->end edge erased" << std::endl;
                 ((*it_start).second).erase(it);
             } 
-            it++;
+            ++it;
         }
          
         if (m_graphType == GraphType::Undirected) {
@@ -259,13 +263,31 @@ namespace GraphClasses {
                     // std::cout << "end->start edge erased" << std::endl;
                     ((*it_end).second).erase(it);
                 } 
-                it++;
+                ++it;
             }
         }
         
         return;
     }
+    
+    template <typename DataType, typename WeightType>
+    void Graph<DataType, WeightType>::deleteNode(DataType node) {
+        // TODO
+    }
 
+    template <typename DataType, typename WeightType>
+    size_t Graph<DataType, WeightType>::getNodeCount() {
+        return m_neighbors.size();
+    }
+
+    template <typename DataType, typename WeightType>
+    size_t Graph<DataType, WeightType>::getEdgeCount() {
+        size_t count = 0;
+        for(auto& kv : m_neighbors) {
+            count += kv.second.size();
+        }
+        return count;
+    }
 } //namespace GraphClasses
 
 

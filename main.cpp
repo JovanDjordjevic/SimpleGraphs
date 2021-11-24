@@ -11,15 +11,18 @@ int main () {
     const char* fileName = "testInputs/string_double.txt";
     GraphClasses::Graph<std::string, double> g;
     
-    g.configureDirections(GraphClasses::GraphType::Undirected);
+    g.configureDirections(GraphClasses::GraphType::Directed);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
 
     g.readFromTxt(fileName);
 
+    std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
     std::cout << g << std::endl;
 
     // g.deleteEdge(1, 2);
     g.deleteEdge("node1", "node2");
+
+    std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
     std::cout << g << std::endl;
 
     g.writeToTxt("tmp.txt");
