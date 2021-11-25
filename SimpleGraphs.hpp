@@ -7,6 +7,8 @@
 #include <optional>
 #include <fstream>
 #include <sstream>
+#include <stack>
+#include <queue>
 
 #define GRAPH_ERROR(message) std::cerr << "ERROR: " << message << std::endl; 
 
@@ -51,7 +53,7 @@ namespace GraphClasses {
             template<typename DataType, typename WeightType> 
             friend std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<DataType, WeightType>& g);
             
-        private:
+        public:
             GraphType m_graphType;
             GraphWeights m_graphWeights;
             
@@ -71,8 +73,13 @@ namespace GraphClasses {
 
 
 namespace GraphAlgorithms {
-    // TODO:
-    // bfs, dfs
+    template<typename DataType, typename WeightType> 
+    void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
+
+    template<typename DataType, typename WeightType> 
+    void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
+
+    // TODO:    
     // dijkstra
     // belman-ford
     // flojd-varsal
@@ -314,7 +321,74 @@ namespace GraphClasses {
 
 
 namespace GraphAlgorithms {
-    // ...
+    template<typename DataType, typename WeightType> 
+    void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
+        std::unordered_map<DataType, bool> visited;
+        for(auto& kv : g.m_neighbors) {
+            visited[kv.first] = false;
+        }
+        
+        std::stack<DataType> stack;
+        stack.emplace(startNode);
+
+        while (!stack.empty()) {
+            DataType currentNode = stack.top();
+            stack.pop();
+
+            if (!visited[currentNode]) {
+                out << "[" << currentNode << "] ";
+                visited[currentNode] = true;
+            }
+
+            auto it = std::cbegin(g.m_neighbors[currentNode]);
+            auto end = std::cend(g.m_neighbors[currentNode]);
+            while (it != end) {
+                if (!visited[(*it).neighbor]) {
+                    stack.emplace((*it).neighbor);
+                }
+
+                ++it;
+            }
+        }
+        out << std::endl;
+
+        return;
+    }
+
+    template<typename DataType, typename WeightType> 
+    void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
+        std::unordered_map<DataType, bool> visited;
+        for(auto& kv : g.m_neighbors) {
+            visited[kv.first] = false;
+        }
+        
+        std::queue<DataType> queue;
+        queue.emplace(startNode);
+
+        while (!queue.empty()) {
+            DataType currentNode = queue.front();
+            queue.pop();
+
+            if (!visited[currentNode]) {
+                out << "[" << currentNode << "] ";
+                visited[currentNode] = true;
+            }
+
+            auto it = std::cbegin(g.m_neighbors[currentNode]);
+            auto end = std::cend(g.m_neighbors[currentNode]);
+            while (it != end) {
+                if (!visited[(*it).neighbor]) {
+                    queue.emplace((*it).neighbor);
+                }
+
+                ++it;
+            }
+        }
+        out << std::endl;
+
+        return;
+    }
+
 } // namespace GraphAlgorithms
 
 #endif  //__SIMPLE_GRAPHS__

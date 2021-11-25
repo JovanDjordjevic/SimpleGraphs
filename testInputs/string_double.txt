@@ -1,4 +1,5 @@
 node1 node2 11 node3 245.1 
 node4 node2 123.1125
+node3 node6 51.55 node9 22.13
 node2 node1 55.0002 node4 1234
 node5 node4 0.124 node6 4e-06 node7 5991.55124

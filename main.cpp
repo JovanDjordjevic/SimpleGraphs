@@ -17,6 +17,11 @@ int main () {
     g.readFromTxt(fileName);
 
     std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
+    //int start = 1;
+    std::string start = "node1";
+    //GraphAlgorithms::dfs(g, start);
+    GraphAlgorithms::bfs(g, start);
+
     std::cout << g << std::endl;
 
     // g.deleteEdge(1, 2);
@@ -25,8 +30,9 @@ int main () {
 
     std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
     std::cout << g << std::endl;
+    // std::cout << g << std::endl;
 
-    g.writeToTxt("tmp.txt");
+    //g.writeToTxt("tmp.txt");
 
     // std::cout << "-----------------------------" << std::endl;
     // GraphClasses::Graph<std::string, double> g2;
