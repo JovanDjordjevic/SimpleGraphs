@@ -402,12 +402,6 @@ namespace GraphAlgorithms {
 
     template<typename DataType, typename WeightType> 
     void dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, std::ostream& out) {
-        // temporary
-        if(g.m_graphWeights == GraphClasses::GraphWeights::Unweighted) {
-            GRAPH_ERROR("Dijstra for unweighted graphs unavailable");
-            exit(EXIT_FAILURE);
-        }
-
         std::unordered_map<DataType, WeightType> distances;
         std::unordered_map<DataType, bool> visited;
         std::unordered_map<DataType, std::optional<DataType>> parents; 
@@ -449,7 +443,7 @@ namespace GraphAlgorithms {
                 //std::cout << "\t" << neighbor << " " << weight.value() << std::endl;
                 if (!visited[neighbor]) {
                     WeightType oldDistance = distances[neighbor];
-                    WeightType newDistance = distances[currentNode] + weight.value();
+                    WeightType newDistance = distances[currentNode] + weight.value_or(1); // i don't like this
                     if (newDistance < oldDistance) {
                         pq.emplace(neighbor, newDistance);
                         distances[neighbor] = newDistance;
@@ -479,7 +473,7 @@ namespace GraphAlgorithms {
                 out << "[" << (*it) << "] ";
                 ++it;
             }
-            out << "\nwith total weight: " << distances[endCpy] << std::endl;
+            out << "\nwith total distance: " << distances[endCpy] << std::endl;
         }
         else {
             out << "No path found between [" << startNode <<"] and [" << endNode << "]" << std::endl;
