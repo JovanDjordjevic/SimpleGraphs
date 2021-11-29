@@ -25,7 +25,8 @@ int main () {
     std::string endNode = "node6"; 
 
     //GraphAlgorithms::dijkstra(g, startNode, endNode);
-    GraphAlgorithms::bellmanFord(g, startNode);
+    //GraphAlgorithms::bellmanFord(g, startNode);
+    GraphAlgorithms::floydWarshall(g);
 
     return 0;
 }

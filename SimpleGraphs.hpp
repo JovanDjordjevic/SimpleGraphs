@@ -92,8 +92,10 @@ namespace GraphAlgorithms {
     template<typename DataType, typename WeightType> 
     void bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
 
+    template<typename DataType, typename WeightType> 
+    void floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, std::ostream& out = std::cout);
+
     // TODO:    
-    // flojd-varsal
     // cycles
     // mst  (prim, kruskal)
     // components (tarjan, kosaraju)
@@ -556,7 +558,63 @@ namespace GraphAlgorithms {
                 out << "[" << (*it) << "] ";
                 ++it;
             }
+            out << std::endl;
+        }
 
+        return;
+    }
+
+    template<typename DataType, typename WeightType> 
+    void floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, std::ostream& out) {
+        std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> distances;
+        // TODO: add actual paths
+
+        for(auto& kv1 : g.m_neighbors) {
+            for(auto& kv2 : g.m_neighbors) {
+                distances[kv1.first][kv2.first] = GraphClasses::MAX_WEIGHT<WeightType>;
+            }
+        }
+
+        for(auto& kv : g.m_neighbors) {
+            for(auto& [neighbor, weight] : kv.second) {
+                if (kv.first == neighbor) {
+                    distances[kv.first][neighbor] = 0;
+                }
+                else {
+                    distances[kv.first][neighbor] = weight.value_or(1);
+                }             
+            }
+        }
+
+        for(auto& [mid, n1] : g.m_neighbors) {
+            for(auto& [start, n2] : g.m_neighbors) {
+                for(auto& [end, n3] : g.m_neighbors) {
+                    if (distances[start][mid] != GraphClasses::MAX_WEIGHT<WeightType>
+                        && distances[mid][end] != GraphClasses::MAX_WEIGHT<WeightType>
+                        && distances[start][mid] + distances[mid][end] < distances[start][end]) {
+                            distances[start][end] = distances[start][mid] + distances[mid][end];
+                    }
+                }   
+            }
+        }
+
+        for(auto& kv : distances) {
+            if (distances[kv.first][kv.first] < 0) {
+                GRAPH_ERROR("Graph contins negative cycle"); // should this be an error ?
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        // print
+        for(auto& [node, neighbors] : distances) {
+            for(auto& [neighbor, distance] : neighbors) {
+                if (distance == GraphClasses::MAX_WEIGHT<WeightType> || node == neighbor) {
+                    continue;
+                }
+                out << "Shortest distance between [" << node <<"] and [" << neighbor << "] is: " << distance << std::endl; 
+            }
+            
+            // FIXME: for string nodes, sometimes 2 new line characters are printed between groups
             out << std::endl;
         }
 
