@@ -89,8 +89,10 @@ namespace GraphAlgorithms {
     template<typename DataType, typename WeightType> 
     void dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, std::ostream& out = std::cout);
 
+    template<typename DataType, typename WeightType> 
+    void bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
+
     // TODO:    
-    // belman-ford
     // flojd-varsal
     // cycles
     // mst  (prim, kruskal)
@@ -477,6 +479,85 @@ namespace GraphAlgorithms {
         }
         else {
             out << "No path found between [" << startNode <<"] and [" << endNode << "]" << std::endl;
+        }
+
+        return;
+    }
+
+    template<typename DataType, typename WeightType> 
+    void bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
+        std::unordered_map<DataType, WeightType> distances;
+        std::unordered_map<DataType, std::optional<DataType>> parents; 
+
+        for(auto& kv : g.m_neighbors) {
+            distances[kv.first] = GraphClasses::MAX_WEIGHT<WeightType>;
+        }
+
+        distances[startNode] = 0;
+        parents[startNode]; // only startNode will have the empty optional
+
+        size_t relaxationCount = g.getNodeCount() - 1;
+
+        for(auto r = 0; r < relaxationCount; ++r) {
+            for(auto& kv : g.m_neighbors) {
+                DataType currentNode = kv.first;
+                auto neighbors = kv.second;
+                for(auto& [neighbor, weight] : neighbors) {
+                    WeightType newDistnce = distances[currentNode] + weight.value_or(1);
+                    if (newDistnce < distances[neighbor]) {
+                        distances[neighbor] = newDistnce;
+                        parents[neighbor] = currentNode;
+                    }
+                }
+            }
+        }
+
+        // negtive cycle check
+        for (auto& kv : g.m_neighbors) {
+            DataType currentNode = kv.first;
+            auto neighbors = kv.second;
+            for (auto& [neighbor, weight] : neighbors) {
+                if (distances[currentNode] + weight.value_or(1) < distances[neighbor]) {
+                    GRAPH_ERROR("Graph contins negative cycle");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
+        // print (TODO: change this behavior to return instead of print (maybe both))
+        for(auto& kv : distances) {
+            // there is no path to nodes in different components
+            if (kv.second == GraphClasses::MAX_WEIGHT<WeightType>) {
+                out << "There is no possible path between [" << startNode << "] and [" << kv.first << "]" << std::endl;
+                continue;
+            }
+
+            // path to start node itself is irrelevant
+            if (kv.first == startNode) {
+                continue;
+            }
+
+            out << "Distance from [" << startNode << "] to [" <<  kv.first << "] is: " << kv.second <<"\n\t Path: ";
+            DataType pathNode = kv.first;
+            std::vector<DataType> path{pathNode};
+
+            while (true) {
+                std::optional<DataType> parent = parents[pathNode];
+                if(!parent.has_value()) {
+                    break;
+                }
+                path.emplace_back(parent.value());
+                pathNode = parent.value();
+            }
+
+            auto it = std::crbegin(path);
+            auto end = std::crend(path);
+            while(it != end) {
+                out << "[" << (*it) << "] ";
+                ++it;
+            }
+
+            out << std::endl;
         }
 
         return;

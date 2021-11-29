@@ -22,7 +22,10 @@ int main () {
     // int startNode = 1;
     // int endNode = 8;
     std::string startNode = "node2";
-    std::string endNode = "node6";    
-    GraphAlgorithms::dijkstra(g, startNode, endNode);
+    std::string endNode = "node6"; 
+
+    //GraphAlgorithms::dijkstra(g, startNode, endNode);
+    GraphAlgorithms::bellmanFord(g, startNode);
+
     return 0;
 }
