@@ -1,15 +1,30 @@
 #include <iostream>
 #include <string>
 
+#include "customClass.hpp"
 #include "SimpleGraphs.hpp"
+
+
+int globalAlloc = 0;
+
+void* operator new(size_t size)
+{
+    // std::cout << "Heap allocation" << std::endl;      // i dont't know why but this line causes a crash
+    ++globalAlloc;
+    return malloc(size);
+}
+
 
 int main () {
 
     // const char* fileName = "testInputs/int_int.txt";
     // GraphClasses::Graph<int, int> g;
 
-    const char* fileName = "testInputs/string_double.txt";
-    GraphClasses::Graph<std::string, double> g;
+    // const char* fileName = "testInputs/string_double.txt";
+    // GraphClasses::Graph<std::string, double> g;
+
+    const char* fileName = "testInputs/custom_float.txt";
+    GraphClasses::Graph<CustomClass, float> g;
     
     g.configureDirections(GraphClasses::GraphType::Directed);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
@@ -17,35 +32,15 @@ int main () {
     g.readFromTxt(fileName);
 
     std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
-    //int start = 1;
-    std::string start = "node1";
-    //GraphAlgorithms::dfs(g, start);
+    // int start = 1;
+    // std::string start = "node1";
+    CustomClass start = {1, 2, 3};
+    // GraphAlgorithms::dfs(g, start);
     GraphAlgorithms::bfs(g, start);
 
     std::cout << g << std::endl;
-
-    // g.deleteEdge(1, 2);
-    // g.deleteEdge("node1", "node2");
-    g.deleteNode("node4");
-
-    std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
-    std::cout << g << std::endl;
-    // std::cout << g << std::endl;
-
-    //g.writeToTxt("tmp.txt");
-
-    // std::cout << "-----------------------------" << std::endl;
-    // GraphClasses::Graph<std::string, double> g2;
-    // // GraphClasses::Graph<const char*, double> g2;   // FIXME: duplicated inserting with const char* 
-                                                         // problem is with std::hash<const char*>{}(...) not returning the same hash value
-    // g2.configureDirections(GraphClasses::GraphType::Undirected);
-    // g2.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    // g2.addEdge("node1", "node2");
-    // g2.addEdge("node2", "node3");
-    // g2.addEdge("node1", "node3");
-    // // g2.addEdge("node5", "node6", 9);
-    // g2.addNode("node4");
-    // std::cout << g2 << std::endl;
+    
+    std::cout << globalAlloc << std::endl;
 
     return 0;
 }
