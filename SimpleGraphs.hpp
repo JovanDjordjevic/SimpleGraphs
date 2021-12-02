@@ -39,6 +39,7 @@ namespace GraphClasses {
             void readFromTxt(const char* filePath);
             void writeToTxt(const char* filePath);
             void exportToTxt(const char* filePath); // TODO: export in format that SimpleGraphs can read
+            void readFromDimacs(const char* filePath);
 
             void addNode(DataType node);
             void addEdge(DataType startNode, DataType neighborNode); // for unweighted graphs 
@@ -203,6 +204,68 @@ namespace GraphClasses {
         std::ofstream file(filePath);
 
         file << (*this);
+
+        file.close();
+    }
+
+    template <typename DataType, typename WeightType>
+    void Graph<DataType, WeightType>::readFromDimacs(const char* filePath) {
+        if (!isConfigured())  {   
+            GRAPH_ERROR("Graph type and weight must be configured before reading from file!");
+            exit(EXIT_FAILURE);
+        }
+
+        clearGraph();
+        
+        std::ifstream file(filePath);
+        if (!file)  {
+            GRAPH_ERROR("Invalid file!");
+            exit(EXIT_FAILURE);
+        }
+
+        DataType node;
+        DataType neighbor;
+        WeightType weight;
+
+        std::string line;
+        char lineInfo;
+        
+        while(getline(file, line)) {
+            std::istringstream lineStream(line);
+            lineStream >> lineInfo;
+
+            if (lineInfo == 'c' || lineInfo == 'p') {
+                continue;
+            }
+
+            lineStream >> node;
+            m_neighbors[node]; // this line is neccessary becasue of isolated nodes
+
+            if (m_graphWeights == GraphWeights::Weighted) {
+                while(lineStream >> neighbor >> weight) {
+                    m_neighbors[neighbor]; // this line is neccessary in case neighbor node is only mentioned as neighbor of another node
+                    if (m_graphType == GraphType::Directed) {
+                          m_neighbors[node].emplace_back(neighbor, weight);  
+                    }
+                    else { // undirected
+                        m_neighbors[node].emplace_back(neighbor, weight);
+                        m_neighbors[neighbor].emplace_back(node, weight);
+                    }
+                }
+            } 
+            else { // unweighted
+                while(lineStream >> neighbor) {
+                    m_neighbors[neighbor]; // this line is neccessary in case neighbor node is only mentioned as neighbor of another node
+                    if (m_graphType == GraphType::Directed) {
+                          m_neighbors[node].emplace_back(neighbor);
+                    }
+                    else  { // undirected
+                        m_neighbors[node].emplace_back(neighbor);
+                        m_neighbors[neighbor].emplace_back(node);
+                    }
+                }
+            }
+        }   
 
         file.close();
     }

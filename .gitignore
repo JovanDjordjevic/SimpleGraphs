@@ -8,6 +8,3 @@
 
 *.exe
 *.out
-
-*.txt
-!testInputs/*.txt
