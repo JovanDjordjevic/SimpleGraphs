@@ -96,7 +96,8 @@ namespace GraphAlgorithms {
                   AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
-    void bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
+    std::unordered_map<DataType, std::vector<DataType>> bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, 
+                 AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
     void floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, std::ostream& out = std::cout);
@@ -479,8 +480,8 @@ namespace GraphAlgorithms {
 
         if(behavior == AlgorithmBehavior::PrintAndReturn) {
             if (pathFound) {
-                auto it = std::begin(path);
-                auto end = std::end(path);
+                auto it = std::cbegin(path);
+                auto end = std::cend(path);
                 out << "Path found: \n\t";
                 while(it != end) {
                     out << "[" << (*it) << "] ";
@@ -497,7 +498,7 @@ namespace GraphAlgorithms {
     }
 
     template<typename DataType, typename WeightType> 
-    void bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
+    std::unordered_map<DataType, std::vector<DataType>> bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior, std::ostream& out) {
         std::unordered_map<DataType, WeightType> distances;
         std::unordered_map<DataType, std::optional<DataType>> parents; 
 
@@ -536,42 +537,56 @@ namespace GraphAlgorithms {
             }
         }
 
-        // print (TODO: change this behavior to return instead of print (maybe both))
+        // path reconstruction
+        std::unordered_map<DataType, std::vector<DataType>> paths;
+
         for(auto& kv : distances) {
-            // there is no path to nodes in different components
-            if (kv.second == GraphClasses::MAX_WEIGHT<WeightType>) {
-                out << "There is no possible path between [" << startNode << "] and [" << kv.first << "]" << std::endl;
+            paths[kv.first] = {};
+
+            if (kv.second == GraphClasses::MAX_WEIGHT<WeightType> || kv.first == startNode) {
                 continue;
             }
 
-            // path to start node itself is irrelevant
-            if (kv.first == startNode) {
-                continue;
-            }
-
-            out << "Distance from [" << startNode << "] to [" <<  kv.first << "] is: " << kv.second <<"\n\t Path: ";
             DataType pathNode = kv.first;
-            std::vector<DataType> path{pathNode};
+            paths[kv.first].emplace_back(pathNode);
 
             while (true) {
                 std::optional<DataType> parent = parents[pathNode];
                 if(!parent.has_value()) {
                     break;
                 }
-                path.emplace_back(parent.value());
+                paths[kv.first].emplace_back(parent.value());
                 pathNode = parent.value();
             }
 
-            auto it = std::crbegin(path);
-            auto end = std::crend(path);
-            while(it != end) {
-                out << "[" << (*it) << "] ";
-                ++it;
-            }
-            out << std::endl;
+            std::reverse(std::begin(paths[kv.first]), std::end(paths[kv.first]));
         }
 
-        return;
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            for(auto& kv : paths) {
+                // path to start node itself is irrelevant
+                if (kv.first == startNode) {
+                    continue;
+                }
+
+                // there is no path to nodes in different components
+                if (kv.second.size() == 0) {
+                    out << "There is no possible path between [" << startNode << "] and [" << kv.first << "]" << std::endl;
+                    continue;
+                }
+
+                out << "Distance from [" << startNode << "] to [" <<  kv.first << "] is: " << distances[kv.first] <<"\n\t Path: ";
+                auto it = std::cbegin(kv.second);
+                auto end = std::cend(kv.second);
+                while(it != end) {
+                    out << "[" << (*it) << "] ";
+                    ++it;
+                }
+                out << std::endl;
+            }
+        }
+
+        return paths;
     }
 
     template<typename DataType, typename WeightType> 
