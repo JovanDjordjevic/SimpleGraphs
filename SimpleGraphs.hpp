@@ -14,6 +14,13 @@
 
 //------------------------------------- API -------------------------------------
 namespace GraphClasses {
+    // NOTE: this is good enough for now but it limits possible types that can be used as WeightType
+    template<typename WeightType>
+    WeightType MAX_WEIGHT = std::numeric_limits<WeightType>::max();
+
+    template<typename WeightType>
+    WeightType MIN_WEIGHT = std::numeric_limits<WeightType>::lowest();
+
     enum class GraphType {   
         Unset, 
         Directed,
@@ -24,6 +31,16 @@ namespace GraphClasses {
         Unset,
         Weighted,
         Unweighted
+    };
+
+    template <typename DataType, typename WeightType>
+    struct Edge {
+        Edge(DataType neighbor, std::optional<WeightType> weight = {})
+            : neighbor(neighbor), weight(weight)
+        {}
+
+        DataType neighbor;
+        std::optional<WeightType> weight;
     };
 
     template <typename DataType, typename WeightType = int>
@@ -51,39 +68,49 @@ namespace GraphClasses {
             
             // ...
 
+            GraphType getGraphType();
+            GraphWeights getGraphWeights();
+            std::unordered_map<DataType, std::vector<Edge<DataType, WeightType>>> getNeighbors();
+
             template<typename DataType, typename WeightType> 
             friend std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<DataType, WeightType>& g);
             
-        public:
+        private:
             GraphType m_graphType;
             GraphWeights m_graphWeights;
-            
-            struct Edge{
-                Edge(DataType neighbor, std::optional<WeightType> weight = {}) 
-                    : neighbor(neighbor), weight(weight) 
-                {}
-
-                DataType neighbor;
-                std::optional<WeightType> weight;
-            };
-
-            std::unordered_map<DataType, std::vector<Edge>> m_neighbors;
+            std::unordered_map<DataType, std::vector<Edge<DataType, WeightType>>> m_neighbors;
     }; 
 
 } //namespace GraphClasses
 
 
 namespace GraphAlgorithms {
+    enum class AlgorithmBehavior {   
+        ReturnOnly,
+        PrintAndReturn
+    };
+    
     template<typename DataType, typename WeightType> 
     void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
     void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
 
+    template<typename DataType, typename WeightType> 
+    std::vector<DataType> dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, 
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+    template<typename DataType, typename WeightType> 
+    std::unordered_map<DataType, std::vector<DataType>> bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, 
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+    // NOTE: at this time, Floyd-Warshall algorithm only returns the distances between pairs of nodes and not the paths themselves
+    // TODO: implement returning of paths
+    template<typename DataType, typename WeightType> 
+    std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshall(GraphClasses::Graph<DataType, WeightType> &g,
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
     // TODO:    
-    // dijkstra
-    // belman-ford
-    // flojd-varsal
     // cycles
     // mst  (prim, kruskal)
     // components (tarjan, kosaraju)
@@ -119,7 +146,9 @@ namespace GraphClasses {
 
     template <typename DataType, typename WeightType>
     Graph<DataType, WeightType>::Graph(GraphType graphType, GraphWeights graphWeights)
-        : m_graphType(graphType), m_graphWeights(graphWeights) {}
+        : m_graphType(graphType), m_graphWeights(graphWeights) {
+            // std::cout << MAX_WEIGHT<WeightType> << " " << MIN_WEIGHT<WeightType> << std::endl;
+        }
 
     template <typename DataType, typename WeightType>
     void Graph<DataType, WeightType>::configureDirections(GraphType graphType) {
@@ -380,6 +409,22 @@ namespace GraphClasses {
         }
         return count;
     }
+
+    template <typename DataType, typename WeightType>
+    GraphType Graph<DataType, WeightType>::getGraphType() {
+        return m_graphType;
+    }
+
+    template <typename DataType, typename WeightType>
+    GraphWeights Graph<DataType, WeightType>::getGraphWeights() {
+        return m_graphWeights;
+    }
+
+    template <typename DataType, typename WeightType>
+    std::unordered_map<DataType, std::vector<Edge<DataType, WeightType>>> Graph<DataType, WeightType>::getNeighbors() {
+        return m_neighbors;
+    }
+
 } //namespace GraphClasses
 
 
@@ -387,7 +432,10 @@ namespace GraphAlgorithms {
     template<typename DataType, typename WeightType> 
     void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
         std::unordered_map<DataType, bool> visited;
-        for(auto& kv : g.m_neighbors) {
+
+        auto& neighborList = g.getNeighbors();
+
+        for(auto& kv : neighborList) {
             visited[kv.first] = false;
         }
         
@@ -403,8 +451,8 @@ namespace GraphAlgorithms {
                 visited[currentNode] = true;
             }
 
-            auto it = std::cbegin(g.m_neighbors[currentNode]);
-            auto end = std::cend(g.m_neighbors[currentNode]);
+            auto it = std::cbegin(neighborList[currentNode]);
+            auto end = std::cend(neighborList[currentNode]);
             while (it != end) {
                 if (!visited[(*it).neighbor]) {
                     stack.emplace((*it).neighbor);
@@ -421,7 +469,10 @@ namespace GraphAlgorithms {
     template<typename DataType, typename WeightType> 
     void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
         std::unordered_map<DataType, bool> visited;
-        for(auto& kv : g.m_neighbors) {
+
+        auto& neighborList = g.getNeighbors();
+
+        for(auto& kv : neighborList) {
             visited[kv.first] = false;
         }
         
@@ -437,8 +488,8 @@ namespace GraphAlgorithms {
                 visited[currentNode] = true;
             }
 
-            auto it = std::cbegin(g.m_neighbors[currentNode]);
-            auto end = std::cend(g.m_neighbors[currentNode]);
+            auto it = std::cbegin(neighborList[currentNode]);
+            auto end = std::cend(neighborList[currentNode]);
             while (it != end) {
                 if (!visited[(*it).neighbor]) {
                     queue.emplace((*it).neighbor);
@@ -450,6 +501,247 @@ namespace GraphAlgorithms {
         out << std::endl;
 
         return;
+    }
+
+    template<typename DataType, typename WeightType> 
+    std::vector<DataType> dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, AlgorithmBehavior behavior, std::ostream& out) {
+        std::unordered_map<DataType, WeightType> distances;
+        std::unordered_map<DataType, bool> visited;
+        std::unordered_map<DataType, std::optional<DataType>> parents; 
+
+        using pqData = GraphClasses::Edge<DataType, WeightType>;
+        struct Comparator {
+            bool operator()(pqData& e1, pqData& e2) {
+                return e1.weight.value() > e2.weight.value();
+            }
+        };
+        std::priority_queue<pqData, std::vector<pqData>, Comparator> pq;
+
+        auto& neighborList = g.getNeighbors();
+
+        for(auto& kv : neighborList) {
+            distances[kv.first] = GraphClasses::MAX_WEIGHT<WeightType>;
+            visited[kv.first] = false;
+        }
+
+        distances[startNode] = 0;
+        parents[startNode]; // only startNode will have the empty optional
+        pq.emplace(startNode, 0);
+
+        bool pathFound = false;
+
+        while (!pq.empty()) {
+            auto [currentNode, weight] = pq.top();
+            pq.pop();
+
+            if (currentNode == endNode) {
+                pathFound = true;
+                break;
+            }
+
+            visited[currentNode] = true;
+
+            for(auto& [neighbor, weight] : neighborList[currentNode]) {
+                if (!visited[neighbor]) {
+                    WeightType oldDistance = distances[neighbor];
+                    WeightType newDistance = distances[currentNode] + weight.value_or(1); // i don't like this
+                    if (newDistance < oldDistance) {
+                        pq.emplace(neighbor, newDistance);
+                        distances[neighbor] = newDistance;
+                        parents[neighbor] = currentNode;
+                    }
+                }
+            }
+        }
+
+        // path reconstruction
+        std::vector<DataType> path;
+
+        if (pathFound) {
+            DataType endCpy = endNode;
+            path.emplace_back(endNode);
+            while (true) {
+                std::optional<DataType> parent = parents[endCpy];
+                if(!parent.has_value()) {
+                    break;
+                }
+                path.emplace_back(parent.value());
+                endCpy = parent.value();
+            }
+
+            std::reverse(std::begin(path), std::end(path));
+        }
+
+        if(behavior == AlgorithmBehavior::PrintAndReturn) {
+            if (pathFound) {
+                auto it = std::cbegin(path);
+                auto end = std::cend(path);
+                out << "Path found: \n\t";
+                while(it != end) {
+                    out << "[" << (*it) << "] ";
+                    ++it;
+                }
+                out << "\nwith total distance: " << distances[endNode] << std::endl;
+            }
+            else {
+                out << "No path found between [" << startNode <<"] and [" << endNode << "]" << std::endl;
+            }
+        }
+
+        return path;
+    }
+
+    template<typename DataType, typename WeightType> 
+    std::unordered_map<DataType, std::vector<DataType>> bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior, std::ostream& out) {
+        std::unordered_map<DataType, WeightType> distances;
+        std::unordered_map<DataType, std::optional<DataType>> parents; 
+
+        auto& neighborsList = g.getNeighbors();
+
+        for(auto& kv : neighborsList) {
+            distances[kv.first] = GraphClasses::MAX_WEIGHT<WeightType>;
+        }
+
+        distances[startNode] = 0;
+        parents[startNode]; // only startNode will have the empty optional
+
+        size_t relaxationCount = g.getNodeCount() - 1;
+
+        for(auto r = 0; r < relaxationCount; ++r) {
+            for(auto& kv : neighborsList) {
+                DataType currentNode = kv.first;
+                auto neighbors = kv.second;
+                for(auto& [neighbor, weight] : neighbors) {
+                    WeightType newDistnce = distances[currentNode] + weight.value_or(1);
+                    if (newDistnce < distances[neighbor]) {
+                        distances[neighbor] = newDistnce;
+                        parents[neighbor] = currentNode;
+                    }
+                }
+            }
+        }
+
+        // negtive cycle check
+        for (auto& kv : neighborsList) {
+            DataType currentNode = kv.first;
+            auto neighbors = kv.second;
+            for (auto& [neighbor, weight] : neighbors) {
+                if (distances[currentNode] + weight.value_or(1) < distances[neighbor]) {
+                    GRAPH_ERROR("Graph contins negative cycle");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
+        // path reconstruction
+        std::unordered_map<DataType, std::vector<DataType>> paths;
+
+        for(auto& kv : distances) {
+            paths[kv.first] = {};
+
+            if (kv.second == GraphClasses::MAX_WEIGHT<WeightType> || kv.first == startNode) {
+                continue;
+            }
+
+            DataType pathNode = kv.first;
+            paths[kv.first].emplace_back(pathNode);
+
+            while (true) {
+                std::optional<DataType> parent = parents[pathNode];
+                if(!parent.has_value()) {
+                    break;
+                }
+                paths[kv.first].emplace_back(parent.value());
+                pathNode = parent.value();
+            }
+
+            std::reverse(std::begin(paths[kv.first]), std::end(paths[kv.first]));
+        }
+
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            for(auto& kv : paths) {
+                // path to start node itself is irrelevant
+                if (kv.first == startNode) {
+                    continue;
+                }
+
+                // there is no path to nodes in different components
+                if (kv.second.size() == 0) {
+                    out << "There is no possible path between [" << startNode << "] and [" << kv.first << "]" << std::endl;
+                    continue;
+                }
+
+                out << "Distance from [" << startNode << "] to [" <<  kv.first << "] is: " << distances[kv.first] <<"\n\t Path: ";
+                auto it = std::cbegin(kv.second);
+                auto end = std::cend(kv.second);
+                while(it != end) {
+                    out << "[" << (*it) << "] ";
+                    ++it;
+                }
+                out << std::endl;
+            }
+        }
+
+        return paths;
+    }
+
+    template<typename DataType, typename WeightType> 
+    std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
+        std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> distances;
+
+        auto& neighborList = g.getNeighbors();
+
+        for(auto& kv1 : neighborList) {
+            for(auto& kv2 : neighborList) {
+                distances[kv1.first][kv2.first] = GraphClasses::MAX_WEIGHT<WeightType>;
+            }
+        }
+
+        for(auto& kv : neighborList) {
+            for(auto& [neighbor, weight] : kv.second) {
+                if (kv.first == neighbor) {
+                    distances[kv.first][neighbor] = 0;
+                }
+                else {
+                    distances[kv.first][neighbor] = weight.value_or(1);
+                }             
+            }
+        }
+
+        for(auto& [mid, n1] : neighborList) {
+            for(auto& [start, n2] : neighborList) {
+                for(auto& [end, n3] : neighborList) {
+                    if (distances[start][mid] != GraphClasses::MAX_WEIGHT<WeightType>
+                        && distances[mid][end] != GraphClasses::MAX_WEIGHT<WeightType>
+                        && distances[start][mid] + distances[mid][end] < distances[start][end]) {
+                            distances[start][end] = distances[start][mid] + distances[mid][end];
+                    }
+                }   
+            }
+        }
+
+        for(auto& kv : distances) {
+            if (distances[kv.first][kv.first] < 0) {
+                GRAPH_ERROR("Graph contins negative cycle"); // should this be an error ?
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            for(auto& [node, neighbors] : distances) {
+                for(auto& [neighbor, distance] : neighbors) {
+                    if (distance == GraphClasses::MAX_WEIGHT<WeightType> || node == neighbor) {
+                        continue;
+                    }
+                    out << "Shortest distance between [" << node <<"] and [" << neighbor << "] is: " << distance << std::endl; 
+                }
+                
+                // FIXME: for string nodes, sometimes 2 new line characters are printed between groups
+                out << std::endl;
+            }
+        }
+
+        return distances;
     }
 
 } // namespace GraphAlgorithms

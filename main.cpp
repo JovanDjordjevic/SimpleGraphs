@@ -46,6 +46,14 @@ int main () {
     GraphAlgorithms::bfs(g, start);
 
     //std::cout << globalAlloc << std::endl;
+    // int startNode = 1;
+    // int endNode = 8;
+    // std::string startNode = "node2";
+    // std::string endNode = "node6"; 
+
+    // auto ret = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 
     return 0;
 }
