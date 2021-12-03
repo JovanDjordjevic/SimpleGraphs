@@ -93,14 +93,17 @@ namespace GraphAlgorithms {
 
     template<typename DataType, typename WeightType> 
     std::vector<DataType> dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, 
-                  AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
     std::unordered_map<DataType, std::vector<DataType>> bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, 
-                 AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
+    // NOTE: at this time, Floyd-Warshall algorithm only returns the distances between pairs of nodes and not the paths themselves
+    // TODO: implement returning of paths
     template<typename DataType, typename WeightType> 
-    void floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, std::ostream& out = std::cout);
+    std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshall(GraphClasses::Graph<DataType, WeightType> &g,
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     // TODO:    
     // cycles
@@ -590,9 +593,8 @@ namespace GraphAlgorithms {
     }
 
     template<typename DataType, typename WeightType> 
-    void floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, std::ostream& out) {
+    std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
         std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> distances;
-        // TODO: add actual paths
 
         for(auto& kv1 : g.m_neighbors) {
             for(auto& kv2 : g.m_neighbors) {
@@ -630,20 +632,21 @@ namespace GraphAlgorithms {
             }
         }
 
-        // print
-        for(auto& [node, neighbors] : distances) {
-            for(auto& [neighbor, distance] : neighbors) {
-                if (distance == GraphClasses::MAX_WEIGHT<WeightType> || node == neighbor) {
-                    continue;
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            for(auto& [node, neighbors] : distances) {
+                for(auto& [neighbor, distance] : neighbors) {
+                    if (distance == GraphClasses::MAX_WEIGHT<WeightType> || node == neighbor) {
+                        continue;
+                    }
+                    out << "Shortest distance between [" << node <<"] and [" << neighbor << "] is: " << distance << std::endl; 
                 }
-                out << "Shortest distance between [" << node <<"] and [" << neighbor << "] is: " << distance << std::endl; 
+                
+                // FIXME: for string nodes, sometimes 2 new line characters are printed between groups
+                out << std::endl;
             }
-            
-            // FIXME: for string nodes, sometimes 2 new line characters are printed between groups
-            out << std::endl;
         }
 
-        return;
+        return distances;
     }
 
 } // namespace GraphAlgorithms

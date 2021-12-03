@@ -24,9 +24,9 @@ int main () {
     std::string startNode = "node2";
     std::string endNode = "node6"; 
 
-    // auto ret = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn, std::cout);
-    auto ret = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn, std::cout);
-    //GraphAlgorithms::floydWarshall(g);
+    // auto ret = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 
     return 0;
 }
