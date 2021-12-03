@@ -33,6 +33,16 @@ namespace GraphClasses {
         Unweighted
     };
 
+    template <typename DataType, typename WeightType>
+    struct Edge {
+        Edge(DataType neighbor, std::optional<WeightType> weight = {})
+            : neighbor(neighbor), weight(weight)
+        {}
+
+        DataType neighbor;
+        std::optional<WeightType> weight;
+    };
+
     template <typename DataType, typename WeightType = int>
     class Graph {
         public:
@@ -57,23 +67,17 @@ namespace GraphClasses {
             
             // ...
 
+            GraphType getGraphType();
+            GraphWeights getGraphWeights();
+            std::unordered_map<DataType, std::vector<Edge<DataType, WeightType>>> getNeighbors();
+
             template<typename DataType, typename WeightType> 
             friend std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<DataType, WeightType>& g);
             
-        public:
+        private:
             GraphType m_graphType;
             GraphWeights m_graphWeights;
-            
-            struct Edge{
-                Edge(DataType neighbor, std::optional<WeightType> weight = {}) 
-                    : neighbor(neighbor), weight(weight) 
-                {}
-
-                DataType neighbor;
-                std::optional<WeightType> weight;
-            };
-
-            std::unordered_map<DataType, std::vector<Edge>> m_neighbors;
+            std::unordered_map<DataType, std::vector<Edge<DataType, WeightType>>> m_neighbors;
     }; 
 
 } //namespace GraphClasses
@@ -342,6 +346,22 @@ namespace GraphClasses {
         }
         return count;
     }
+
+    template <typename DataType, typename WeightType>
+    GraphType Graph<DataType, WeightType>::getGraphType() {
+        return m_graphType;
+    }
+
+    template <typename DataType, typename WeightType>
+    GraphWeights Graph<DataType, WeightType>::getGraphWeights() {
+        return m_graphWeights;
+    }
+
+    template <typename DataType, typename WeightType>
+    std::unordered_map<DataType, std::vector<Edge<DataType, WeightType>>> Graph<DataType, WeightType>::getNeighbors() {
+        return m_neighbors;
+    }
+
 } //namespace GraphClasses
 
 
@@ -349,7 +369,10 @@ namespace GraphAlgorithms {
     template<typename DataType, typename WeightType> 
     void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
         std::unordered_map<DataType, bool> visited;
-        for(auto& kv : g.m_neighbors) {
+
+        auto& neighborList = g.getNeighbors();
+
+        for(auto& kv : neighborList) {
             visited[kv.first] = false;
         }
         
@@ -365,8 +388,8 @@ namespace GraphAlgorithms {
                 visited[currentNode] = true;
             }
 
-            auto it = std::cbegin(g.m_neighbors[currentNode]);
-            auto end = std::cend(g.m_neighbors[currentNode]);
+            auto it = std::cbegin(neighborList[currentNode]);
+            auto end = std::cend(neighborList[currentNode]);
             while (it != end) {
                 if (!visited[(*it).neighbor]) {
                     stack.emplace((*it).neighbor);
@@ -383,7 +406,10 @@ namespace GraphAlgorithms {
     template<typename DataType, typename WeightType> 
     void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
         std::unordered_map<DataType, bool> visited;
-        for(auto& kv : g.m_neighbors) {
+
+        auto& neighborList = g.getNeighbors();
+
+        for(auto& kv : neighborList) {
             visited[kv.first] = false;
         }
         
@@ -399,8 +425,8 @@ namespace GraphAlgorithms {
                 visited[currentNode] = true;
             }
 
-            auto it = std::cbegin(g.m_neighbors[currentNode]);
-            auto end = std::cend(g.m_neighbors[currentNode]);
+            auto it = std::cbegin(neighborList[currentNode]);
+            auto end = std::cend(neighborList[currentNode]);
             while (it != end) {
                 if (!visited[(*it).neighbor]) {
                     queue.emplace((*it).neighbor);
@@ -420,7 +446,7 @@ namespace GraphAlgorithms {
         std::unordered_map<DataType, bool> visited;
         std::unordered_map<DataType, std::optional<DataType>> parents; 
 
-        using pqData = GraphClasses::Graph<DataType, WeightType>::Edge;
+        using pqData = GraphClasses::Edge<DataType, WeightType>;
         struct Comparator {
             bool operator()(pqData& e1, pqData& e2) {
                 return e1.weight.value() > e2.weight.value();
@@ -428,7 +454,9 @@ namespace GraphAlgorithms {
         };
         std::priority_queue<pqData, std::vector<pqData>, Comparator> pq;
 
-        for(auto& kv : g.m_neighbors) {
+        auto& neighborList = g.getNeighbors();
+
+        for(auto& kv : neighborList) {
             distances[kv.first] = GraphClasses::MAX_WEIGHT<WeightType>;
             visited[kv.first] = false;
         }
@@ -450,7 +478,7 @@ namespace GraphAlgorithms {
 
             visited[currentNode] = true;
 
-            for(auto& [neighbor, weight] : g.m_neighbors[currentNode]) {
+            for(auto& [neighbor, weight] : neighborList[currentNode]) {
                 if (!visited[neighbor]) {
                     WeightType oldDistance = distances[neighbor];
                     WeightType newDistance = distances[currentNode] + weight.value_or(1); // i don't like this
@@ -505,7 +533,9 @@ namespace GraphAlgorithms {
         std::unordered_map<DataType, WeightType> distances;
         std::unordered_map<DataType, std::optional<DataType>> parents; 
 
-        for(auto& kv : g.m_neighbors) {
+        auto& neighborsList = g.getNeighbors();
+
+        for(auto& kv : neighborsList) {
             distances[kv.first] = GraphClasses::MAX_WEIGHT<WeightType>;
         }
 
@@ -515,7 +545,7 @@ namespace GraphAlgorithms {
         size_t relaxationCount = g.getNodeCount() - 1;
 
         for(auto r = 0; r < relaxationCount; ++r) {
-            for(auto& kv : g.m_neighbors) {
+            for(auto& kv : neighborsList) {
                 DataType currentNode = kv.first;
                 auto neighbors = kv.second;
                 for(auto& [neighbor, weight] : neighbors) {
@@ -529,7 +559,7 @@ namespace GraphAlgorithms {
         }
 
         // negtive cycle check
-        for (auto& kv : g.m_neighbors) {
+        for (auto& kv : neighborsList) {
             DataType currentNode = kv.first;
             auto neighbors = kv.second;
             for (auto& [neighbor, weight] : neighbors) {
@@ -596,13 +626,15 @@ namespace GraphAlgorithms {
     std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
         std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> distances;
 
-        for(auto& kv1 : g.m_neighbors) {
-            for(auto& kv2 : g.m_neighbors) {
+        auto& neighborList = g.getNeighbors();
+
+        for(auto& kv1 : neighborList) {
+            for(auto& kv2 : neighborList) {
                 distances[kv1.first][kv2.first] = GraphClasses::MAX_WEIGHT<WeightType>;
             }
         }
 
-        for(auto& kv : g.m_neighbors) {
+        for(auto& kv : neighborList) {
             for(auto& [neighbor, weight] : kv.second) {
                 if (kv.first == neighbor) {
                     distances[kv.first][neighbor] = 0;
@@ -613,9 +645,9 @@ namespace GraphAlgorithms {
             }
         }
 
-        for(auto& [mid, n1] : g.m_neighbors) {
-            for(auto& [start, n2] : g.m_neighbors) {
-                for(auto& [end, n3] : g.m_neighbors) {
+        for(auto& [mid, n1] : neighborList) {
+            for(auto& [start, n2] : neighborList) {
+                for(auto& [end, n3] : neighborList) {
                     if (distances[start][mid] != GraphClasses::MAX_WEIGHT<WeightType>
                         && distances[mid][end] != GraphClasses::MAX_WEIGHT<WeightType>
                         && distances[start][mid] + distances[mid][end] < distances[start][end]) {
