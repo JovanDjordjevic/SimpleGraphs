@@ -80,6 +80,11 @@ namespace GraphClasses {
 
 
 namespace GraphAlgorithms {
+    enum class AlgorithmBehavior {   
+        ReturnOnly,
+        PrintAndReturn
+    };
+    
     template<typename DataType, typename WeightType> 
     void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
 
