@@ -92,7 +92,8 @@ namespace GraphAlgorithms {
     void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
-    void dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, std::ostream& out = std::cout);
+    std::vector<DataType> dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, 
+                  AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
     void bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
@@ -410,7 +411,7 @@ namespace GraphAlgorithms {
     }
 
     template<typename DataType, typename WeightType> 
-    void dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, std::ostream& out) {
+    std::vector<DataType> dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, AlgorithmBehavior behavior, std::ostream& out) {
         std::unordered_map<DataType, WeightType> distances;
         std::unordered_map<DataType, bool> visited;
         std::unordered_map<DataType, std::optional<DataType>> parents; 
@@ -437,9 +438,6 @@ namespace GraphAlgorithms {
         while (!pq.empty()) {
             auto [currentNode, weight] = pq.top();
             pq.pop();
-            //std::cout << currentNode << " " << weight.value() << std::endl;
-            // std::cout << typeid(currentNode).name() <<  std::endl;
-            // std::cout << typeid(weight).name() <<  std::endl;
 
             if (currentNode == endNode) {
                 pathFound = true;
@@ -449,7 +447,6 @@ namespace GraphAlgorithms {
             visited[currentNode] = true;
 
             for(auto& [neighbor, weight] : g.m_neighbors[currentNode]) {
-                //std::cout << "\t" << neighbor << " " << weight.value() << std::endl;
                 if (!visited[neighbor]) {
                     WeightType oldDistance = distances[neighbor];
                     WeightType newDistance = distances[currentNode] + weight.value_or(1); // i don't like this
@@ -463,32 +460,40 @@ namespace GraphAlgorithms {
         }
 
         // path reconstruction
+        std::vector<DataType> path;
+
         if (pathFound) {
             DataType endCpy = endNode;
-            std::vector<DataType> path{endNode};
+            path.emplace_back(endNode);
             while (true) {
-                std::optional<DataType> parent = parents[endNode];
+                std::optional<DataType> parent = parents[endCpy];
                 if(!parent.has_value()) {
                     break;
                 }
                 path.emplace_back(parent.value());
-                endNode = parent.value();
+                endCpy = parent.value();
             }
 
-            auto it = std::crbegin(path);
-            auto end = std::crend(path);
-            out << "Path found: \n\t";
-            while(it != end) {
-                out << "[" << (*it) << "] ";
-                ++it;
-            }
-            out << "\nwith total distance: " << distances[endCpy] << std::endl;
-        }
-        else {
-            out << "No path found between [" << startNode <<"] and [" << endNode << "]" << std::endl;
+            std::reverse(std::begin(path), std::end(path));
         }
 
-        return;
+        if(behavior == AlgorithmBehavior::PrintAndReturn) {
+            if (pathFound) {
+                auto it = std::begin(path);
+                auto end = std::end(path);
+                out << "Path found: \n\t";
+                while(it != end) {
+                    out << "[" << (*it) << "] ";
+                    ++it;
+                }
+                out << "\nwith total distance: " << distances[endNode] << std::endl;
+            }
+            else {
+                out << "No path found between [" << startNode <<"] and [" << endNode << "]" << std::endl;
+            }
+        }
+
+        return path;
     }
 
     template<typename DataType, typename WeightType> 
