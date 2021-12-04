@@ -27,7 +27,8 @@ int main () {
     // GraphClasses::Graph<unsigned, unsigned> g;
 
     const char* fileName = "testInputs/custom_float.txt";
-    GraphClasses::Graph<CustomClass, float> g;
+    GraphClasses::Graph<CustomClass, double> g;      // FIXME: using float instead of double gives compilation error when trying to use dijsktra algorithm
+                                                     // so far other algorithms work fine with float, gives warning for possible loss of data during conversion
 
     g.configureDirections(GraphClasses::GraphType::Directed);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
@@ -41,19 +42,28 @@ int main () {
 
     // int start = 1;
     // std::string start = "node1";
-    CustomClass start = {1, 2, 3};
+    // CustomClass start = {1, 2, 3};
     // GraphAlgorithms::dfs(g, start);
-    GraphAlgorithms::bfs(g, start);
+    // GraphAlgorithms::bfs(g, start);
 
     //std::cout << globalAlloc << std::endl;
     // int startNode = 1;
     // int endNode = 8;
     // std::string startNode = "node2";
-    // std::string endNode = "node6"; 
+    // std::string endNode = "node6";
+    CustomClass startNode = {1, 2, 3}; 
+    CustomClass endNode = {1, 7, 3};
 
-    // auto ret = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    // auto ret = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    // auto ret = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
+    auto ret1 = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
+    std::cout << std::endl;
+
+    auto ret2 = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    std::cout << std::endl;
+
+    auto ret3 = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    std::cout << std::endl;
 
     return 0;
 }

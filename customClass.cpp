@@ -2,7 +2,7 @@
 #include <vector>
 #include "customClass.hpp"
 
-#define DEBUG 1
+#define DEBUG
 
 CustomClass::CustomClass(int a, int b, int c) {
     #ifdef DEBUG
@@ -24,16 +24,16 @@ CustomClass::CustomClass(const CustomClass &other) {
         m_data.push_back(other.m_data[2]);
 }
 
-CustomClass::CustomClass(CustomClass &&other) {
-    #ifdef DEBUG
-        std::cout << "move cosntructor" << std::endl;
-    #endif
+// CustomClass::CustomClass(CustomClass &&other) {
+//     #ifdef DEBUG
+//         std::cout << "move cosntructor" << std::endl;
+//     #endif
 
-        m_data[0] = other.m_data[0];
-        m_data[1] = other.m_data[1];
-        m_data[2] = other.m_data[2];
-        other.m_data.clear();
-}
+//         m_data[0] = other.m_data[0];
+//         m_data[1] = other.m_data[1];
+//         m_data[2] = other.m_data[2];
+//         other.m_data.clear();
+// }
 
 CustomClass &CustomClass::operator=(const CustomClass &other) {
     #ifdef DEBUG
@@ -49,20 +49,20 @@ CustomClass &CustomClass::operator=(const CustomClass &other) {
     return *this;
 }
 
-CustomClass &CustomClass::operator=(CustomClass &&other) {
-    #ifdef DEBUG
-        std::cout << "move assignment operator" << std::endl;
-    #endif
+// CustomClass &CustomClass::operator=(CustomClass &&other) {
+//     #ifdef DEBUG
+//         std::cout << "move assignment operator" << std::endl;
+//     #endif
 
-    if (this != &other)
-    {
-        m_data[0] = other.m_data[0];
-        m_data[1] = other.m_data[1];
-        m_data[2] = other.m_data[2];
-        other.m_data.clear();
-    }
-    return *this;
-}
+//     if (this != &other)
+//     {
+//         m_data[0] = other.m_data[0];
+//         m_data[1] = other.m_data[1];
+//         m_data[2] = other.m_data[2];
+//         other.m_data.clear();
+//     }
+//     return *this;
+// }
 
 CustomClass::~CustomClass() {
     #ifdef DEBUG
@@ -73,7 +73,9 @@ CustomClass::~CustomClass() {
 
 
 bool operator==(const CustomClass& obj1, const CustomClass& obj2){
-    std::cout << "operator ==" << std::endl;
+    #ifdef DEBUG
+        std::cout << "operator ==" << std::endl;
+    #endif
     return obj1.m_data[0] == obj2.m_data[0] && obj1.m_data[1] == obj2.m_data[1] && obj1.m_data[2] == obj2.m_data[2];
 }
 

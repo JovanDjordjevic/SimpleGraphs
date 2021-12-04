@@ -9,10 +9,10 @@ class CustomClass{
     public:
         CustomClass(int a=0, int b=0, int c=0);
         CustomClass(const CustomClass& other);
-        CustomClass(CustomClass&& other);
+        //CustomClass(CustomClass&& other);
 
         CustomClass& operator=(const CustomClass& other);
-        CustomClass& operator=(CustomClass&& other);
+        //CustomClass& operator=(CustomClass&& other);
 
         ~CustomClass();
 
