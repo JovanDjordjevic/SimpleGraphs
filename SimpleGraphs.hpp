@@ -433,7 +433,7 @@ namespace GraphAlgorithms {
     void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
         std::unordered_map<DataType, bool> visited;
 
-        auto& neighborList = g.getNeighbors();
+        auto neighborList = g.getNeighbors();
 
         for(auto& kv : neighborList) {
             visited[kv.first] = false;
@@ -470,7 +470,7 @@ namespace GraphAlgorithms {
     void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
         std::unordered_map<DataType, bool> visited;
 
-        auto& neighborList = g.getNeighbors();
+        auto neighborList = g.getNeighbors();
 
         for(auto& kv : neighborList) {
             visited[kv.first] = false;
@@ -517,7 +517,7 @@ namespace GraphAlgorithms {
         };
         std::priority_queue<pqData, std::vector<pqData>, Comparator> pq;
 
-        auto& neighborList = g.getNeighbors();
+        auto neighborList = g.getNeighbors();
 
         for(auto& kv : neighborList) {
             distances[kv.first] = GraphClasses::MAX_WEIGHT<WeightType>;
@@ -596,7 +596,7 @@ namespace GraphAlgorithms {
         std::unordered_map<DataType, WeightType> distances;
         std::unordered_map<DataType, std::optional<DataType>> parents; 
 
-        auto& neighborsList = g.getNeighbors();
+        auto neighborsList = g.getNeighbors();
 
         for(auto& kv : neighborsList) {
             distances[kv.first] = GraphClasses::MAX_WEIGHT<WeightType>;
@@ -607,7 +607,7 @@ namespace GraphAlgorithms {
 
         size_t relaxationCount = g.getNodeCount() - 1;
 
-        for(auto r = 0; r < relaxationCount; ++r) {
+        for(size_t r = 0; r < relaxationCount; ++r) {
             for(auto& kv : neighborsList) {
                 DataType currentNode = kv.first;
                 auto neighbors = kv.second;
@@ -689,7 +689,7 @@ namespace GraphAlgorithms {
     std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
         std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> distances;
 
-        auto& neighborList = g.getNeighbors();
+        auto neighborList = g.getNeighbors();
 
         for(auto& kv1 : neighborList) {
             for(auto& kv2 : neighborList) {
