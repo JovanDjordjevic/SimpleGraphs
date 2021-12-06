@@ -17,7 +17,7 @@ void* operator new(size_t size)
 
 int main () {
 
-    // const char* fileName = "testInputs/int_int.txt";
+    // const char* fileName = "testInputs/int_int_artic.txt";
     // GraphClasses::Graph<int, int> g;
 
     // const char* fileName = "testInputs/string_double.txt";
@@ -29,8 +29,9 @@ int main () {
     const char* fileName = "testInputs/custom_float.txt";
     GraphClasses::Graph<CustomClass, double> g;      // FIXME: using float instead of double gives compilation error when trying to use dijsktra algorithm
                                                      // so far other algorithms work fine with float, gives warning for possible loss of data during conversion
+                                                     // compilation fails with MSVC but not with clang
 
-    g.configureDirections(GraphClasses::GraphType::Directed);
+    g.configureDirections(GraphClasses::GraphType::Undirected);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
 
     g.readFromTxt(fileName);
@@ -39,6 +40,13 @@ int main () {
     std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
     std::cout << g << std::endl;
     //g.writeToTxt("test_otput.txt");
+
+    //std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
+    // int startNode = 2;
+    //std::string startNode = "node1";
+    CustomClass startNode = {1, 2, 3}; 
+    auto ret = GraphAlgorithms::findArticulationPoints(g, startNode);
+    //std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
 
     // int start = 1;
     // std::string start = "node1";
@@ -51,19 +59,19 @@ int main () {
     // int endNode = 8;
     // std::string startNode = "node2";
     // std::string endNode = "node6";
-    CustomClass startNode = {1, 2, 3}; 
-    CustomClass endNode = {1, 7, 3};
+    // CustomClass startNode = {1, 2, 3}; 
+    // CustomClass endNode = {1, 7, 3};
 
-    // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    auto ret1 = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    std::cout << std::endl;
+    // // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
+    // auto ret1 = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
+    // std::cout << std::endl;
 
-    auto ret2 = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    std::cout << std::endl;
+    // auto ret2 = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // std::cout << std::endl;
 
-    auto ret3 = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    std::cout << std::endl;
+    // auto ret3 = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // std::cout << std::endl;
 
     return 0;
 }

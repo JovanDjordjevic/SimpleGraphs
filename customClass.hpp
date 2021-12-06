@@ -18,6 +18,7 @@ class CustomClass{
 
         // i don't know why yet, but these must be friend (even though class has no private data) or compilation fails
         friend bool operator==(const CustomClass& obj1, const CustomClass& obj2);
+        friend bool operator!=(const CustomClass& obj1, const CustomClass& obj2);
         friend std::ostream& operator<<(std::ostream& out, const CustomClass& obj);
         friend std::istream& operator>>(std::istream& is, CustomClass& obj);
         
