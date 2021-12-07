@@ -44,7 +44,7 @@ int main () {
     // std::string start = "node1";
     CustomClass start = {1, 2, 3};
     // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    auto ret = GraphAlgorithms::dfs(g, start, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret = GraphAlgorithms::dfs(g, start);
     // std::cout << "-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
     // GraphAlgorithms::bfs(g, start);
 
