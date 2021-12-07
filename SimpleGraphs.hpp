@@ -448,12 +448,11 @@ namespace GraphAlgorithms {
             DataType currentNode = stack.top();
             stack.pop();
 
-            visited[currentNode] = true;
             dfsSearchTree.emplace_back(currentNode);
 
-            // if (!visited[currentNode]) {
-            //     visited[currentNode] = true;
-            // }
+            if (!visited[currentNode]) {
+                visited[currentNode] = true;
+            }
 
             auto it = std::cbegin(neighborList[currentNode]);
             auto end = std::cend(neighborList[currentNode]);
