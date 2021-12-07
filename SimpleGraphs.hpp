@@ -91,7 +91,8 @@ namespace GraphAlgorithms {
     };
     
     template<typename DataType, typename WeightType> 
-    void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
+    std::vector<DataType> dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, 
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
     void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
@@ -430,8 +431,9 @@ namespace GraphClasses {
 
 namespace GraphAlgorithms {
     template<typename DataType, typename WeightType> 
-    void dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
+    std::vector<DataType> dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior, std::ostream& out) {
         std::unordered_map<DataType, bool> visited;
+        std::vector<DataType> dfsSearchTree;
 
         auto neighborList = g.getNeighbors();
 
@@ -446,8 +448,9 @@ namespace GraphAlgorithms {
             DataType currentNode = stack.top();
             stack.pop();
 
+            dfsSearchTree.emplace_back(currentNode);
+
             if (!visited[currentNode]) {
-                out << "[" << currentNode << "] ";
                 visited[currentNode] = true;
             }
 
@@ -457,13 +460,19 @@ namespace GraphAlgorithms {
                 if (!visited[(*it).neighbor]) {
                     stack.emplace((*it).neighbor);
                 }
-
                 ++it;
             }
         }
-        out << std::endl;
 
-        return;
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            out << "Order of DFS traversal:\n\t";
+            for(auto& node : dfsSearchTree) {
+                out << "[" << node << "] ";
+            }
+            out << std::endl;
+        }
+
+        return dfsSearchTree;
     }
 
     template<typename DataType, typename WeightType> 
