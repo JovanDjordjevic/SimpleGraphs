@@ -31,22 +31,21 @@ int main () {
                                                      // so far other algorithms work fine with float, gives warning for possible loss of data during conversion
                                                      // compilation fails with MSVC but not with clang
 
-    g.configureDirections(GraphClasses::GraphType::Undirected);
+    g.configureDirections(GraphClasses::GraphType::Directed);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
 
     g.readFromTxt(fileName);
     //g.readFromDimacs(fileName);
 
     std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
-    std::cout << g << std::endl;
+    //std::cout << g << std::endl;
     //g.writeToTxt("test_otput.txt");
 
-    //std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    // int startNode = 2;
+    //unsigned startNode = 2;
     //std::string startNode = "node1";
     CustomClass startNode = {1, 2, 3}; 
-    auto ret = GraphAlgorithms::findArticulationPoints(g, startNode);
-    //std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
+    auto ret1 = GraphAlgorithms::findArticulationPoints(g, startNode);
+    auto ret2 = GraphAlgorithms::findBridges(g, startNode);
 
     // int start = 1;
     // std::string start = "node1";

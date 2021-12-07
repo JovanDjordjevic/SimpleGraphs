@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stack>
 #include <queue>
+#include <utility>
 
 #define GRAPH_ERROR(message) std::cerr << "ERROR: " << message << std::endl; 
 
@@ -121,6 +122,18 @@ namespace GraphAlgorithms {
     template<typename DataType, typename WeightType> 
     std::unordered_set<DataType> findArticulationPoints(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn,
                     std::ostream& out = std::cout);
+
+    // without start node (only available for undirected graphs)
+    template<typename DataType, typename WeightType> 
+    std::vector<std::pair<DataType, DataType>> findBridges(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn,
+                    std::ostream& out = std::cout);
+
+    // with start node (available for both undirected and directed)
+    // NOTE: when using this function for directed graphs, only nodes in the corresponding dfs tree will be checked
+    template<typename DataType, typename WeightType> 
+    std::vector<std::pair<DataType, DataType>> findBridges(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn,
+                    std::ostream& out = std::cout);
+
 
     // TODO:    
     // cycles
@@ -779,7 +792,7 @@ namespace GraphAlgorithms {
             internalData.visited[kv.first] = false;
         }
 
-        internal::findArticulationPoints__internal(g, startNode, behavior, out, internalData);
+        internal::articulation__internal(g, startNode, behavior, out, internalData);
 
         if (behavior == AlgorithmBehavior::PrintAndReturn) {
             if (internalData.articulationPoints.size() == 0) {
@@ -796,11 +809,46 @@ namespace GraphAlgorithms {
         return internalData.articulationPoints;
     }
 
+    template<typename DataType, typename WeightType> 
+    std::vector<std::pair<DataType, DataType>> findBridges(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
+        if (g.getGraphType() == GraphClasses::GraphType::Directed) {        
+            GRAPH_ERROR("Must specify startNode for directed graphs. Call the appropriate overload of this function!");
+            exit(EXIT_FAILURE);
+        }  
+
+        DataType startNode = (*std::begin(g.getNeighbors())).first;
+        return findBridges(g, startNode, behavior, out);
+    }
+
+    template<typename DataType, typename WeightType> 
+    std::vector<std::pair<DataType, DataType>> findBridges(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior, std::ostream& out) {
+        internal::ArticulationHelper<DataType, WeightType> internalData;
+
+        auto neighborList = g.getNeighbors();
+
+        internalData.time = 0u;
+        internalData.parents[startNode];
+        for(auto& kv : neighborList) {
+            internalData.visited[kv.first] = false;
+        }
+
+        internal::articulation__internal(g, startNode, behavior, out, internalData);
+
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            if (internalData.bridges.size() == 0) {
+                out << "No bridges found" << std::endl;
+            } else {
+                out << "Bridges found:" << std::endl;
+                for (auto& bridge : internalData.bridges) {
+                    out << "\t{ [" << bridge.first << "] [" << bridge.second << "] }" << std::endl;
+                }
+            }
+        }
+
+        return internalData.bridges;
+    }
+
 } // namespace GraphAlgorithms
-
-
-
-
 
 
 // internal namesapce for helper funcitons, not inteded for end user
@@ -814,35 +862,46 @@ namespace internal {
             std::unordered_map<DataType, bool> visited;
             std::unordered_map<DataType, std::optional<DataType>> parents; 
             std::unordered_set<DataType> articulationPoints;
+            std::vector<std::pair<DataType, DataType>> bridges;
     };
 
+    // this one internal function is used both for findArticulationPoints and findBridges as these to algorithms are very simmilar
     template<typename DataType, typename WeightType> 
-    void findArticulationPoints__internal(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, GraphAlgorithms::AlgorithmBehavior behavior, std::ostream& out, ArticulationHelper<DataType, WeightType>& internalData) {
+    void articulation__internal(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, GraphAlgorithms::AlgorithmBehavior behavior, std::ostream& out, ArticulationHelper<DataType, WeightType>& internalData) {
         internalData.visited[startNode] = true;
         internalData.times[startNode] = internalData.time;
         internalData.lowerTimes[startNode] = internalData.time;
         ++internalData.time;
+
         auto neighborList = g.getNeighbors();
         unsigned numChildren = 0u;
+
         for (auto& [neighbor, weight] : neighborList[startNode]) {
             if (!internalData.visited[neighbor]) {
                 ++numChildren;
                 internalData.parents[neighbor] = startNode;
 
-                findArticulationPoints__internal(g, neighbor, behavior, out, internalData);
+                articulation__internal(g, neighbor, behavior, out, internalData);
 
                 if (internalData.lowerTimes[neighbor] < internalData.lowerTimes[startNode]) {
                     internalData.lowerTimes[startNode] = internalData.lowerTimes[neighbor];
                 }
 
+                // for articulation points
                 if ( (!internalData.parents[startNode].has_value() && numChildren > 1) 
-                 || (internalData.parents[startNode].has_value() && (internalData.lowerTimes[neighbor] >= internalData.times[startNode])) ){
+                  || (internalData.parents[startNode].has_value() && (internalData.lowerTimes[neighbor] >= internalData.times[startNode])) ){
                     internalData.articulationPoints.emplace(startNode);
                 }
+
+                // for bridges
+                if (internalData.lowerTimes[neighbor] > internalData.times[startNode]) {
+                    internalData.bridges.emplace_back(startNode, neighbor);
+                }
+
             } else {
-                // FIXME: this line causes crash in CustomClass test particularly for nodes [1 2 3]   and  [5 2 6]
-                // problem is probably comparison with optional for case when starNode is the root
-                if (neighbor != internalData.parents[startNode].value() && internalData.times[neighbor] < internalData.lowerTimes[startNode]) {
+                if (internalData.parents[startNode].has_value() 
+                  && neighbor != internalData.parents[startNode].value() 
+                  && internalData.times[neighbor] < internalData.lowerTimes[startNode]) {
                     internalData.lowerTimes[startNode] = internalData.times[neighbor];
                 }
             }
