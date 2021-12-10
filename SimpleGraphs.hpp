@@ -135,6 +135,16 @@ namespace GraphAlgorithms {
     std::vector<std::pair<DataType, DataType>> findBridges(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn,
                     std::ostream& out = std::cout);
 
+    // without start node (only available for undirected graphs)
+    template<typename DataType, typename WeightType> 
+    std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(GraphClasses::Graph<DataType, WeightType> &g,
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+    // NOTE: when using this function for directed graphs, only nodes in the corresponding dfs tree will be checked
+    template<typename DataType, typename WeightType> 
+    std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, 
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
 
     // TODO:    
     // cycles
@@ -857,6 +867,48 @@ namespace GraphAlgorithms {
         return internalData.bridges;
     }
 
+    template<typename DataType, typename WeightType> 
+    std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
+        if (g.getGraphType() == GraphClasses::GraphType::Directed) {        
+            GRAPH_ERROR("Must specify startNode for directed graphs. Call the appropriate overload of this function!");
+            exit(EXIT_FAILURE);
+        }  
+
+        DataType startNode = (*std::begin(g.getNeighbors())).first;
+        return findStronglyConnectedComponentsTarjan(g, startNode, behavior, out);
+    }
+
+
+    template<typename DataType, typename WeightType> 
+    std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior, std::ostream& out) {
+        internal::TarjanHelper<DataType, WeightType> internalData;
+
+        auto neighborList = g.getNeighbors();
+
+        internalData.time = 1u;
+        for(auto& kv : neighborList) {
+            internalData.inStack[kv.first] = false;
+            // unvisited nodes will have their time set to 0
+            internalData.times[kv.first] = 0u;
+        }
+
+        internal::tarjan__internal(g, startNode, internalData);
+
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            unsigned i = 1u;
+            for (auto& component : internalData.components) {
+                out << "Component " << i << " consists of " <<  component.size() << " nodes:\n\t";
+                for(auto& node : component) {
+                    out << "[" << node << "] ";
+                }
+                std::cout << std::endl;
+                ++i;
+            }
+        }
+
+        return internalData.components;
+    }
+
 } // namespace GraphAlgorithms
 
 
@@ -918,6 +970,58 @@ namespace internal {
 
         return;
     }
+
+    template<typename DataType, typename WeightType>
+    struct TarjanHelper {
+        public:
+            unsigned time;
+            std::unordered_map<DataType, unsigned> times;
+            std::unordered_map<DataType, unsigned> lowerTimes;
+            std::stack<DataType> traversalOrder;
+            std::unordered_map<DataType, bool> inStack;
+            std::vector<std::unordered_set<DataType>> components;
+    };
+
+    template<typename DataType, typename WeightType> 
+    void tarjan__internal(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, TarjanHelper<DataType, WeightType>& internalData) {
+        internalData.times[startNode] = internalData.time;
+        internalData.lowerTimes[startNode] = internalData.time;
+        ++internalData.time;
+        internalData.traversalOrder.emplace(startNode);
+        internalData.inStack[startNode] = true;
+
+        auto neighborList = g.getNeighbors();
+        for (auto& [neighbor, weight] : neighborList[startNode]) {
+            if (internalData.times[neighbor] == 0u) {
+                tarjan__internal(g, neighbor, internalData);
+
+                if (internalData.lowerTimes[neighbor] < internalData.lowerTimes[startNode]) {
+                    internalData.lowerTimes[startNode] = internalData.lowerTimes[neighbor];
+                }
+            } else if (internalData.inStack[neighbor] && (internalData.times[neighbor] < internalData.lowerTimes[startNode])) {
+                    internalData.lowerTimes[startNode] = internalData.times[neighbor];
+            }
+        }  
+        
+        // component found
+        if (internalData.times[startNode] == internalData.lowerTimes[startNode]) {
+            DataType componentNode;
+            std::unordered_set<DataType> component;
+            while (true) {
+                componentNode = internalData.traversalOrder.top();
+                internalData.traversalOrder.pop();
+                component.emplace(componentNode);
+                internalData.inStack[componentNode] = false;
+                if (componentNode == startNode) {
+                    internalData.components.emplace_back(component);
+                    break;
+                }
+            }
+        }
+
+        return;
+    }
+
 } // namespace internal
 
 
