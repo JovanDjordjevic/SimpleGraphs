@@ -85,6 +85,18 @@ namespace GraphClasses {
 
 } //namespace GraphClasses
 
+namespace GraphUtility {
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> mergeGraphs(GraphClasses::Graph<DataType, WeightType>& g1, GraphClasses::Graph<DataType, WeightType>& g2);
+
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> intersectGraphs(GraphClasses::Graph<DataType, WeightType>& g1, GraphClasses::Graph<DataType, WeightType>& g2);
+
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType>& g, std::unordered_set<DataType>& nodes);
+
+    // ...
+} //namespace GraphUtility
 
 namespace GraphAlgorithms {
     enum class AlgorithmBehavior {   
@@ -452,6 +464,11 @@ namespace GraphClasses {
     }
 
 } //namespace GraphClasses
+
+
+namespace GraphUtility {
+    // ...
+} //namespace GraphUtility
 
 
 namespace GraphAlgorithms {
