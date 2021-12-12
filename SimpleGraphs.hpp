@@ -136,12 +136,15 @@ namespace GraphAlgorithms {
     std::vector<std::pair<DataType, DataType>> findBridges(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn,
                     std::ostream& out = std::cout);
 
+    template<typename DataType, typename WeightType> 
+    std::vector<DataType> topsortKhan(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn,
+                    std::ostream& out = std::cout);
+
 
     // TODO:    
     // cycles
     // mst  (prim, kruskal)
     // components (tarjan, kosaraju)
-    // topsort (kan)
     // coloring
     // maximum flow (ford-fulkerson, edmonds-karp)
     // pairing
@@ -863,6 +866,70 @@ namespace GraphAlgorithms {
         }
 
         return internalData.bridges;
+    }
+
+    template<typename DataType, typename WeightType> 
+    std::vector<DataType> topsortKhan(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
+        if (g.getGraphType() == GraphClasses::GraphType::Undirected) {
+            GRAPH_ERROR("Topological sorting makes no sense for undirected graphs!");
+            exit(EXIT_FAILURE);
+        }
+
+        auto neighborList = g.getNeighbors();
+
+        std::unordered_map<DataType, unsigned> inDegrees;
+        for(auto& kv : neighborList) {
+            inDegrees[kv.first] = 0u;
+        }
+
+        std::vector<DataType> topologicalOrdering;
+        unsigned numVisited = 0u;
+
+        for(auto& kv : neighborList) {
+            for (auto& [neighbor, weight] : neighborList[kv.first]) {
+                ++inDegrees[neighbor];
+            }
+        }
+
+        std::queue<DataType> topsortQueue;
+        for(auto& kv : inDegrees) {
+            if (inDegrees[kv.first] == 0) {
+                topsortQueue.emplace(kv.first);
+            }
+        }
+
+        while (!topsortQueue.empty()) {
+            DataType current = topsortQueue.front();
+            topsortQueue.pop();
+            topologicalOrdering.emplace_back(current);
+            ++numVisited;
+
+            for (auto& [neighbor, weight] : neighborList[current]) {
+                --inDegrees[neighbor];
+                if (inDegrees[neighbor] == 0) {
+                    topsortQueue.emplace(neighbor);
+                }
+            }
+        }
+
+        // we signal that graph is not acyclic with an empty vector
+        if (numVisited != g.getNodeCount()) {
+            topologicalOrdering.clear();
+        }
+
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            if (numVisited != g.getNodeCount()) {
+                out << "Graph is not acyclic!" << std::endl;
+            } else {
+                out << "Topological ordering:\n\t";
+                for (auto& val : topologicalOrdering) {
+                    out << "[" << val << "] ";
+                }
+                out << std::endl;
+            }
+        }
+
+        return topologicalOrdering;
     }
 
 } // namespace GraphAlgorithms
