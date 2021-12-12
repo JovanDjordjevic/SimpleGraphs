@@ -97,7 +97,8 @@ namespace GraphAlgorithms {
                     AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
-    void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out = std::cout);
+    std::vector<DataType> bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, 
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     template<typename DataType, typename WeightType> 
     std::vector<DataType> dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, 
@@ -501,8 +502,9 @@ namespace GraphAlgorithms {
     }
 
     template<typename DataType, typename WeightType> 
-    void bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, std::ostream& out) {
+    std::vector<DataType> bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, AlgorithmBehavior behavior, std::ostream& out) {
         std::unordered_map<DataType, bool> visited;
+        std::vector<DataType> bfsTraversalOrder;
 
         auto neighborList = g.getNeighbors();
 
@@ -518,7 +520,7 @@ namespace GraphAlgorithms {
             queue.pop();
 
             if (!visited[currentNode]) {
-                out << "[" << currentNode << "] ";
+                bfsTraversalOrder.emplace_back(currentNode);
                 visited[currentNode] = true;
             }
 
@@ -528,13 +530,19 @@ namespace GraphAlgorithms {
                 if (!visited[(*it).neighbor]) {
                     queue.emplace((*it).neighbor);
                 }
-
                 ++it;
             }
         }
-        out << std::endl;
 
-        return;
+        if (behavior == GraphAlgorithms::AlgorithmBehavior::PrintAndReturn) {
+            out << "Order of BFS traversal:\n\t";
+            for(auto& node : bfsTraversalOrder) {
+                out << "[" << node << "] ";
+            }
+            out << std::endl;
+        }
+
+        return bfsTraversalOrder;
     }
 
     template<typename DataType, typename WeightType> 

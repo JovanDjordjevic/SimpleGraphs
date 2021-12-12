@@ -44,14 +44,14 @@ int main () {
     //unsigned startNode = 2;
     //std::string startNode = "node1";
     CustomClass startNode = {1, 2, 3}; 
-    auto ret1 = GraphAlgorithms::findArticulationPoints(g, startNode);
-    auto ret2 = GraphAlgorithms::findBridges(g, startNode);
+    //auto ret1 = GraphAlgorithms::findArticulationPoints(g, startNode);
+    //auto ret2 = GraphAlgorithms::findBridges(g, startNode);
 
     // int start = 1;
     // std::string start = "node1";
     CustomClass start = {1, 2, 3};
     // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    auto ret = GraphAlgorithms::dfs(g, start);
+    auto ret = GraphAlgorithms::bfs(g, start);
     // std::cout << "-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
     // GraphAlgorithms::bfs(g, start);
 
