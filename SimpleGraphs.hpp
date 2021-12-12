@@ -467,7 +467,30 @@ namespace GraphClasses {
 
 
 namespace GraphUtility {
-    // ...
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType>& g, std::unordered_set<DataType>& nodes) {
+        GraphClasses::Graph<DataType, WeightType> newGraph;
+
+        newGraph.configureDirections(g.getGraphType());
+        newGraph.configureWeights(g.getGraphWeights());
+
+        auto neighborList = g.getNeighbors();
+
+        for(auto& node : nodes) {
+            newGraph.addNode(node);
+            for(auto& [neighbor, weight] : neighborList[node]) {
+                if (nodes.find(neighbor) != nodes.end()) {
+                    if (newGraph.getGraphWeights() == GraphClasses::GraphWeights::Weighted) {
+                        newGraph.addEdge(node, neighbor, weight.value());
+                    } else {
+                        newGraph.addEdge(node, neighbor);
+                    }
+                }
+            }
+        }
+
+        return newGraph;
+    }
 } //namespace GraphUtility
 
 
