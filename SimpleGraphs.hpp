@@ -12,6 +12,7 @@
 #include <queue>
 #include <utility>
 #include <set>
+#include <algorithm>
 
 #define GRAPH_ERROR(message) std::cerr << "ERROR: " << message << std::endl; 
 
@@ -47,9 +48,23 @@ namespace GraphClasses {
                 return this->neighbor < other.neighbor || this->weight < other.weight;
             }
 
+            bool operator==(const Edge& other) const {
+                return this->neighbor == other.neighbor && this->weight == other.weight;
+            }
+
         public:
             DataType neighbor;
             std::optional<WeightType> weight;
+    };
+
+    template <typename DataType, typename WeightType>
+    struct EdgeHasher {
+        size_t operator()(const Edge<DataType, WeightType>& obj) const {
+            std::hash<DataType> nHash;
+            std::hash<WeightType> wHash;
+            // TODO:  try finding a better alternative
+            return nHash(obj.neighbor) + wHash(obj.weight.value_or(0));
+        }
     };
 
     template <typename DataType, typename WeightType = int>
@@ -494,7 +509,7 @@ namespace GraphUtility {
         GraphClasses::Graph<DataType, WeightType> newGraph;
 
         if (g1.getGraphType() != g2.getGraphType() || g1.getGraphWeights() != g2.getGraphWeights()) {
-            GRAPH_ERROR("Graphs can only be merged if the have the same type (directed/undirected) and same weights (weighed/unweighed)!");
+            GRAPH_ERROR("Graphs can only be merged if they have the same type (directed/undirected) and same weights (weighed/unweighed)!");
             exit(EXIT_FAILURE);
         }
 
@@ -537,6 +552,49 @@ namespace GraphUtility {
             } else if (it1 == g1NeighborList.end() && it2 != g2NeighborList.end()) { // is only in g2
                 for(auto& edge : g2NeighborList[kv.first]) {
                     newGraph.addEdge(kv.first, edge);
+                }
+            }
+        }
+
+        return newGraph;
+    }
+
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> intersectGraphs(GraphClasses::Graph<DataType, WeightType>& g1, GraphClasses::Graph<DataType, WeightType>& g2) {
+        GraphClasses::Graph<DataType, WeightType> newGraph;
+
+        if (g1.getGraphType() != g2.getGraphType() || g1.getGraphWeights() != g2.getGraphWeights()) {
+            GRAPH_ERROR("Graph intersection can only be created if they have the same type (directed/undirected) and same weights (weighed/unweighed)!");
+            exit(EXIT_FAILURE);
+        }
+
+        newGraph.configureDirections(g1.getGraphType());
+        newGraph.configureWeights(g1.getGraphWeights());
+
+        auto g1NeighborList = g1.getNeighbors();
+        auto g2NeighborList = g2.getNeighbors();
+
+        for (auto& kv : g1NeighborList) {
+            auto it = g2NeighborList.find(kv.first);
+            if (it != std::end(g2NeighborList)) {  
+                newGraph.addNode(kv.first);
+
+                std::unordered_set<GraphClasses::Edge<DataType, WeightType>, GraphClasses::EdgeHasher<DataType, WeightType>> edges;
+                auto& shorter = g1NeighborList[kv.first];
+                auto& longer = g2NeighborList[kv.first];
+                if (g2NeighborList[kv.first].size() < g2NeighborList[kv.first].size()) {
+                    shorter = g2NeighborList[kv.first];
+                    longer = g1NeighborList[kv.first];
+                }
+
+                for(auto& edge : shorter) {
+                    edges.emplace(edge.neighbor, edge.weight);
+                }
+
+                for (auto& edge : longer) {
+                    if (edges.find(edge) != std::end(edges)) {
+                        newGraph.addEdge(kv.first, edge);
+                    }
                 }
             }
         }

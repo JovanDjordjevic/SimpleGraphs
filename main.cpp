@@ -54,7 +54,8 @@ int main () {
     std::cout << "--------" << std::endl;
 
 
-    auto ret = GraphUtility::mergeGraphs(g1, g2);
+    //auto ret = GraphUtility::mergeGraphs(g1, g2);
+    auto ret = GraphUtility::intersectGraphs(g1, g2);
     std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     std::cout << ret << std::endl;
 
