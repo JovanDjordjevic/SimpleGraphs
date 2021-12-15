@@ -145,6 +145,11 @@ namespace GraphAlgorithms {
     std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, 
                     AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
+    // NOTE: currently only works for undirected graphs
+    // TODO: implement a funciton that also works for directed graphs
+    template<typename DataType, typename WeightType> 
+    std::vector<std::unordered_set<DataType>> findStronglyWeaklyComponents(GraphClasses::Graph<DataType, WeightType> &g,
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     // TODO:    
     // cycles
@@ -907,6 +912,50 @@ namespace GraphAlgorithms {
         }
 
         return internalData.components;
+    }
+
+    template<typename DataType, typename WeightType> 
+    std::vector<std::unordered_set<DataType>> findStronglyWeaklyComponents(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
+        if (g.getGraphType() == GraphClasses::GraphType::Directed) {
+            GRAPH_ERROR("Finding weakly connected components in directed graphs currently not supported!");
+            exit(EXIT_FAILURE);
+        }
+        
+        std::unordered_map<DataType, bool> visited;
+
+        auto neighborList = g.getNeighbors();
+
+        for(auto& kv : neighborList) {
+            visited[kv.first] = false;
+        }
+
+        std::vector<std::unordered_set<DataType>> weaklyConnectedComponents;
+
+        for(auto& kv : neighborList) {
+            if (!visited[kv.first]) {
+                auto dfsSearchTree = GraphAlgorithms::dfs(g, kv.first, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+                std::unordered_set<DataType> component;
+                    for (auto& node : dfsSearchTree) {
+                        visited[node] = true;
+                        component.emplace(node);                        
+                    }
+                weaklyConnectedComponents.emplace_back(component);
+            }
+        }
+
+        if (behavior == AlgorithmBehavior::PrintAndReturn) {
+            unsigned i = 1u;
+            for (auto& component : weaklyConnectedComponents) {
+                out << "Component " << i << " consists of " <<  component.size() << " nodes:\n\t";
+                for(auto& node : component) {
+                    out << "[" << node << "] ";
+                }
+                std::cout << std::endl;
+                ++i;
+            }
+        }
+
+        return weaklyConnectedComponents;
     }
 
 } // namespace GraphAlgorithms

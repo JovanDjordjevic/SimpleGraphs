@@ -20,18 +20,18 @@ int main () {
     // const char* fileName = "testInputs/int_int_artic.txt";
     // GraphClasses::Graph<int, int> g;
 
-    const char* fileName = "testInputs/string_double.txt";
-    GraphClasses::Graph<std::string, double> g;
+    // const char* fileName = "testInputs/string_double.txt";
+    // GraphClasses::Graph<std::string, double> g;
 
     // const char* fileName = "testInputs/DIMACS_instances/USA-road-d.NY.txt";
     // GraphClasses::Graph<unsigned, unsigned> g;
 
-    // const char* fileName = "testInputs/custom_float.txt";
-    // GraphClasses::Graph<CustomClass, double> g;      // FIXME: using float instead of double gives compilation error when trying to use dijsktra algorithm
+    const char* fileName = "testInputs/custom_float.txt";
+    GraphClasses::Graph<CustomClass, double> g;      // FIXME: using float instead of double gives compilation error when trying to use dijsktra algorithm
                                                      // so far other algorithms work fine with float, gives warning for possible loss of data during conversion
                                                      // compilation fails with MSVC but not with clang
 
-    g.configureDirections(GraphClasses::GraphType::Directed);
+    g.configureDirections(GraphClasses::GraphType::Undirected);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
 
     g.readFromTxt(fileName);
@@ -42,9 +42,10 @@ int main () {
     //g.writeToTxt("test_otput.txt");
 
     // int startNode = 2;
-    std::string startNode = "node1";
+    // std::string startNode = "node1";
     //CustomClass startNode = {1, 2, 3}; 
-    auto ret3 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, startNode);
+    // auto ret3 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, startNode);
+    auto ret = GraphAlgorithms::findStronglyWeaklyComponents(g);
 
     return 0;
 }
