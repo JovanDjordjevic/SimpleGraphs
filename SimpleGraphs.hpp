@@ -44,27 +44,14 @@ namespace GraphClasses {
                 : neighbor(neighbor), weight(weight)
             {}
 
-            bool operator<(const Edge& other) const {
-                return this->neighbor < other.neighbor || this->weight < other.weight;
-            }
-
-            bool operator==(const Edge& other) const {
-                return this->neighbor == other.neighbor && this->weight == other.weight;
-            }
+            template<typename DataType, typename WeightType> 
+            friend std::ostream& operator<(const Edge& lhs, const Edge& rhs);
+            template<typename DataType, typename WeightType> 
+            friend std::ostream& operator==(const Edge& lhs, const Edge& rhs);
 
         public:
             DataType neighbor;
             std::optional<WeightType> weight;
-    };
-
-    template <typename DataType, typename WeightType>
-    struct EdgeHasher {
-        size_t operator()(const Edge<DataType, WeightType>& obj) const {
-            std::hash<DataType> nHash;
-            std::hash<WeightType> wHash;
-            // TODO:  try finding a better alternative
-            return nHash(obj.neighbor) + wHash(obj.weight.value_or(0));
-        }
     };
 
     template <typename DataType, typename WeightType = int>
@@ -203,6 +190,16 @@ namespace GraphClasses {
             }
         }
         return out;
+    }
+
+    template <typename DataType, typename WeightType>
+    bool operator<(const Edge<DataType, WeightType>& lhs, const Edge<DataType, WeightType>& rhs) {
+        return lhs.neighbor < rhs.neighbor || lhs.weight < rhs.weight;
+    }
+
+    template <typename DataType, typename WeightType>
+    bool operator==(const Edge<DataType, WeightType>& lhs, const Edge<DataType, WeightType>& rhs) {
+        return lhs.neighbor == rhs.neighbor && lhs.weight == rhs.weight;
     }
 
     template <typename DataType, typename WeightType>
@@ -579,7 +576,7 @@ namespace GraphUtility {
             if (it != std::end(g2NeighborList)) {  
                 newGraph.addNode(kv.first);
 
-                std::unordered_set<GraphClasses::Edge<DataType, WeightType>, GraphClasses::EdgeHasher<DataType, WeightType>> edges;
+                std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>> edges;
                 auto& shorter = g1NeighborList[kv.first];
                 auto& longer = g2NeighborList[kv.first];
                 if (g2NeighborList[kv.first].size() < g2NeighborList[kv.first].size()) {
@@ -1037,6 +1034,16 @@ namespace GraphAlgorithms {
 
 // internal namesapce for helper funcitons, not inteded for end user
 namespace internal {
+    template <typename DataType, typename WeightType>
+    struct EdgeHasher {
+        size_t operator()(const GraphClasses::Edge<DataType, WeightType>& obj) const {
+            std::hash<DataType> nHash;
+            std::hash<WeightType> wHash;
+            // TODO:  try finding a better alternative
+            return nHash(obj.neighbor) + wHash(obj.weight.value_or(0));
+        }
+    };
+
     template<typename DataType, typename WeightType>
     struct ArticulationHelper {
         public:
