@@ -18,20 +18,23 @@ void* operator new(size_t size)
 
 int main () {
 
-    const char* fileName1 = "testInputs/int_int_artic.txt";
-    GraphClasses::Graph<int, int> g1;
+    // const char* fileName1 = "testInputs/int_int_artic.txt";
+    // GraphClasses::Graph<int, int> g1;
+    // const char* fileName2 = "testInputs/int_int.txt";
+    // GraphClasses::Graph<int, int> g2;
 
-    const char* fileName2 = "testInputs/int_int.txt";
-    GraphClasses::Graph<int, int> g2;
-
-    // const char* fileName = "testInputs/string_double.txt";
-    // GraphClasses::Graph<std::string, double> g;
+    // const char* fileName1 = "testInputs/string_double.txt";
+    // GraphClasses::Graph<std::string, double> g1;
+    // const char* fileName2 = "testInputs/string_double_2.txt";
+    // GraphClasses::Graph<std::string, double> g2;
 
     // const char* fileName = "testInputs/DIMACS_instances/USA-road-d.NY.txt";
     // GraphClasses::Graph<unsigned, unsigned> g;
 
-    // const char* fileName = "testInputs/custom_float.txt";
-    // GraphClasses::Graph<CustomClass, double> g;      // FIXME: using float instead of double gives compilation error when trying to use dijsktra algorithm
+    const char* fileName1 = "testInputs/custom_float.txt";
+    GraphClasses::Graph<CustomClass, double> g1;
+    const char* fileName2 = "testInputs/custom_float_2.txt";
+    GraphClasses::Graph<CustomClass, double> g2;      // FIXME: using float instead of double gives compilation error when trying to use dijsktra algorithm
                                                      // so far other algorithms work fine with float, gives warning for possible loss of data during conversion
                                                      // compilation fails with MSVC but not with clang
 
