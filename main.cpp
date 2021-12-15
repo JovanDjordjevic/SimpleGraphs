@@ -18,11 +18,14 @@ void* operator new(size_t size)
 
 int main () {
 
-    // const char* fileName = "testInputs/int_int_artic.txt";
-    // GraphClasses::Graph<int, int> g;
+    const char* fileName1 = "testInputs/int_int_artic.txt";
+    GraphClasses::Graph<int, int> g1;
 
-    const char* fileName = "testInputs/string_double.txt";
-    GraphClasses::Graph<std::string, double> g;
+    const char* fileName2 = "testInputs/int_int.txt";
+    GraphClasses::Graph<int, int> g2;
+
+    // const char* fileName = "testInputs/string_double.txt";
+    // GraphClasses::Graph<std::string, double> g;
 
     // const char* fileName = "testInputs/DIMACS_instances/USA-road-d.NY.txt";
     // GraphClasses::Graph<unsigned, unsigned> g;
@@ -32,18 +35,27 @@ int main () {
                                                      // so far other algorithms work fine with float, gives warning for possible loss of data during conversion
                                                      // compilation fails with MSVC but not with clang
 
-    g.configureDirections(GraphClasses::GraphType::Directed);
-    g.configureWeights(GraphClasses::GraphWeights::Weighted);
+    g1.configureDirections(GraphClasses::GraphType::Directed);
+    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
 
-    g.readFromTxt(fileName);
-    //g.readFromDimacs(fileName);
+    g1.readFromTxt(fileName1);
 
-    std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << std::endl;
-    std::cout << g << std::endl;
-    //g.writeToTxt("test_otput.txt");
+    std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << std::endl;
+    std::cout << g1 << std::endl;
+    std::cout << "--------" << std::endl;
 
-    std::unordered_set<std::string> nodes = {"node1", "node2", "node3", "node5"};
-    auto ret = GraphUtility::getSubgraphFromNodes(g, nodes);
+    g2.configureDirections(GraphClasses::GraphType::Directed);
+    g2.configureWeights(GraphClasses::GraphWeights::Weighted);
+    
+    g2.readFromTxt(fileName2);
+
+    std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << std::endl;
+    std::cout << g2 << std::endl;
+    std::cout << "--------" << std::endl;
+
+
+    auto ret = GraphUtility::mergeGraphs(g1, g2);
+    std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     std::cout << ret << std::endl;
 
     return 0;
