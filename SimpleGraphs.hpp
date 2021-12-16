@@ -11,6 +11,7 @@
 #include <stack>
 #include <queue>
 #include <utility>
+#include <tuple>
 
 #define GRAPH_ERROR(message) std::cerr << "ERROR: " << message << std::endl; 
 
@@ -140,11 +141,18 @@ namespace GraphAlgorithms {
     std::vector<DataType> topsortKhan(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn,
                     std::ostream& out = std::cout);
 
+    template<typename DataType, typename WeightType> 
+    WeightType mcstPrimTotalCostOnly(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, 
+                    std::ostream& out = std::cout);
+
+    template<typename DataType, typename WeightType> 
+    std::vector<std::tuple<DataType, DataType, WeightType>> mcstPrim(GraphClasses::Graph<DataType, WeightType> &g, 
+                    AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+    
 
     // TODO:    
     // cycles
-    // mst  (prim, kruskal)
-    // components (tarjan, kosaraju)
     // coloring
     // maximum flow (ford-fulkerson, edmonds-karp)
     // pairing
@@ -930,6 +938,102 @@ namespace GraphAlgorithms {
         }
 
         return topologicalOrdering;
+    }
+
+    template<typename DataType, typename WeightType> 
+    WeightType mcstPrimTotalCostOnly(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
+        auto ret = mcstPrim(g, behavior, out);
+
+        WeightType totalCost = 0;
+        for(auto& [node1, node2, weight] : ret) {
+            totalCost += weight;
+        }
+
+        if (behavior == GraphAlgorithms::AlgorithmBehavior::PrintAndReturn) {
+            out << "Total cost of minimum cost spanning tree is: " << totalCost << std::endl;
+        }
+
+        return totalCost;
+    }
+
+    template<typename DataType, typename WeightType> 
+    std::vector<std::tuple<DataType, DataType, WeightType>> mcstPrim(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
+        if (g.getGraphType() == GraphClasses::GraphType::Directed) {
+            GRAPH_ERROR("Minimum cost spanning tree for directed graphs currently not supported");
+            exit(EXIT_FAILURE);
+        }
+
+        std::unordered_map<DataType, WeightType> distances;
+        std::unordered_map<DataType, bool> visited;
+        std::unordered_map<DataType, std::optional<DataType>> parents; 
+
+        using pqData = GraphClasses::Edge<DataType, WeightType>;
+        struct Comparator {
+            bool operator()(pqData& e1, pqData& e2) {
+                return e1.weight.value() > e2.weight.value();
+            }
+        };
+        std::priority_queue<pqData, std::vector<pqData>, Comparator> pq;
+
+        auto neighborList = g.getNeighbors();
+
+        for(auto& kv : neighborList) {
+            distances[kv.first] = GraphClasses::MAX_WEIGHT<WeightType>;
+            visited[kv.first] = false;
+        }
+        
+        DataType startNode = (*std::begin(g.getNeighbors())).first;
+
+        distances[startNode] = 0;
+        parents[startNode]; // only startNode will have the empty optional
+        pq.emplace(startNode, 0);
+
+        for (auto& [neighbor, weight] : neighborList[startNode]) {
+            pq.emplace(neighbor, GraphClasses::MAX_WEIGHT<WeightType>);
+        }
+
+        size_t nodeCount = g.getNodeCount();
+        for(size_t i = 0; i < nodeCount; ++i) {
+            auto [currentNode, weight] = pq.top();
+            pq.pop();
+
+            // distances[currentNode] = weight.value_or(1);    not needed?
+
+            if (!visited[currentNode]) {
+                visited[currentNode] = true;  
+
+                for(auto& [neighbor, weight] : neighborList[currentNode]) {
+                    if (!visited[neighbor]) {
+                        if (weight.value_or(1) < distances[neighbor]) {
+                            distances[neighbor] = weight.value_or(1);
+                            parents[neighbor] = currentNode;
+                            pq.emplace(neighbor, distances[neighbor]);
+                        }
+                    }
+                }
+            } 
+        }
+
+        std::vector<std::tuple<DataType, DataType, WeightType>> mcst;
+        for (auto& kv : neighborList) {
+            if (parents[kv.first].has_value()) {
+                mcst.emplace_back(parents[kv.first].value(), kv.first, distances[kv.first]);
+            }
+        }
+
+        if (behavior == GraphAlgorithms::AlgorithmBehavior::PrintAndReturn) {
+            WeightType totalCost = 0;
+
+            out << "Minimum cost spanning tree consists of the following edges:\n";
+            for (auto& [node1, node2, weight] : mcst) {
+                    out << "\t(" << node1 << ", " << node2 << ") weight " << weight << "\n"; 
+                    totalCost += weight;
+            }
+            out << "\nTotal cost of minimum cost spanning tree is: " << totalCost << std::endl;
+            
+        }
+
+        return mcst;
     }
 
 } // namespace GraphAlgorithms

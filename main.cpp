@@ -28,7 +28,7 @@ int main () {
                                                      // so far other algorithms work fine with float, gives warning for possible loss of data during conversion
                                                      // compilation fails with MSVC but not with clang
 
-    g.configureDirections(GraphClasses::GraphType::Directed);
+    g.configureDirections(GraphClasses::GraphType::Undirected);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
 
     g.readFromTxt(fileName);
@@ -37,39 +37,7 @@ int main () {
     std::cout << g << std::endl;
     //g.writeToTxt("test_otput.txt");
 
-    //unsigned startNode = 2;
-    //std::string startNode = "node1";
-    CustomClass startNode = {1, 2, 3}; 
-    //auto ret1 = GraphAlgorithms::findArticulationPoints(g, startNode);
-    //auto ret2 = GraphAlgorithms::findBridges(g, startNode);
-
-    // int start = 1;
-    std::string start = "node1";
-    // CustomClass start = {1, 2, 3};
-    // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    auto ret = GraphAlgorithms::bfs(g, start);
-    // std::cout << "-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    // GraphAlgorithms::bfs(g, start);
-
-    //std::cout << globalAlloc << std::endl;
-    // int startNode = 1;
-    // int endNode = 8;
-    // std::string startNode = "node2";
-    // std::string endNode = "node6";
-    // CustomClass startNode = {1, 2, 3}; 
-    // CustomClass endNode = {1, 7, 3};
-
-    // // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    // auto ret1 = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    // // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    // std::cout << std::endl;
-
-    // auto ret2 = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    // std::cout << std::endl;
-
-    // auto ret3 = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    // std::cout << std::endl;
-    auto ret1 = GraphAlgorithms::topsortKhan(g);
+    auto ret = GraphAlgorithms::mcstPrim(g);
 
     return 0;
 }
