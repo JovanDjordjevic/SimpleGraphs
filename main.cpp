@@ -37,7 +37,8 @@ int main () {
     std::cout << g << std::endl;
     //g.writeToTxt("test_otput.txt");
 
-    auto ret = GraphAlgorithms::mcstPrim(g);
+    auto ret1 = GraphAlgorithms::mcstPrim(g);
+    auto ret2 = GraphAlgorithms::mcstKruskal(g);
 
     return 0;
 }
