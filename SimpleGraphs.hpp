@@ -1071,9 +1071,8 @@ namespace GraphAlgorithms {
             if (root1 != root2) {
                 mcst.emplace_back(node1, node2, edgeWeight);
                 ds.unionDisjointSets(root1, root2);
+                ++addedEdges;
             }
-
-            ++addedEdges;
         }
 
         if (behavior == GraphAlgorithms::AlgorithmBehavior::PrintAndReturn) {
@@ -1169,7 +1168,9 @@ namespace internal {
                     root = parent[root];
                 }
                 while (node != root) {
-                    std::swap(node, parent[node]);
+                    DataType tmp = parent[node];
+                    parent[node] = root;
+                    node = tmp;
                 }
                 return root;
             }
