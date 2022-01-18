@@ -40,7 +40,16 @@ int main () {
     std::cout << g << std::endl;
     //g.writeToTxt("test_otput.txt");
 
-    auto ret = GraphAlgorithms::mcstKruskal(g);
+    //auto ret1 = GraphAlgorithms::mcstPrimTotalCostOnly(g);
+    auto ret2 = GraphAlgorithms::mcstPrim(g);
+    auto ret3 = GraphAlgorithms::mcstKruskal(g);
+
+    // int startNode = 2;
+    std::string startNode = "node1";
+    //CustomClass startNode = {1, 2, 3}; 
+    auto ret4 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, startNode);
+    auto ret5 = GraphAlgorithms::findStronglyWeaklyComponents(g);
+    auto ret6 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g);
 
     return 0;
 }
