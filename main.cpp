@@ -4,6 +4,7 @@
 #include "customClass.hpp"
 #include "SimpleGraphs.hpp"
 
+#include <unordered_set>
 
 int globalAlloc = 0;
 
@@ -17,8 +18,10 @@ void* operator new(size_t size)
 
 int main () {
 
-    // const char* fileName = "testInputs/int_int_artic.txt";
-    // GraphClasses::Graph<int, int> g;
+    // const char* fileName1 = "testInputs/int_int_artic.txt";
+    // GraphClasses::Graph<int, int> g1;
+    // const char* fileName2 = "testInputs/int_int.txt";
+    // GraphClasses::Graph<int, int> g2;
 
     const char* fileName = "testInputs/string_double.txt";
     GraphClasses::Graph<std::string, double> g;
@@ -37,39 +40,49 @@ int main () {
     std::cout << g << std::endl;
     //g.writeToTxt("test_otput.txt");
 
-    //unsigned startNode = 2;
-    //std::string startNode = "node1";
-    CustomClass startNode = {1, 2, 3}; 
-    //auto ret1 = GraphAlgorithms::findArticulationPoints(g, startNode);
-    //auto ret2 = GraphAlgorithms::findBridges(g, startNode);
-
-    // int start = 1;
-    std::string start = "node1";
-    // CustomClass start = {1, 2, 3};
-    // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    auto ret = GraphAlgorithms::bfs(g, start);
-    // std::cout << "-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    // GraphAlgorithms::bfs(g, start);
-
-    //std::cout << globalAlloc << std::endl;
-    // int startNode = 1;
-    // int endNode = 8;
-    // std::string startNode = "node2";
-    // std::string endNode = "node6";
-    // CustomClass startNode = {1, 2, 3}; 
-    // CustomClass endNode = {1, 7, 3};
-
-    // // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    // auto ret1 = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    // // std::cout <<"-----\n-----\n-----\n-----\n-----\n-----\n-----\n-----\n" << std::endl;
-    // std::cout << std::endl;
-
-    // auto ret2 = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    // std::cout << std::endl;
-
     // auto ret3 = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
     // std::cout << std::endl;
     auto ret1 = GraphAlgorithms::topsortKhan(g);
+    // const char* fileName1 = "testInputs/string_double.txt";
+    // GraphClasses::Graph<std::string, double> g1;
+    // const char* fileName2 = "testInputs/string_double_2.txt";
+    // GraphClasses::Graph<std::string, double> g2;
+
+    // const char* fileName = "testInputs/DIMACS_instances/USA-road-d.NY.txt";
+    // GraphClasses::Graph<unsigned, unsigned> g;
+
+
+
+    const char* fileName1 = "testInputs/custom_float.txt";
+    GraphClasses::Graph<CustomClass, double> g1;
+    const char* fileName2 = "testInputs/custom_float_2.txt";
+    GraphClasses::Graph<CustomClass, double> g2;      // FIXME: using float instead of double gives compilation error when trying to use dijsktra algorithm
+                                                     // so far other algorithms work fine with float, gives warning for possible loss of data during conversion
+                                                     // compilation fails with MSVC but not with clang
+
+    g1.configureDirections(GraphClasses::GraphType::Directed);
+    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+
+    g1.readFromTxt(fileName1);
+
+    std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << std::endl;
+    std::cout << g1 << std::endl;
+    std::cout << "--------" << std::endl;
+
+    g2.configureDirections(GraphClasses::GraphType::Directed);
+    g2.configureWeights(GraphClasses::GraphWeights::Weighted);
+    
+    g2.readFromTxt(fileName2);
+
+    std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << std::endl;
+    std::cout << g2 << std::endl;
+    std::cout << "--------" << std::endl;
+
+
+    //auto ret = GraphUtility::mergeGraphs(g1, g2);
+    auto ret = GraphUtility::intersectGraphs(g1, g2);
+    std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
+    std::cout << ret << std::endl;
 
     return 0;
 }

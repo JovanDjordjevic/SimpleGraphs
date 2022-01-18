@@ -11,6 +11,8 @@
 #include <stack>
 #include <queue>
 #include <utility>
+#include <set>
+#include <algorithm>
 
 #define GRAPH_ERROR(message) std::cerr << "ERROR: " << message << std::endl; 
 
@@ -37,12 +39,19 @@ namespace GraphClasses {
 
     template <typename DataType, typename WeightType>
     struct Edge {
-        Edge(DataType neighbor, std::optional<WeightType> weight = {})
-            : neighbor(neighbor), weight(weight)
-        {}
+        public:
+            Edge(DataType neighbor, std::optional<WeightType> weight = {})
+                : neighbor(neighbor), weight(weight)
+            {}
 
-        DataType neighbor;
-        std::optional<WeightType> weight;
+            template<typename DataType, typename WeightType> 
+            friend std::ostream& operator<(const Edge& lhs, const Edge& rhs);
+            template<typename DataType, typename WeightType> 
+            friend std::ostream& operator==(const Edge& lhs, const Edge& rhs);
+
+        public:
+            DataType neighbor;
+            std::optional<WeightType> weight;
     };
 
     template <typename DataType, typename WeightType = int>
@@ -63,6 +72,7 @@ namespace GraphClasses {
             void addNode(DataType node);
             void addEdge(DataType startNode, DataType neighborNode); // for unweighted graphs 
             void addEdge(DataType startNode, DataType neighborNode, WeightType edgeWeight); // for weighted graphs
+            void addEdge(DataType startNode, Edge<DataType, WeightType> edge);
             void deleteEdge(DataType startNode, DataType endNode);
             void deleteNode(DataType node); // TODO
             size_t getNodeCount();
@@ -85,6 +95,18 @@ namespace GraphClasses {
 
 } //namespace GraphClasses
 
+namespace GraphUtility {
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> mergeGraphs(GraphClasses::Graph<DataType, WeightType>& g1, GraphClasses::Graph<DataType, WeightType>& g2);
+
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> intersectGraphs(GraphClasses::Graph<DataType, WeightType>& g1, GraphClasses::Graph<DataType, WeightType>& g2);
+
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType>& g, std::unordered_set<DataType>& nodes);
+
+    // ...
+} //namespace GraphUtility
 
 namespace GraphAlgorithms {
     enum class AlgorithmBehavior {   
@@ -172,6 +194,16 @@ namespace GraphClasses {
             }
         }
         return out;
+    }
+
+    template <typename DataType, typename WeightType>
+    bool operator<(const Edge<DataType, WeightType>& lhs, const Edge<DataType, WeightType>& rhs) {
+        return lhs.neighbor < rhs.neighbor || lhs.weight < rhs.weight;
+    }
+
+    template <typename DataType, typename WeightType>
+    bool operator==(const Edge<DataType, WeightType>& lhs, const Edge<DataType, WeightType>& rhs) {
+        return lhs.neighbor == rhs.neighbor && lhs.weight == rhs.weight;
     }
 
     template <typename DataType, typename WeightType>
@@ -366,6 +398,20 @@ namespace GraphClasses {
         }
     }
 
+    template <typename DataType, typename WeightType>
+    void Graph<DataType, WeightType>::addEdge(DataType startNode, Edge<DataType, WeightType> edge) {
+        if (m_graphWeights == GraphWeights::Unweighted && edge.weight.has_value() ) {
+            GRAPH_ERROR("Graph is unweighed but edge has a weight!");
+            exit(EXIT_FAILURE);
+        } else if (m_graphWeights == GraphWeights::Weighted && !edge.weight.has_value()) {
+            GRAPH_ERROR("Graph is weighed but edge has no weight!");
+            exit(EXIT_FAILURE);
+        }
+
+        m_neighbors[startNode].emplace_back(edge.neighbor, edge.weight);
+        return;
+    }
+
     // NOTE: will delete all edges that connect start and end nodes in case of a multigraph
     template <typename DataType, typename WeightType>
     void Graph<DataType, WeightType>::deleteEdge(DataType startNode, DataType endNode) {
@@ -456,6 +502,132 @@ namespace GraphClasses {
     }
 
 } //namespace GraphClasses
+
+
+namespace GraphUtility {
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> mergeGraphs(GraphClasses::Graph<DataType, WeightType>& g1, GraphClasses::Graph<DataType, WeightType>& g2) {
+        GraphClasses::Graph<DataType, WeightType> newGraph;
+
+        if (g1.getGraphType() != g2.getGraphType() || g1.getGraphWeights() != g2.getGraphWeights()) {
+            GRAPH_ERROR("Graphs can only be merged if they have the same type (directed/undirected) and same weights (weighed/unweighed)!");
+            exit(EXIT_FAILURE);
+        }
+
+        newGraph.configureDirections(g1.getGraphType());
+        newGraph.configureWeights(g1.getGraphWeights());
+
+        auto g1NeighborList = g1.getNeighbors();
+        for (auto& kv : g1NeighborList) {
+            newGraph.addNode(kv.first);
+        }
+
+        auto g2NeighborList = g2.getNeighbors();
+        for (auto& kv : g2NeighborList) {
+            newGraph.addNode(kv.first);
+        }
+
+        auto neightborList = newGraph.getNeighbors();
+        for (auto& kv : neightborList) {
+            auto it1 = g1NeighborList.find(kv.first);
+            auto it2 = g2NeighborList.find(kv.first);
+            
+            if (it1 != g1NeighborList.end() && it2 != g2NeighborList.end()) {   // node is in both graphs
+                // we avoid adding duplicate edges by putting them in a set first
+                std::set<GraphClasses::Edge<DataType, WeightType>> edges;
+                for (auto& edge : g1NeighborList[kv.first]) {
+                    edges.emplace(edge);
+                }
+
+                for (auto& edge : g2NeighborList[kv.first]) {
+                    edges.emplace(edge);
+                }
+
+                for(auto& edge : edges) {
+                    newGraph.addEdge(kv.first, edge);
+                }
+            } else if (it1 != g1NeighborList.end() && it2 == g2NeighborList.end()) {  // node is only in g1
+                for(auto& edge : g1NeighborList[kv.first]) {
+                    newGraph.addEdge(kv.first, edge);
+                }
+            } else if (it1 == g1NeighborList.end() && it2 != g2NeighborList.end()) { // is only in g2
+                for(auto& edge : g2NeighborList[kv.first]) {
+                    newGraph.addEdge(kv.first, edge);
+                }
+            }
+        }
+
+        return newGraph;
+    }
+
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> intersectGraphs(GraphClasses::Graph<DataType, WeightType>& g1, GraphClasses::Graph<DataType, WeightType>& g2) {
+        GraphClasses::Graph<DataType, WeightType> newGraph;
+
+        if (g1.getGraphType() != g2.getGraphType() || g1.getGraphWeights() != g2.getGraphWeights()) {
+            GRAPH_ERROR("Graph intersection can only be created if they have the same type (directed/undirected) and same weights (weighed/unweighed)!");
+            exit(EXIT_FAILURE);
+        }
+
+        newGraph.configureDirections(g1.getGraphType());
+        newGraph.configureWeights(g1.getGraphWeights());
+
+        auto g1NeighborList = g1.getNeighbors();
+        auto g2NeighborList = g2.getNeighbors();
+
+        for (auto& kv : g1NeighborList) {
+            auto it = g2NeighborList.find(kv.first);
+            if (it != std::end(g2NeighborList)) {  
+                newGraph.addNode(kv.first);
+
+                std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>> edges;
+                auto& shorter = g1NeighborList[kv.first];
+                auto& longer = g2NeighborList[kv.first];
+                if (g2NeighborList[kv.first].size() < g2NeighborList[kv.first].size()) {
+                    shorter = g2NeighborList[kv.first];
+                    longer = g1NeighborList[kv.first];
+                }
+
+                for(auto& edge : shorter) {
+                    edges.emplace(edge.neighbor, edge.weight);
+                }
+
+                for (auto& edge : longer) {
+                    if (edges.find(edge) != std::end(edges)) {
+                        newGraph.addEdge(kv.first, edge);
+                    }
+                }
+            }
+        }
+
+        return newGraph;
+    }
+
+    template<typename DataType, typename WeightType> 
+    GraphClasses::Graph<DataType, WeightType> getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType>& g, std::unordered_set<DataType>& nodes) {
+        GraphClasses::Graph<DataType, WeightType> newGraph;
+
+        newGraph.configureDirections(g.getGraphType());
+        newGraph.configureWeights(g.getGraphWeights());
+
+        auto neighborList = g.getNeighbors();
+
+        for(auto& node : nodes) {
+            newGraph.addNode(node);
+            for(auto& [neighbor, weight] : neighborList[node]) {
+                if (nodes.find(neighbor) != nodes.end()) {
+                    if (newGraph.getGraphWeights() == GraphClasses::GraphWeights::Weighted) {
+                        newGraph.addEdge(node, neighbor, weight.value());
+                    } else {
+                        newGraph.addEdge(node, neighbor);
+                    }
+                }
+            }
+        }
+
+        return newGraph;
+    }
+} //namespace GraphUtility
 
 
 namespace GraphAlgorithms {
@@ -937,6 +1109,16 @@ namespace GraphAlgorithms {
 
 // internal namesapce for helper funcitons, not inteded for end user
 namespace internal {
+    template <typename DataType, typename WeightType>
+    struct EdgeHasher {
+        size_t operator()(const GraphClasses::Edge<DataType, WeightType>& obj) const {
+            std::hash<DataType> nHash;
+            std::hash<WeightType> wHash;
+            // TODO:  try finding a better alternative
+            return nHash(obj.neighbor) + wHash(obj.weight.value_or(0));
+        }
+    };
+
     template<typename DataType, typename WeightType>
     struct ArticulationHelper {
         public:

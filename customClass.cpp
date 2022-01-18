@@ -87,6 +87,12 @@ bool operator!=(const CustomClass& obj1, const CustomClass& obj2){
     return !(obj1 == obj2);
 }
 
+bool operator<(const CustomClass& obj1, const CustomClass& obj2){
+    #ifdef DEBUG
+        std::cout << "operator <" << std::endl;
+    #endif
+    return obj1.m_data[0] < obj2.m_data[0] && obj1.m_data[1] < obj2.m_data[1] && obj1.m_data[2] < obj2.m_data[2];
+}
 
 std::ostream& operator<<(std::ostream& out, const CustomClass& obj)
 {

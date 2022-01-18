@@ -4,6 +4,15 @@
 #include <iostream>
 #include <vector>
 
+// In order for a custom class to be used a node in SimpleGraphs, it must have the following implemented:
+//      - default constructor
+//      - copy constructor
+//      - operator==
+//      - operator=<
+//      - operator<< (only needed if printing of a node to an output stream/file is needed by user)
+//      - operator>> (only needed if it will be loaded from a file)
+//      - std::hash specialization for the custom class
+
 
 class CustomClass{
     public:
@@ -19,6 +28,7 @@ class CustomClass{
         // i don't know why yet, but these must be friend (even though class has no private data) or compilation fails
         friend bool operator==(const CustomClass& obj1, const CustomClass& obj2);
         friend bool operator!=(const CustomClass& obj1, const CustomClass& obj2);
+        friend bool operator<(const CustomClass& obj1, const CustomClass& obj2);
         friend std::ostream& operator<<(std::ostream& out, const CustomClass& obj);
         friend std::istream& operator>>(std::istream& is, CustomClass& obj);
         
