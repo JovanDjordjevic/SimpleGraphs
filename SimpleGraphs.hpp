@@ -45,10 +45,10 @@ namespace GraphClasses {
                 : neighbor(neighbor), weight(weight)
             {}
 
-            template<typename DataType, typename WeightType> 
-            friend std::ostream& operator<(const Edge& lhs, const Edge& rhs);
-            template<typename DataType, typename WeightType> 
-            friend std::ostream& operator==(const Edge& lhs, const Edge& rhs);
+            template<typename D, typename W> 
+            friend std::ostream& operator<(const Edge<D, W>& lhs, const Edge<D, W>& rhs);
+            template<typename D, typename W> 
+            friend std::ostream& operator==(const Edge<D, W>& lhs, const Edge<D, W>& rhs);
 
         public:
             DataType neighbor;
@@ -85,8 +85,8 @@ namespace GraphClasses {
             GraphWeights getGraphWeights();
             std::unordered_map<DataType, std::vector<Edge<DataType, WeightType>>> getNeighbors();
 
-            template<typename DataType, typename WeightType> 
-            friend std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<DataType, WeightType>& g);
+            template<typename D, typename W> 
+            friend std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<D, W>& g);
             
         private:
             GraphType m_graphType;
@@ -202,6 +202,28 @@ namespace GraphAlgorithms {
 
 
 //------------------------------------- IMPLEMENTATION -------------------------------------
+// forward decleare here or else clang fails on linux (but not on windows)
+namespace internal {
+    template <typename DataType, typename WeightType>
+    struct EdgeHasher;
+    
+    template<typename DataType, typename WeightType>
+    struct ArticulationHelper;
+
+    template<typename DataType, typename WeightType> 
+    void articulation__internal(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, GraphAlgorithms::AlgorithmBehavior behavior, std::ostream& out, ArticulationHelper<DataType, WeightType>& internalData);
+
+    template<typename DataType, typename WeightType>
+    class DisjointSet;
+
+    template<typename DataType, typename WeightType>
+    struct TarjanHelper;
+
+    template<typename DataType, typename WeightType> 
+    void tarjan__internal(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, TarjanHelper<DataType, WeightType>& internalData);
+}
+
+
 namespace GraphClasses {
     template<typename DataType, typename WeightType>
     std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<DataType, WeightType>& g) {   
