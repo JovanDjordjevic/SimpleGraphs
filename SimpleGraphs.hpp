@@ -45,10 +45,16 @@ namespace GraphClasses {
                 : neighbor(neighbor), weight(weight)
             {}
 
-            template<typename D, typename W> 
-            friend std::ostream& operator<(const Edge<D, W>& lhs, const Edge<D, W>& rhs);
-            template<typename D, typename W> 
-            friend std::ostream& operator==(const Edge<D, W>& lhs, const Edge<D, W>& rhs);
+            // REFACTOR THIS 
+            // template<typename D, typename W> 
+            // friend std::ostream& operator<(const Edge<D, W>& lhs, const Edge<D, W>& rhs);
+            // template<typename D, typename W> 
+            // friend std::ostream& operator==(const Edge<D, W>& lhs, const Edge<D, W>& rhs);
+            
+            // template<typename D, typename W> 
+            // bool operator<(const Edge<D, W>& lhs, const Edge<D, W>& rhs);
+            // template<typename D, typename W> 
+            // bool operator==(const Edge<D, W>& lhs, const Edge<D, W>& rhs);
 
         public:
             DataType neighbor;
@@ -188,7 +194,7 @@ namespace GraphAlgorithms {
     // NOTE: currently only works for undirected graphs
     // TODO: implement a funciton that also works for directed graphs
     template<typename DataType, typename WeightType> 
-    std::vector<std::unordered_set<DataType>> findStronglyWeaklyComponents(GraphClasses::Graph<DataType, WeightType> &g,
+    std::vector<std::unordered_set<DataType>> findWeaklyConnectedComponents(GraphClasses::Graph<DataType, WeightType> &g,
                     AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
     // TODO:    
@@ -1342,7 +1348,7 @@ namespace GraphAlgorithms {
     }
 
     template<typename DataType, typename WeightType> 
-    std::vector<std::unordered_set<DataType>> findStronglyWeaklyComponents(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
+    std::vector<std::unordered_set<DataType>> findWeaklyConnectedComponents(GraphClasses::Graph<DataType, WeightType> &g, AlgorithmBehavior behavior, std::ostream& out) {
         if (g.getGraphType() == GraphClasses::GraphType::Directed) {
             GRAPH_ERROR("Finding weakly connected components in directed graphs currently not supported!");
             exit(EXIT_FAILURE);
