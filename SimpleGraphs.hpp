@@ -697,10 +697,9 @@ namespace GraphAlgorithms {
             DataType currentNode = stack.top();
             stack.pop();
 
-            dfsSearchTree.emplace_back(currentNode);
-
             if (!visited[currentNode]) {
                 visited[currentNode] = true;
+                dfsSearchTree.emplace_back(currentNode);
             }
 
             auto it = std::cbegin(neighborList[currentNode]);
