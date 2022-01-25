@@ -981,10 +981,11 @@ namespace GraphAlgorithms {
         for(auto& [mid, n1] : neighborList) {
             for(auto& [start, n2] : neighborList) {
                 for(auto& [end, n3] : neighborList) {
-                    if (distances[start][mid] != GraphClasses::MAX_WEIGHT<WeightType>
-                        && distances[mid][end] != GraphClasses::MAX_WEIGHT<WeightType>
-                        && distances[start][mid] + distances[mid][end] < distances[start][end]) {
-                            distances[start][end] = distances[start][mid] + distances[mid][end];
+                    auto startMid = distances[start][mid];
+                    auto midEnd = distances[mid][end];
+                    auto startEnd = distances[start][end];
+                    if (startMid != GraphClasses::MAX_WEIGHT<WeightType> && midEnd != GraphClasses::MAX_WEIGHT<WeightType> && startMid + midEnd < startEnd) {
+                        distances[start][end] = startMid + midEnd;
                     }
                 }   
             }
