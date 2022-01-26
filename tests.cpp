@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "customClass.hpp"
+#include "CustomClass/customClass.hpp"
 #include "SimpleGraphs.hpp"
 #include <cassert>
 #include <iomanip>
@@ -180,14 +180,6 @@ void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std
     assert(ret.getEdgeCount() == expectedNumOfEdges);
 }
 
-
-
-
-
-
-
-
-
 void string_double_graphs_tests() {
     //std::cout << std::setprecision(10);
 
@@ -196,7 +188,7 @@ void string_double_graphs_tests() {
     g1.configureDirections(GraphClasses::GraphType::Undirected);
     g1.configureWeights(GraphClasses::GraphWeights::Weighted);
 
-    const char* fileName1 = "testInputs/string_double.txt";
+    const char* fileName1 = "../testInputs/string_double.txt";
     g1.readFromTxt(fileName1);
 
     std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << std::endl;
@@ -232,7 +224,7 @@ void string_double_graphs_tests() {
     g2.configureDirections(GraphClasses::GraphType::Undirected);
     g2.configureWeights(GraphClasses::GraphWeights::Weighted);
 
-    const char* fileName2 = "testInputs/string_double.txt";
+    const char* fileName2 = "../testInputs/string_double.txt";
     g2.readFromTxt(fileName2);
 
     std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << std::endl;
@@ -243,4 +235,11 @@ void string_double_graphs_tests() {
     // FIXME: resulting subgraph contains two extra edges (node5 - node7 and node7 - node5 are doubled!)
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     // test_getSubgraphFromNodes(g1, someNodes, 4, 5);
+}
+
+int main() {
+
+    string_double_graphs_tests();
+
+    return 0;
 }

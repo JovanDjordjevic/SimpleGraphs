@@ -1,23 +1,29 @@
 # FOR LINUX, CLANG++ COMPILER
-PROGRAM  = main.out 
+MAIN_PROGRAM = main.out 
+TEST_PROGRAM = tests.out
 CX 		 = clang++
-CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic
+CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic -O0
 
-$(PROGRAM) : main.o customClass.o tests.o SimpleGraphs.hpp customClass.hpp
-	$(CXX) main.o customClass.o tests.o
+all : $(MAIN_PROGRAM) $(TEST_PROGRAM)
+
+$(MAIN_PROGRAM) : main.o 
+	$(CXX) -o $(MAIN_PROGRAM) main.o 
 
 main.o : main.cpp SimpleGraphs.hpp
 	$(CXX) -c $(CXXFLAGS) main.cpp
 
+$(TEST_PROGRAM) : tests.o customClass.o SimpleGraphs.hpp
+	$(CXX) -o $(TEST_PROGRAM) tests.o customClass.o
+
 tests.o : tests.cpp SimpleGraphs.hpp
 	$(CXX) -c $(CXXFLAGS) tests.cpp
 
-customClass.obj : customClass.cpp 
-	$(CXX) -c $(CXXFLAGS) customClass.cpp
+customClass.o : CustomClass/customClass.cpp CustomClass/customClass.hpp
+	$(CXX) -c $(CXXFLAGS) customClass/customClass.cpp
 
 .PHONY: clean
 clean:
-	rm *.o *.out *.txt
+	rm *.o *.out 
 
 
 
