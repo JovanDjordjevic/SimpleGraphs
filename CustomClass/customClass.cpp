@@ -1,6 +1,6 @@
+#include "customClass.hpp"
 #include <iostream>
 #include <vector>
-#include "customClass.hpp"
 
 //#define DEBUG
 
@@ -103,11 +103,12 @@ std::ostream& operator<<(std::ostream& out, const CustomClass& obj)
 
 std::istream& operator>>(std::istream& is, CustomClass& obj)
 {
-    char c1,c2;
-    int a,b,c;
+    char c1 = 0, c2 = 0;
+    int a = 0, b = 0, c = 0;
     is >> c1 >> a >> b >> c >> c2;
-    if( c1 != '[' || c2 != ']' )
+    if( c1 != '[' || c2 != ']') {
         is.setstate(std::ios::failbit);
+    }
     obj.m_data[0]  = a;
     obj.m_data[1]  = b;
     obj.m_data[2]  = c;

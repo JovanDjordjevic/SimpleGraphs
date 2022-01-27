@@ -46,7 +46,7 @@ namespace std{
             return hasher(obj.m_data[0]) + hasher(obj.m_data[1]) + hasher(obj.m_data[2]);
         }
     };
-}
+} // namespace std
 
 
 #endif //__CUSTOM_CLASS__

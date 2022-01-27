@@ -1,30 +1,30 @@
 #ifndef __SIMPLE_GRAPHS__
 #define __SIMPLE_GRAPHS__
 
-#include <iostream>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-#include <optional>
+#include <algorithm>
 #include <fstream>
+#include <iostream>
+#include <optional>
+#include <queue>
+#include <set>
 #include <sstream>
 #include <stack>
-#include <queue>
-#include <utility>
-#include <set>
-#include <algorithm>
 #include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
-#define GRAPH_ERROR(message) std::cerr << "ERROR: " << message << std::endl; 
+#define GRAPH_ERROR(message) std::cerr << "ERROR: " << (message) << std::endl; 
 
 //------------------------------------- API -------------------------------------
 namespace GraphClasses {
     // NOTE: this is good enough for now but it limits possible types that can be used as WeightType
     template<typename WeightType>
-    WeightType MAX_WEIGHT = std::numeric_limits<WeightType>::max();
+    static WeightType MAX_WEIGHT = std::numeric_limits<WeightType>::max();
 
     template<typename WeightType>
-    WeightType MIN_WEIGHT = std::numeric_limits<WeightType>::lowest();
+    static WeightType MIN_WEIGHT = std::numeric_limits<WeightType>::lowest();
 
     enum class GraphType {   
         Unset, 
@@ -41,7 +41,7 @@ namespace GraphClasses {
     template <typename DataType, typename WeightType>
     struct Edge {
         public:
-            Edge(DataType neighbor, std::optional<WeightType> weight = {})
+            explicit Edge(DataType neighbor, std::optional<WeightType> weight = {})
                 : neighbor(neighbor), weight(weight)
             {}
 
@@ -64,7 +64,7 @@ namespace GraphClasses {
     template <typename DataType, typename WeightType = int>
     class Graph {
         public:
-            Graph(GraphType graphType = GraphType::Unset, GraphWeights graphWeights = GraphWeights::Unset);
+            explicit Graph(GraphType graphType = GraphType::Unset, GraphWeights graphWeights = GraphWeights::Unset);
 
             void configureDirections(GraphType graphType);
             void configureWeights(GraphWeights graphWeights);
@@ -227,7 +227,7 @@ namespace internal {
 
     template<typename DataType, typename WeightType> 
     void tarjan__internal(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, TarjanHelper<DataType, WeightType>& internalData);
-}
+} // namespace internal
 
 
 namespace GraphClasses {
@@ -278,10 +278,7 @@ namespace GraphClasses {
 
     template <typename DataType, typename WeightType>
     bool Graph<DataType, WeightType>::isConfigured() {
-        if (m_graphType != GraphType::Unset || m_graphWeights != GraphWeights::Unset) {
-            return true;
-        }
-        return false;
+        return m_graphType != GraphType::Unset && m_graphWeights != GraphWeights::Unset;
     }
 
     template <typename DataType, typename WeightType>
@@ -1466,7 +1463,7 @@ namespace internal {
     template<typename DataType, typename WeightType>
     class DisjointSet {
         public:
-            DisjointSet (GraphClasses::Graph<DataType, WeightType>& g) {
+            explicit DisjointSet (GraphClasses::Graph<DataType, WeightType>& g) {
                 auto neighborList = g.getNeighbors();
                 for(auto& kv : neighborList) {
                     parent[kv.first] = kv.first;
