@@ -1,0 +1,46 @@
+name: runTestsForDebugBuildAndGenerateCoverageReport
+
+on:
+    push:
+        branches:
+          - develop
+          - feature/*
+
+jobs:
+    runTestsForDebugBuildAndGenerateCoverageReport:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: "Create build directory"
+              run: mkdir build
+            - name: "Run CMake"
+              working-directory: build
+              run: cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" ..
+            - name: "Run Make"
+              working-directory: build
+              run: make VERBOSE=1
+            - name: "Run tests"
+              working-directory: build
+              run: make test
+            - name: "Generate coverage report directory"
+              run: mkdir coverage
+            - name: "Compile with g++"
+              working-directory: coverage
+              run: g++ -std=c++17 -g -Wall -Wextra -pedantic --coverage ../tests.cpp
+            - name: "Run program to generate .gcda file"
+              working-directory: coverage
+              run: ./a.out
+            - name: 'Install lcov'
+              run: sudo apt-get -y install lcov
+            - name: "Run lcov"
+              working-directory: coverage
+              run:  lcov --capture --directory . --output-file coverage.info
+            - name: "Run genhtml"
+              working-directory: coverage
+              run: genhtml --output-directory coverage-html --legend coverage.info
+            - name: "Save coverage report artifact"
+              uses: actions/upload-artifact@v2
+              with: 
+                name: code-coverage-report
+                path: coverage
+                retention-days: 1
