@@ -42,8 +42,15 @@ void test_bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType sta
 template<typename DataType, typename WeightType>
 void test_floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, WeightType distance) {
     auto ret = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    
+    // NOTE: not pretty, only testing up to 5 decimal places precission
+    WeightType retDist = ret[startNode][endNode];
+    // std::cout << retDist << " " << distance << " " << EPS << std::endl;
+    retDist = static_cast<double>(static_cast<int>(retDist * 100000)) / 100000;
+    distance  = static_cast<double>(static_cast<int>(distance * 100000)) / 100000;
+    // std::cout << retDist << " " << distance << " " << EPS << std::endl;
 
-    assert(abs(ret[startNode][endNode] - distance) < EPS);
+    assert(std::abs(retDist - distance) < EPS);
 }
 
 template<typename DataType, typename WeightType>
@@ -89,12 +96,14 @@ void test_topsortKhan(GraphClasses::Graph<DataType, WeightType> &g, DataType fir
 template<typename DataType, typename WeightType>
 void test_mcstPrimTotalCostOnly(GraphClasses::Graph<DataType, WeightType> &g, WeightType totalCost) {
     auto ret = GraphAlgorithms::mcstPrimTotalCostOnly(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // std::cout << ret << " " << totalCost << " " << EPS << std::endl;
-    // std::cout << (ret - totalCost) << "     "  << abs(ret-totalCost) <<std::endl;
-    // std::cout << (totalCost - ret) << "     "  << abs(totalCost-ret) <<std::endl;
-    // std::cout << (abs(totalCost-ret) - EPS) << std::endl;
+    
+    // NOTE: not pretty, only testing up to 5 decimal places precission
+    //std::cout << ret << " " << totalCost << " " << EPS << std::endl;
+    ret  = static_cast<double>(static_cast<int>(ret * 100000)) / 100000;
+    totalCost  = static_cast<double>(static_cast<int>(totalCost * 100000)) / 100000;
+    //std::cout << ret << " " << totalCost << " " << EPS << std::endl;
 
-    assert(abs(ret - totalCost) < EPS);
+    assert(std::abs(ret - totalCost) < EPS);
 }
 
 template<typename DataType, typename WeightType>
@@ -229,12 +238,10 @@ void string_double_graphs_tests() {
 
     std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << std::endl;
     std::cout << g2 << std::endl;
-    // FIXME: result of merge contains one extra edge (node3 - node1 is contained in the result 2 times!)
-    // test_mergeGraphs(g1, g2);
+    test_mergeGraphs(g1, g2);
     test_intersectGraphs(g1, g2);
-    // FIXME: resulting subgraph contains two extra edges (node5 - node7 and node7 - node5 are doubled!)
-    // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    // test_getSubgraphFromNodes(g1, someNodes, 4, 5);
+    std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
+    test_getSubgraphFromNodes(g1, someNodes, 4, 6);
 }
 
 int main() {

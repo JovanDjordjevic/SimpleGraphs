@@ -560,41 +560,41 @@ namespace GraphUtility {
 		newGraph.configureWeights(g1.getGraphWeights());
 
 		auto g1NeighborList = g1.getNeighbors();
-		for (auto& kv : g1NeighborList) {
-			newGraph.addNode(kv.first);
+		for (auto& [node, neighbors] : g1NeighborList) {
+			newGraph.addNode(node);
 		}
 
 		auto g2NeighborList = g2.getNeighbors();
-		for (auto& kv : g2NeighborList) {
-			newGraph.addNode(kv.first);
+		for (auto& [node, neighbors] : g2NeighborList) {
+			newGraph.addNode(node);
 		}
 
 		auto neightborList = newGraph.getNeighbors();
-		for (auto& kv : neightborList) {
-			auto it1 = g1NeighborList.find(kv.first);
-			auto it2 = g2NeighborList.find(kv.first);
+		for (auto& [node, neighbors] : neightborList) {
+			auto it1 = g1NeighborList.find(node);
+			auto it2 = g2NeighborList.find(node);
 
 			if (it1 != g1NeighborList.end() && it2 != g2NeighborList.end()) { // node is in both graphs
 				// we avoid adding duplicate edges by putting them in a set first
-				std::set<GraphClasses::Edge<DataType, WeightType>> edges;
-				for (auto& edge : g1NeighborList[kv.first]) {
-					edges.emplace(edge);
+				std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>> edgeSet;
+				for (auto& edge : g1NeighborList[node]) {
+					edgeSet.emplace(edge);
 				}
 
-				for (auto& edge : g2NeighborList[kv.first]) {
-					edges.emplace(edge);
+				for (auto& edge : g2NeighborList[node]) {
+					edgeSet.emplace(edge);
 				}
 
-				for (auto& edge : edges) {
-					newGraph.addEdge(kv.first, edge);
+				for (auto& edge : edgeSet) {
+					newGraph.addEdge(node, edge);
 				}
 			} else if (it1 != g1NeighborList.end() && it2 == g2NeighborList.end()) { // node is only in g1
-				for (auto& edge : g1NeighborList[kv.first]) {
-					newGraph.addEdge(kv.first, edge);
+				for (auto& edge : g1NeighborList[node]) {
+					newGraph.addEdge(node, edge);
 				}
 			} else if (it1 == g1NeighborList.end() && it2 != g2NeighborList.end()) { // is only in g2
-				for (auto& edge : g2NeighborList[kv.first]) {
-					newGraph.addEdge(kv.first, edge);
+				for (auto& edge : g2NeighborList[node]) {
+					newGraph.addEdge(node, edge);
 				}
 			}
 		}
@@ -627,7 +627,7 @@ namespace GraphUtility {
 				std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>> edges;
 				auto& shorter = g1NeighborList[kv.first];
 				auto& longer  = g2NeighborList[kv.first];
-				if (g2NeighborList[kv.first].size() < g2NeighborList[kv.first].size()) {
+				if (g2NeighborList[kv.first].size() < g1NeighborList[kv.first].size()) {
 					shorter = g2NeighborList[kv.first];
 					longer  = g1NeighborList[kv.first];
 				}
@@ -659,13 +659,9 @@ namespace GraphUtility {
 
 		for (auto& node : nodes) {
 			newGraph.addNode(node);
-			for (auto& [neighbor, weight] : neighborList[node]) {
-				if (nodes.find(neighbor) != nodes.end()) {
-					if (newGraph.getGraphWeights() == GraphClasses::GraphWeights::Weighted) {
-						newGraph.addEdge(node, neighbor, weight.value());
-					} else {
-						newGraph.addEdge(node, neighbor);
-					}
+			for (auto& edge : neighborList[node]) {
+				if (nodes.find(edge.neighbor) != nodes.end()) {
+					newGraph.addEdge(node, edge);
 				}
 			}
 		}

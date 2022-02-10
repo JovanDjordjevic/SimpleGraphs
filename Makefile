@@ -1,8 +1,8 @@
 # FOR LINUX, CLANG++ COMPILER
 MAIN_PROGRAM = main.out 
 TEST_PROGRAM = tests.out
-CX 		 = clang++
-CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic -O0
+CXX 		 = clang++
+CXXFLAGS     = -std=c++17 -g -Wall -Wextra -pedantic -O0
 
 all : $(MAIN_PROGRAM) $(TEST_PROGRAM)
 
