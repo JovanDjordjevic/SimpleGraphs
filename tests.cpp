@@ -197,7 +197,7 @@ void string_double_graphs_tests() {
     g1.configureDirections(GraphClasses::GraphType::Undirected);
     g1.configureWeights(GraphClasses::GraphWeights::Weighted);
 
-    const char* fileName1 = "../testInputs/string_double.txt";
+    const char* fileName1 = "testInputs/string_double.txt";
     g1.readFromTxt(fileName1);
 
     std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << std::endl;
@@ -233,7 +233,7 @@ void string_double_graphs_tests() {
     g2.configureDirections(GraphClasses::GraphType::Undirected);
     g2.configureWeights(GraphClasses::GraphWeights::Weighted);
 
-    const char* fileName2 = "../testInputs/string_double.txt";
+    const char* fileName2 = "testInputs/string_double.txt";
     g2.readFromTxt(fileName2);
 
     std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << std::endl;
@@ -247,6 +247,15 @@ void string_double_graphs_tests() {
 int main() {
 
     string_double_graphs_tests();
+    // GraphClasses::Graph<std::string, double> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Undirected);
+    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+
+    // const char* fileName1 = "testInputs/string_double.txt";
+    // g1.readFromTxt(fileName1);
+
+    // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << std::endl;
+    // std::cout << g1 << std::endl;
 
     return 0;
 }
