@@ -704,7 +704,7 @@ namespace GraphAlgorithms {
 		bool pathFound = false;
 
 		while (!pq.empty()) {
-			auto [currentNode, weight] = pq.top();
+			auto [currentNode, distToCurrentNode] = pq.top();
 			pq.pop();
 
 			if (currentNode == endNode) {
@@ -1107,10 +1107,10 @@ namespace GraphAlgorithms {
 
 		size_t nodeCount = g.getNodeCount();
 		for (size_t i = 0; i < nodeCount; ++i) {
-			auto [currentNode, weight] = pq.top();
+			auto [currentNode, distToCurrentNode] = pq.top();
 			pq.pop();
 
-			// distances[currentNode] = weight.value_or(1);    not needed?
+			// distances[currentNode] = distToCurrentNode.value_or(1);    not needed?
 
 			if (!visited[currentNode]) {
 				visited[currentNode] = true;
