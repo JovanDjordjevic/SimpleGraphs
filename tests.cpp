@@ -5,8 +5,6 @@
 #include <cassert>
 #include <iomanip>
 
-auto EPS = std::numeric_limits<double>::epsilon();
-
 // NOTE: currently tests written only for <string, double> graphs that are undirected and weighed. Other tests will be added in the future
 // prior to this, all functions were tested arbitrarily and seem to be working
 
@@ -43,14 +41,9 @@ template<typename DataType, typename WeightType>
 void test_floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, WeightType distance) {
     auto ret = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     
-    // NOTE: not pretty, only testing up to 5 decimal places precission
     WeightType retDist = ret[startNode][endNode];
-    // std::cout << retDist << " " << distance << " " << EPS << std::endl;
-    retDist = static_cast<double>(static_cast<int>(retDist * 100000)) / 100000;
-    distance  = static_cast<double>(static_cast<int>(distance * 100000)) / 100000;
-    // std::cout << retDist << " " << distance << " " << EPS << std::endl;
 
-    assert(std::abs(retDist - distance) < EPS);
+    assert(internal::equals(retDist, distance));
 }
 
 template<typename DataType, typename WeightType>
@@ -97,13 +90,7 @@ template<typename DataType, typename WeightType>
 void test_mcstPrimTotalCostOnly(GraphClasses::Graph<DataType, WeightType> &g, WeightType totalCost) {
     auto ret = GraphAlgorithms::mcstPrimTotalCostOnly(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     
-    // NOTE: not pretty, only testing up to 5 decimal places precission
-    //std::cout << ret << " " << totalCost << " " << EPS << std::endl;
-    ret  = static_cast<double>(static_cast<int>(ret * 100000)) / 100000;
-    totalCost  = static_cast<double>(static_cast<int>(totalCost * 100000)) / 100000;
-    //std::cout << ret << " " << totalCost << " " << EPS << std::endl;
-
-    assert(std::abs(ret - totalCost) < EPS);
+    assert(internal::equals(ret, totalCost));
 }
 
 template<typename DataType, typename WeightType>
@@ -238,6 +225,7 @@ void string_double_graphs_tests() {
 
     std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
     std::cout << g2 << std::endl;
+
     test_mergeGraphs(g1, g2);
     test_intersectGraphs(g1, g2);
     std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
@@ -245,7 +233,6 @@ void string_double_graphs_tests() {
 }
 
 int main() {
-
     string_double_graphs_tests();
     // GraphClasses::Graph<std::string, double> g1;
     // g1.configureDirections(GraphClasses::GraphType::Undirected);
@@ -256,6 +243,6 @@ int main() {
 
     // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << std::endl;
     // std::cout << g1 << std::endl;
-
+    
     return 0;
 }
