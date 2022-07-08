@@ -73,6 +73,7 @@ namespace GraphClasses {
 			size_t getNodeCount();
 			size_t getEdgeCount();
 
+			double getDensity();
 			// ...
 
 			GraphType getGraphType();
@@ -446,6 +447,17 @@ namespace GraphClasses {
 			count += neighbors.size();
 		}
 		return count;
+	}
+
+	template<typename DataType, typename WeightType>
+	double Graph<DataType, WeightType>::getDensity() {
+		double density = static_cast<double>(getEdgeCount()) / (getNodeCount() * (getNodeCount() - 1));
+
+		if (m_graphType == GraphType::Undirected) {
+			density *= 2;
+		}
+
+		return density;
 	}
 
 	template<typename DataType, typename WeightType>

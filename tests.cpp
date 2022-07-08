@@ -200,7 +200,7 @@ void string_double_graphs_tests() {
     const char* fileName1 = "testInputs/string_double.txt";
     g1.readFromTxt(fileName1);
 
-    std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << std::endl;
+    std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
     std::cout << g1 << std::endl;
 
     std::string startNode = "node1";
@@ -236,7 +236,7 @@ void string_double_graphs_tests() {
     const char* fileName2 = "testInputs/string_double.txt";
     g2.readFromTxt(fileName2);
 
-    std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << std::endl;
+    std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
     std::cout << g2 << std::endl;
     test_mergeGraphs(g1, g2);
     test_intersectGraphs(g1, g2);
