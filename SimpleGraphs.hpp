@@ -1047,7 +1047,7 @@ namespace GraphAlgorithms {
 		}
 
 		std::vector<DataType> topologicalOrdering;
-		unsigned numVisited = 0u;
+		size_t numVisited = 0u;
 
 		for (auto& [node, neighbors] : neighborList) {
 			for (auto& [neighbor, weight] : neighbors) {

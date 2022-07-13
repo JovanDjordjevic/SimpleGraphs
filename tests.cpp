@@ -4,84 +4,70 @@
 #include "SimpleGraphs.hpp"
 #include <cassert>
 #include <iomanip>
+#include <cmath>
 
-// NOTE: currently tests written only for <string, double> graphs that are undirected and weighed. Other tests will be added in the future
-// prior to this, all functions were tested arbitrarily and seem to be working
+// apart from these tests, all functions were tested arbitrarily and seem to be working
+// this DOES NOT guarantee correctness
 
 template<typename DataType, typename WeightType>
 void test_dfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned dfsTreeSize) {
     auto ret = GraphAlgorithms::dfs(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == dfsTreeSize);
 }
 
 template<typename DataType, typename WeightType>
 void test_bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned bfsTreeSize) {
     auto ret = GraphAlgorithms::bfs(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == bfsTreeSize);
 }
 
 template<typename DataType, typename WeightType>
 void test_dijkstra(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, unsigned edgesOnPath) {
     auto ret = GraphAlgorithms::dijkstra(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
-    assert(ret.size() == edgesOnPath);
+    assert((ret.size() - 1) == edgesOnPath);
 }
 
 template<typename DataType, typename WeightType>
-void test_bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned result) {
+void test_bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType someEndNode, unsigned edgesOnPathToEndNode) {
     auto ret = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    
-    assert(ret.size() == result);
-    //assert(ret["node6"].size() == 5);
+    assert((ret[someEndNode].size() - 1) == edgesOnPathToEndNode);
 }
 
 template<typename DataType, typename WeightType>
-void test_floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, WeightType distance) {
+void test_floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, DataType someStartNode, DataType someEndNode, WeightType distance) {
     auto ret = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    
-    WeightType retDist = ret[startNode][endNode];
-
-    assert(internal::equals(retDist, distance));
+    assert(internal::equals(ret[someStartNode][someEndNode], distance));
 }
 
 template<typename DataType, typename WeightType>
 void test_findArticulationPoints_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfArticulationPoints) {
     assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
-
     auto ret = GraphAlgorithms::findArticulationPoints(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == numOfArticulationPoints);
 }
 
 template<typename DataType, typename WeightType>
 void test_findArticulationPoints_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfArticulationPoints) {
     auto ret = GraphAlgorithms::findArticulationPoints(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == numOfArticulationPoints);
 }
 
 template<typename DataType, typename WeightType>
 void test_findBridges_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfBridges) {
     assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
-
     auto ret = GraphAlgorithms::findBridges(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == numOfBridges);
 }
 
 template<typename DataType, typename WeightType>
 void test_findBridges_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfBridges) {
     auto ret = GraphAlgorithms::findBridges(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == numOfBridges);
 }
 
 template<typename DataType, typename WeightType>
 void test_topsortKhan(GraphClasses::Graph<DataType, WeightType> &g, DataType firstNode, DataType lastNode) {
     auto ret = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret[0] == firstNode);
     assert(ret[g.getNodeCount() - 1] == lastNode);
 }
@@ -89,7 +75,6 @@ void test_topsortKhan(GraphClasses::Graph<DataType, WeightType> &g, DataType fir
 template<typename DataType, typename WeightType>
 void test_mcstPrimTotalCostOnly(GraphClasses::Graph<DataType, WeightType> &g, WeightType totalCost) {
     auto ret = GraphAlgorithms::mcstPrimTotalCostOnly(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    
     assert(internal::equals(ret, totalCost));
 }
 
@@ -110,16 +95,13 @@ void test_mcstKruskal(GraphClasses::Graph<DataType, WeightType> &g, unsigned edg
 template<typename DataType, typename WeightType>
 void test_findStronglyConnectedComponentsTarjan_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
     assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
-
     auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == numOfComponents);
 }
 
 template<typename DataType, typename WeightType>
 void test_findStronglyConnectedComponentsTarjan_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfComponents) {
     auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == numOfComponents);
 }
 
@@ -136,11 +118,9 @@ template<typename DataType, typename WeightType>
 void test_mergeGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphClasses::Graph<DataType, WeightType> &g2) {
     assert(g1.getGraphType() == g2.getGraphType());
     assert(g1.getGraphWeights() == g2.getGraphWeights());
-
     GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::mergeGraphs(g1, g2);
     // std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     // std::cout << ret << std::endl;
-
     // testing that 2 same graphs do not produce extra nodes or edges after merging
     assert(ret.getNodeCount() == g1.getNodeCount());
     assert(ret.getEdgeCount() == g1.getEdgeCount());
@@ -152,11 +132,9 @@ template<typename DataType, typename WeightType>
 void test_intersectGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphClasses::Graph<DataType, WeightType> &g2) {
     assert(g1.getGraphType() == g2.getGraphType());
     assert(g1.getGraphWeights() == g2.getGraphWeights());
-
     GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::intersectGraphs(g1, g2);
     //std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     //std::cout << ret << std::endl;
-
     // testing that intersection of 2 same graphs is the exact same starting graph
     assert(ret.getNodeCount() == g1.getNodeCount());
     assert(ret.getEdgeCount() == g1.getEdgeCount());
@@ -165,48 +143,93 @@ void test_intersectGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphCl
 }
 
 template<typename DataType, typename WeightType>
-void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std::unordered_set<DataType>& nodes, 
-                               unsigned expectedNumOfNodes, unsigned expectedNumOfEdges ) {
+void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std::unordered_set<DataType>& nodes, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges ) {
     GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::getSubgraphFromNodes(g, nodes);
     // std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     // std::cout << ret << std::endl;
-
     // testing that intersection of 2 same graphs is the exact same starting graph
     assert(ret.getNodeCount() == expectedNumOfNodes);
     assert(ret.getEdgeCount() == expectedNumOfEdges);
 }
 
-void string_double_graphs_tests() {
-    //std::cout << std::setprecision(10);
+void test_internal_operators() {
+    std::cout << "=============== test_internal_operators ===============" << std::endl;
 
-    // ---- alg testing ----
+    // for integral types (not much testing is needed as these just call the built in operators for all non floating types)
+    std::cout << "\tTesting for integral types     ";
+
+    assert(internal::equals(1u, 1u) == (1u == 1u));
+    assert(internal::equals(-1, -1) == (-1 == -1));
+    assert(!internal::equals(1u, 2u) == (1u != 2u));
+    assert(!internal::equals(-1, -2) == (-1 != -2));
+
+    assert(internal::lessThan(1u, 2u) == (1u < 2u)); 
+    assert(internal::lessThan(1, 2) == (1 < 2)); 
+    assert(internal::lessThan(-1, -2) == (-1 < -2)); 
+    assert((internal::lessThan(1, 2) || internal::equals(1, 2)) == (1 <= 2)); 
+
+    assert(internal::greaterThan(1u, 2u) == (1u > 2u)); 
+    assert(internal::greaterThan(1, 2) == (1 > 2)); 
+    assert(internal::greaterThan(-1, -2) == (-1 > -2)); 
+    assert((internal::greaterThan(1, 2) || internal::equals(1, 2)) == (1 >= 2)); 
+
+    std::cout << "SUCCESS" << std::endl;
+    
+    // for flaoting point types (testing for float and double)
+    std::cout << "\t\tEpsilon for float set to: " << internal::FLOATING_POINT_EPSIOLON<float> << std::endl;
+    std::cout << "\t\tEpsilon for double set to: " << internal::FLOATING_POINT_EPSIOLON<double> << std::endl;
+    std::cout << "\tTesting for floating point types     ";
+
+    assert(internal::equals(0.f, 0.f) == (0.f == 0.f));
+    assert(internal::equals(0., 0.) == (0. == 0.));
+    assert(internal::equals(0.000000123f, 0.000000234f)); 
+    assert(internal::equals(0.000000123, 0.000000234)); // should be equal
+    assert(internal::equals(0.000002, 0.0000019999999) && !(0.000002 == 0.0000019999999));  // different from the standard ==
+
+    assert(!internal::lessThan(0.000000123, 0.000000234)); // false because they are about an epsilon apart
+    assert(!internal::lessThan(0.000000123f, 0.000000234f)); 
+    assert(internal::lessThan(0.000000222, 0.00000333)); 
+    assert(internal::lessThan(0.000000222f, 0.00000333f)); 
+    assert(internal::lessThan(0.000000222, 0.00000333) || internal::equals(0.000000222, 0.00000333) == (0.000000222 <= 0.00000333)); 
+    assert(internal::lessThan(0.000000222f, 0.00000333f) || internal::equals(0.000000222f, 0.00000333f) == (0.000000222f <= 0.00000333f)); 
+
+    assert(!internal::greaterThan(0.0000008251234, 0.0000008)); // false because they are about an epsilon apart
+    assert(!internal::greaterThan(0.0000008251234f, 0.0000008f));
+    assert(internal::greaterThan(0.0008251234, 0.000799999));
+    assert(internal::greaterThan(0.0008251234f, 0.000799999f));
+    assert(internal::greaterThan(0.0008251234, 0.000799999) || internal::equals(0.0008251234, 0.000799999) == (0.0008251234 >= 0.000799999));
+    assert(internal::greaterThan(0.0008251234f, 0.000799999f) || internal::equals(0.0008251234f, 0.000799999f) == (0.0008251234f >= 0.000799999f));
+
+    std::cout << "SUCCESS" << std::endl;
+    std::cout << "=======================================================" << std::endl << std::endl;
+}
+
+void test_string_double_undirected_weighted() {
+    std::cout << "=============== test_string_double_undirected_weighted ===============" << std::endl;
+
     GraphClasses::Graph<std::string, double> g1;
     g1.configureDirections(GraphClasses::GraphType::Undirected);
     g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-
     const char* fileName1 = "testInputs/string_double.txt";
     g1.readFromTxt(fileName1);
+    // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
+    // std::cout << g1 << std::endl;
 
-    std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
-    std::cout << g1 << std::endl;
+    // ---- alg testing ----
+    std::cout << "\tTesting algorithms     ";
 
     std::string startNode = "node1";
     test_dfs(g1, startNode, g1.getNodeCount());
     test_bfs(g1, startNode, g1.getNodeCount());
-
     std::string endNode = "node6";
-    test_dijkstra(g1, startNode, endNode, 5);
-    test_bellmanFord(g1, startNode, g1.getNodeCount());
+    test_dijkstra(g1, startNode, endNode, 4);
+    test_bellmanFord(g1, startNode, endNode, 4);
     test_floydWarshall(g1, startNode, endNode, 296.65);
     test_findArticulationPoints_without_start(g1, 2);
     test_findArticulationPoints_with_start(g1, startNode, 2);    //should be same as without start for undirected
     test_findBridges_without_start(g1, 2);
     test_findBridges_with_start(g1, startNode, 2);
-        // topsort makes no sense for undirected graphs
-        // endNode = "node9";
-        // g.deleteEdge("node2", "node1");
-        // g.deleteEdge("node4", "node2");
-        // test_topsortKhan(g1, startNode, endNode);
+    // topsort makes no sense for undirected graphs and is not tested here
     test_mcstPrimTotalCostOnly(g1, 6199.467744);
     test_mcstPrim(g1, g1.getNodeCount() - 1);
     test_mcstKruskal(g1, g1.getNodeCount() - 1);
@@ -214,35 +237,91 @@ void string_double_graphs_tests() {
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 1); //should be same as without start for undirected
     test_findWeaklyConnectedComponents(g1, 1);
 
+    std::cout << "SUCCESS" << std::endl;
+
     // ---- utility testing ----
+    std::cout << "\tTesting utility functions     ";
 
     GraphClasses::Graph<std::string, double> g2;
     g2.configureDirections(GraphClasses::GraphType::Undirected);
     g2.configureWeights(GraphClasses::GraphWeights::Weighted);
-
     const char* fileName2 = "testInputs/string_double.txt";
     g2.readFromTxt(fileName2);
-
-    std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
-    std::cout << g2 << std::endl;
+    // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
+    // std::cout << g2 << std::endl;
 
     test_mergeGraphs(g1, g2);
     test_intersectGraphs(g1, g2);
     std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     test_getSubgraphFromNodes(g1, someNodes, 4, 6);
+
+    std::cout << "SUCCESS" << std::endl;
+    std::cout << "======================================================================" << std::endl << std::endl;
+}
+
+void test_custom_float_directed_weighted() {
+    std::cout << "=============== test_custom_float_directed_weighted ===============" << std::endl;
+
+    GraphClasses::Graph<CustomClass, float> g1;
+    g1.configureDirections(GraphClasses::GraphType::Directed);
+    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    const char* fileName1 = "testInputs/custom_float.txt";
+    g1.readFromTxt(fileName1);
+    // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
+    // std::cout << g1 << std::endl;
+
+    // ---- alg testing ----
+    std::cout << "\tTesting algorithms     ";
+
+    CustomClass startNode = CustomClass(1, 2, 3);
+    test_dfs(g1, startNode, g1.getNodeCount());
+    test_bfs(g1, startNode, g1.getNodeCount());
+    CustomClass endNode = CustomClass(2, 2, 2);
+    test_dijkstra(g1, startNode, endNode, 3);
+    test_bellmanFord(g1, startNode, endNode, 3);
+    test_floydWarshall(g1, startNode, endNode, 13.7f);
+    // articulation points without start not supported for directed graphs
+    test_findArticulationPoints_with_start(g1, startNode, 2);
+    //  bridges without start not supported for directed graphs
+    test_findBridges_with_start(g1, startNode, 2);
+        // removing edge before topsort testing because this example graph is not acyclic
+        g1.deleteEdge(CustomClass(5,2,6), startNode);
+    test_topsortKhan(g1, startNode, endNode);
+        g1.addEdge(CustomClass(5,2,6), startNode, 124.5f);
+    // MCST algorithms not supported for directed graphs
+    // tarjan alg without start not supported for directed graphs
+    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
+    // weakly connected components currently not supported for directed graphs
+
+    std::cout << "SUCCESS" << std::endl;
+
+    // ---- utility testing ----
+    std::cout << "\tTesting utility functions     ";
+
+    GraphClasses::Graph<CustomClass, float> g2;
+    g2.configureDirections(GraphClasses::GraphType::Directed);
+    g2.configureWeights(GraphClasses::GraphWeights::Weighted);
+    const char* fileName2 = "testInputs/custom_float.txt";
+    g2.readFromTxt(fileName2);
+
+    test_mergeGraphs(g1, g2);
+    test_intersectGraphs(g1, g2);
+    std::unordered_set<CustomClass> someNodes{startNode, CustomClass(4, 5, 6), endNode};
+    test_getSubgraphFromNodes(g1, someNodes, 3, 1);
+
+    std::cout << "SUCCESS" << std::endl;
+    std::cout << "===================================================================" << std::endl << std::endl;
 }
 
 int main() {
-    string_double_graphs_tests();
-    // GraphClasses::Graph<std::string, double> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Undirected);
-    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    test_internal_operators();
 
-    // const char* fileName1 = "testInputs/string_double.txt";
-    // g1.readFromTxt(fileName1);
+    test_string_double_undirected_weighted();
 
-    // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << std::endl;
-    // std::cout << g1 << std::endl;
-    
+    // TODO: _undirected_unweighted();
+
+    test_custom_float_directed_weighted();
+
+    // TODO: _directed_unweighted();
     return 0;
 }
