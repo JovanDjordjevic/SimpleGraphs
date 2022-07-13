@@ -68,7 +68,7 @@ namespace GraphClasses {
 			void addEdge(const DataType startNode, const DataType neighborNode, const WeightType edgeWeight); // for weighted graphs
 			void addEdge(const DataType startNode, const Edge<DataType, WeightType>& edge);
 			void deleteEdge(const DataType startNode, const DataType endNode);
-			void deleteNode(const DataType node); // TODO
+			void deleteNode(const DataType nodeToDelete); // TODO
 			size_t getNodeCount() const;
 			size_t getEdgeCount() const;
 
@@ -412,33 +412,25 @@ namespace GraphClasses {
 	// NOTE: will delete all edges that connect start and end nodes in case of a multigraph
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::deleteEdge(const DataType startNode, const DataType endNode) {
-		auto it_start = m_neighbors.find(startNode);
-		auto it_end = m_neighbors.find(endNode);
-		if (internal::equals(it_start, std::end(m_neighbors)) || internal::equals(it_end, std::end(m_neighbors))) {
+		auto itStartNode = m_neighbors.find(startNode);
+		auto itEndNode = m_neighbors.find(endNode);
+		if (internal::equals(itStartNode, std::end(m_neighbors)) || internal::equals(itEndNode, std::end(m_neighbors))) {
 			// std::cout << "Edge does not exist" << std::endl;
 			return;
 		}
 
-		auto it  = std::begin((*it_start).second);
-		auto end = std::end((*it_start).second);
-		while (!internal::equals(it, end)) {
-			if (internal::equals((*it).neighbor, endNode)) {
-				// std::cout << "start->end edge erased" << std::endl;
-				((*it_start).second).erase(it);
-			}
-			++it;
-		}
+		auto comparatorFunc = [&](const auto& neighborNode){ return internal::equals(neighborNode.neighbor, endNode); };
+
+		auto it = std::begin((*itStartNode).second);
+		auto end = std::end((*itStartNode).second);
+		auto itRemoved = std::remove_if(it, end, comparatorFunc);
+		(*itStartNode).second.erase(itRemoved, end);
 
 		if (internal::equals(m_graphType, GraphType::Undirected)) {
-			auto it  = std::begin((*it_end).second);
-			auto end = std::end((*it_end).second);
-			while (!internal::equals(it, end)) {
-				if (internal::equals((*it).neighbor, startNode)) {
-					// std::cout << "end->start edge erased" << std::endl;
-					((*it_end).second).erase(it);
-				}
-				++it;
-			}
+			it = std::begin((*itEndNode).second);
+			end = std::end((*itEndNode).second);
+			itRemoved = std::remove_if(it, end, comparatorFunc);
+			(*itEndNode).second.erase(itRemoved, end);
 		}
 
 		return;
@@ -446,24 +438,20 @@ namespace GraphClasses {
 
 	// removes a node and all edges to/from said node
 	template<typename DataType, typename WeightType>
-	void Graph<DataType, WeightType>::deleteNode(DataType node) {
-		if (internal::equals(m_neighbors.find(node), std::end(m_neighbors))) {
+	void Graph<DataType, WeightType>::deleteNode(DataType nodeToDelete) {
+		if (internal::equals(m_neighbors.find(nodeToDelete), std::end(m_neighbors))) {
 			// std::cout << "Node does not exist" << std::endl;
 			return;
 		}
 
-		m_neighbors[node].clear(); // needed?
-		m_neighbors.erase(node);
+		m_neighbors[nodeToDelete].clear(); // needed?
+		m_neighbors.erase(nodeToDelete);
 
 		for (auto& [node, neighbors] : m_neighbors) {
-			auto it_begin = std::begin(neighbors);
-			auto it_end = std::end(neighbors);
-			while (internal::equals(it_begin, it_end)) {
-				if (internal::equals((*it_begin).neighbor, node)) {
-					neighbors.erase(it_begin);
-				}
-				++it_begin;
-			}
+			auto itBegin = std::begin(neighbors);
+			auto itEnd = std::end(neighbors);
+			auto itRemoved = std::remove_if(itBegin, itEnd, [&](const auto& neighborNode){ return internal::equals(neighborNode.neighbor, nodeToDelete); });
+			neighbors.erase(itRemoved, itEnd);
 		}
 
 		return;

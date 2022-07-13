@@ -316,6 +316,8 @@ void test_custom_float_directed_weighted() {
 int main() {
     test_internal_operators();
 
+    // TODO: test member fucntions of Graph
+
     test_string_double_undirected_weighted();
 
     // TODO: _undirected_unweighted();
