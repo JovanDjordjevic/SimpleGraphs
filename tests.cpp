@@ -204,6 +204,60 @@ void test_internal_operators() {
     std::cout << "=======================================================" << std::endl << std::endl;
 }
 
+void test_graph_class_member_functions() {
+    std::cout << "=============== test_graph_class_member_functions ===============" << std::endl;
+    
+    GraphClasses::Graph<unsigned, unsigned> g1;
+    g1.configureDirections(GraphClasses::GraphType::Undirected);
+    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    const char* fileName1 = "testInputs/int_int.txt";
+    g1.readFromTxt(fileName1);
+    // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
+    // std::cout << g1 << std::endl;
+
+    std::cout << "\tTesting member functions     ";
+
+    assert(g1.isConfigured());
+    assert(g1.getGraphType() == GraphClasses::GraphType::Undirected);
+    assert(g1.getGraphWeights() == GraphClasses::GraphWeights::Weighted);
+
+    assert(g1.getNodeCount() == 8);
+    assert(g1.getEdgeCount() == 26);
+    assert(internal::equals(g1.getDensity(), 0.928571));
+
+    g1.addNode(10);
+    assert(g1.getNodeCount() == 9);
+    assert(g1.getEdgeCount() == 26);
+
+    g1.addEdge(10, 6, 2);
+    g1.addEdge(10, 2, 15);
+    assert(g1.getNodeCount() == 9);
+    assert(g1.getEdgeCount() == 30);
+
+    // FIXME: deletes only 1-2 and not 2-1
+    // TODO: check for directed also
+    // g1.deleteEdge(1, 2);
+    // assert(g1.getNodeCount() == 9);
+    // assert(g1.getEdgeCount() == 28);
+
+    g1.deleteNode(3);
+    assert(g1.getNodeCount() == 8);
+    assert(g1.getEdgeCount() == 22);  // will need to be adjusted when deleteEdge bug is fixed
+    
+    // FIXME: does not add neighbor node as standalone node if it does not exists and only inputs it in the neighbor list of the starting node
+    // g1.addEdge(5, GraphClasses::Edge<unsigned, unsigned>(11, 15));
+
+    // FIXME: same issue
+    // g1.addEdge(1, 44, 2);
+
+    g1.clearGraph();
+    assert(g1.getNodeCount() == 0);
+    assert(g1.getEdgeCount() == 0);
+
+    std::cout << "SUCCESS" << std::endl;
+    std::cout << "=================================================================" << std::endl << std::endl;
+}
+
 void test_string_double_undirected_weighted() {
     std::cout << "=============== test_string_double_undirected_weighted ===============" << std::endl;
 
@@ -316,7 +370,7 @@ void test_custom_float_directed_weighted() {
 int main() {
     test_internal_operators();
 
-    // TODO: test member fucntions of Graph
+    test_graph_class_member_functions();
 
     test_string_double_undirected_weighted();
 
