@@ -234,21 +234,21 @@ void test_graph_class_member_functions() {
     assert(g1.getNodeCount() == 9);
     assert(g1.getEdgeCount() == 30);
 
-    // FIXME: deletes only 1-2 and not 2-1
-    // TODO: check for directed also
-    // g1.deleteEdge(1, 2);
-    // assert(g1.getNodeCount() == 9);
-    // assert(g1.getEdgeCount() == 28);
+    g1.deleteEdge(1, 2);
+    assert(g1.getNodeCount() == 9);
+    assert(g1.getEdgeCount() == 28);
 
     g1.deleteNode(3);
     assert(g1.getNodeCount() == 8);
-    assert(g1.getEdgeCount() == 22);  // will need to be adjusted when deleteEdge bug is fixed
+    assert(g1.getEdgeCount() == 20);
     
-    // FIXME: does not add neighbor node as standalone node if it does not exists and only inputs it in the neighbor list of the starting node
-    // g1.addEdge(5, GraphClasses::Edge<unsigned, unsigned>(11, 15));
+    g1.addEdge(5, GraphClasses::Edge<unsigned, unsigned>(11, 15));
+    assert(g1.getNodeCount() == 9);
+    assert(g1.getEdgeCount() == 21);
 
-    // FIXME: same issue
-    // g1.addEdge(1, 44, 2);
+    g1.addEdge(1, 44, 2);
+    assert(g1.getNodeCount() == 10);
+    assert(g1.getEdgeCount() == 23);
 
     g1.clearGraph();
     assert(g1.getNodeCount() == 0);

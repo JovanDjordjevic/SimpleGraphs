@@ -337,12 +337,10 @@ namespace GraphClasses {
 
 			if (internal::equals(m_graphWeights, GraphWeights::Weighted)) {
 				while (lineStream >> neighbor >> weight) {
-					addNode(neighbor); // this line is neccessary in case neighbor node is only mentioned as neighbor of another node
 					addEdge(node, neighbor, weight);
 				}
 			} else { // unweighted
 				while (lineStream >> neighbor) {
-					addNode(neighbor); // this line is neccessary in case neighbor node is only mentioned as neighbor of another node
 					addEdge(node, neighbor);
 				}
 			}
@@ -372,6 +370,9 @@ namespace GraphClasses {
 			exit(EXIT_FAILURE);
 		}
 
+		// this line is neccessary in case neighbor node is only mentioned as neighbor of another node
+		addNode(neighborNode); 
+
 		if (internal::equals(m_graphType, GraphType::Directed)) {
 			m_neighbors[startNode].emplace_back(neighborNode);
 		} else { // undirected
@@ -386,6 +387,9 @@ namespace GraphClasses {
 			GRAPH_ERROR("Graph is not weighed but you are trying to specify edge weight!");
 			exit(EXIT_FAILURE);
 		}
+
+		// this line is neccessary in case neighbor node is only mentioned as neighbor of another node
+		addNode(neighborNode); 
 
 		if (internal::equals(m_graphType, GraphType::Directed)) {
 			m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
@@ -405,6 +409,9 @@ namespace GraphClasses {
 			exit(EXIT_FAILURE);
 		}
 
+		// this line is neccessary in case neighbor node is only mentioned as neighbor of another node
+		addNode(edge.neighbor); 
+
 		m_neighbors[startNode].emplace_back(edge.neighbor, edge.weight);
 		return;
 	}
@@ -419,17 +426,15 @@ namespace GraphClasses {
 			return;
 		}
 
-		auto comparatorFunc = [&](const auto& neighborNode){ return internal::equals(neighborNode.neighbor, endNode); };
-
 		auto it = std::begin((*itStartNode).second);
 		auto end = std::end((*itStartNode).second);
-		auto itRemoved = std::remove_if(it, end, comparatorFunc);
+		auto itRemoved = std::remove_if(it, end, [&](const auto& neighborNode){ return internal::equals(neighborNode.neighbor, endNode); });
 		(*itStartNode).second.erase(itRemoved, end);
 
 		if (internal::equals(m_graphType, GraphType::Undirected)) {
 			it = std::begin((*itEndNode).second);
 			end = std::end((*itEndNode).second);
-			itRemoved = std::remove_if(it, end, comparatorFunc);
+			itRemoved = std::remove_if(it, end, [&](const auto& neighborNode){ return internal::equals(neighborNode.neighbor, startNode); });
 			(*itEndNode).second.erase(itRemoved, end);
 		}
 
