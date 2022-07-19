@@ -81,14 +81,12 @@ void test_mcstPrimTotalCostOnly(GraphClasses::Graph<DataType, WeightType> &g, We
 template<typename DataType, typename WeightType>
 void test_mcstPrim(GraphClasses::Graph<DataType, WeightType> &g, unsigned edgeCount) {
     auto ret = GraphAlgorithms::mcstPrim(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == edgeCount);
 }
 
 template<typename DataType, typename WeightType>
 void test_mcstKruskal(GraphClasses::Graph<DataType, WeightType> &g, unsigned edgeCount) {
     auto ret = GraphAlgorithms::mcstKruskal(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == edgeCount);
 }
 
@@ -108,9 +106,7 @@ void test_findStronglyConnectedComponentsTarjan_with_start(GraphClasses::Graph<D
 template<typename DataType, typename WeightType>
 void test_findWeaklyConnectedComponents(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
     assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
-
     auto ret = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
     assert(ret.size() == numOfComponents);
 }
 
@@ -143,7 +139,7 @@ void test_intersectGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphCl
 }
 
 template<typename DataType, typename WeightType>
-void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std::unordered_set<DataType>& nodes, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges ) {
+void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std::unordered_set<DataType>& nodes, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges) {
     GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::getSubgraphFromNodes(g, nodes);
     // std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     // std::cout << ret << std::endl;
@@ -313,6 +309,60 @@ void test_string_double_undirected_weighted() {
     std::cout << "======================================================================" << std::endl << std::endl;
 }
 
+void test_int_int_undirected_unweighted() {
+    std::cout << "=============== test_int_int_undirected_unweighted ===============" << std::endl;
+
+    GraphClasses::Graph<int, int> g1;
+    g1.configureDirections(GraphClasses::GraphType::Undirected);
+    g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    const char* fileName1 = "testInputs/int_int_u_u.txt";
+    g1.readFromTxt(fileName1);
+    // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
+    // std::cout << g1 << std::endl;
+
+    // ---- alg testing ----
+    std::cout << "\tTesting algorithms     ";
+
+    int startNode = 1;
+    test_dfs(g1, startNode, g1.getNodeCount());
+    test_bfs(g1, startNode, g1.getNodeCount());
+    int endNode = 5;
+    test_dijkstra(g1, startNode, endNode, 2);
+    // FIXME: integer overflow happens and distances become negative
+    // test_bellmanFord(g1, startNode, 6, 2);
+    test_floydWarshall(g1, 4, 5, 2);
+    test_findArticulationPoints_without_start(g1, 0);
+    test_findArticulationPoints_with_start(g1, startNode, 0);
+    test_findBridges_without_start(g1, 0);
+    test_findBridges_with_start(g1, 6, 0);
+    // topsort makes no sense for undirected graphs and is not tested here
+    test_mcstPrim(g1, 7);
+    test_mcstPrimTotalCostOnly(g1, 7);
+    test_mcstKruskal(g1, 7);
+    test_findStronglyConnectedComponentsTarjan_without_start(g1, 1);
+    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 1);
+    test_findWeaklyConnectedComponents(g1, 1);
+
+    std::cout << "SUCCESS" << std::endl;
+
+    // ---- utility testing ----
+    std::cout << "\tTesting utility functions     ";
+
+    GraphClasses::Graph<int, int> g2;
+    g2.configureDirections(GraphClasses::GraphType::Undirected);
+    g2.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    const char* fileName2 = "testInputs/int_int_u_u.txt";
+    g2.readFromTxt(fileName2);
+
+    test_mergeGraphs(g1, g2);
+    test_intersectGraphs(g1, g2);
+    std::unordered_set<int> someNodes{2, 5, 3, 7};
+    test_getSubgraphFromNodes(g1, someNodes, 4, 4);
+    
+    std::cout << "SUCCESS" << std::endl;
+    std::cout << "==================================================================" << std::endl << std::endl;
+}
+
 void test_custom_float_directed_weighted() {
     std::cout << "=============== test_custom_float_directed_weighted ===============" << std::endl;
 
@@ -374,7 +424,7 @@ int main() {
 
     test_string_double_undirected_weighted();
 
-    // TODO: _undirected_unweighted();
+    test_int_int_undirected_unweighted();
 
     test_custom_float_directed_weighted();
 

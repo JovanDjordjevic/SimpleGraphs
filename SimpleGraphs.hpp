@@ -1181,7 +1181,7 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::vector<std::tuple<DataType, DataType, WeightType>> mcstKruskal(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
 			GRAPH_ERROR("Minimum cost spanning tree for directed graphs currently not supported");
 			exit(EXIT_FAILURE);
 		}
