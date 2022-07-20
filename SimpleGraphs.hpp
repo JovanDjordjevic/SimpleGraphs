@@ -808,7 +808,7 @@ namespace GraphAlgorithms {
 			distances[node] = GraphClasses::MAX_WEIGHT<WeightType>;
 		}
 
-		distances[startNode] = 0;
+		distances[startNode] = static_cast<WeightType>(0);
 		parents[startNode]; // only startNode will have the empty optional
 
 		size_t relaxationCount = g.getNodeCount() - 1;
@@ -816,7 +816,12 @@ namespace GraphAlgorithms {
 		for (size_t r = 0; internal::lessThan(r, relaxationCount); ++r) {
 			for (auto& [node, neighbors] : neighborsList) {
 				for (auto& [neighbor, weight] : neighbors) {
+					if (internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>)) {
+						continue;
+					}
+					
 					WeightType newDistnce = distances[node] + weight.value_or(static_cast<WeightType>(1));
+					
 					if (internal::lessThan(newDistnce, distances[neighbor])) {
 						distances[neighbor] = newDistnce;
 						parents[neighbor] = node;

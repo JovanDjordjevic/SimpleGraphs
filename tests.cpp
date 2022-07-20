@@ -328,8 +328,7 @@ void test_int_int_undirected_unweighted() {
     test_bfs(g1, startNode, g1.getNodeCount());
     int endNode = 5;
     test_dijkstra(g1, startNode, endNode, 2);
-    // FIXME: integer overflow happens and distances become negative
-    // test_bellmanFord(g1, startNode, 6, 2);
+    test_bellmanFord(g1, startNode, 6, 2);
     test_floydWarshall(g1, 4, 5, 2);
     test_findArticulationPoints_without_start(g1, 0);
     test_findArticulationPoints_with_start(g1, startNode, 0);
