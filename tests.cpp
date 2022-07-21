@@ -385,7 +385,7 @@ void test_custom_float_directed_weighted() {
     test_floydWarshall(g1, startNode, endNode, 13.7f);
     // articulation points without start not supported for directed graphs
     test_findArticulationPoints_with_start(g1, startNode, 2);
-    //  bridges without start not supported for directed graphs
+    // bridges without start not supported for directed graphs
     test_findBridges_with_start(g1, startNode, 2);
         // removing edge before topsort testing because this example graph is not acyclic
         g1.deleteEdge(CustomClass(5,2,6), startNode);
@@ -416,6 +416,69 @@ void test_custom_float_directed_weighted() {
     std::cout << "===================================================================" << std::endl << std::endl;
 }
 
+void test_char_ull_directed_unweighted() {
+    std::cout << "=============== test_char_ull_directed_unweighted ===============" << std::endl;
+
+    GraphClasses::Graph<char, unsigned long long> g1;
+    g1.configureDirections(GraphClasses::GraphType::Directed);
+    g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    const char* fileName1 = "testInputs/char_ull_d_u.txt";
+    g1.readFromTxt(fileName1);
+    // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
+    // std::cout << g1 << std::endl;
+
+    // ---- alg testing ----
+    std::cout << "\tTesting algorithms     ";
+    char startNode = 'a';
+    test_dfs(g1, startNode, g1.getNodeCount());
+    test_bfs(g1, startNode, g1.getNodeCount());
+    char endNode = 'l';
+    test_dijkstra(g1, startNode, endNode, 4);
+    test_bellmanFord(g1, startNode, 'o', 5);
+    test_floydWarshall(g1, 'h', 'j', static_cast<unsigned long long>(4));
+    // articulation points without start not supported for directed graphs
+    test_findArticulationPoints_with_start(g1, startNode, 3);
+    // bridges without start not supported for directed graphs
+    test_findBridges_with_start(g1, startNode, 3);
+    // removing some edges before topsort testing because this example graph is not acyclic
+        g1.deleteEdge('p', 'a');
+        g1.deleteEdge('o', 'p');
+        g1.deleteEdge('h', 'b');
+        g1.deleteEdge('m', 'h');
+        g1.deleteEdge('j', 'i');
+        g1.deleteEdge('l', 'h');
+    test_topsortKhan(g1, 'a', 'o');
+        g1.addEdge('p', 'a');
+        g1.addEdge('o', 'p');
+        g1.addEdge('h', 'b');
+        g1.addEdge('m', 'h');
+        g1.addEdge('j', 'i');
+        g1.addEdge('l', 'h');
+    // MCST algorithms not supported for directed graphs
+    // tarjan alg without start not supported for directed graphs
+    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
+    // weakly connected components currently not supported for directed graphs
+
+    std::cout << "SUCCESS" << std::endl;
+
+    // ---- utility testing ----
+    std::cout << "\tTesting utility functions     ";
+
+    GraphClasses::Graph<char, unsigned long long> g2;
+    g2.configureDirections(GraphClasses::GraphType::Directed);
+    g2.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    const char* fileName2 = "testInputs/char_ull_d_u.txt";
+    g2.readFromTxt(fileName2);
+
+    test_mergeGraphs(g1, g2);
+    test_intersectGraphs(g1, g2);
+    std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
+    test_getSubgraphFromNodes(g1, someNodes, 6, 6);
+
+    std::cout << "SUCCESS" << std::endl;
+    std::cout << "=================================================================" << std::endl << std::endl;
+}
+
 int main() {
     test_internal_operators();
 
@@ -427,6 +490,7 @@ int main() {
 
     test_custom_float_directed_weighted();
 
-    // TODO: _directed_unweighted();
+    test_char_ull_directed_unweighted();
+
     return 0;
 }

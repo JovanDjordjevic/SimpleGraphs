@@ -1,0 +1,14 @@
+a b 12 p 7
+b c 15 g 12
+c e 8 d 17
+d f 9
+e d 6
+f o 2
+g h 13 i 23
+h b 1 l 7
+i d 3 k 9 j 100
+j i 76 n 33
+l m 19 h 8
+m h 22
+o p 3
+p a 4 g 17
