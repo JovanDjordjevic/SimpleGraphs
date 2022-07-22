@@ -221,6 +221,8 @@ void test_graph_class_member_functions() {
     assert(g1.getEdgeCount() == 26);
     assert(internal::equals(g1.getDensity(), 0.928571));
 
+    assert(g1.getNodeSet().size() == g1.getNodeCount());
+
     g1.addNode(10);
     assert(g1.getNodeCount() == 9);
     assert(g1.getEdgeCount() == 26);

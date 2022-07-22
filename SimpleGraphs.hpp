@@ -68,9 +68,11 @@ namespace GraphClasses {
 			void addEdge(const DataType startNode, const DataType neighborNode, const WeightType edgeWeight); // for weighted graphs
 			void addEdge(const DataType startNode, const Edge<DataType, WeightType>& edge);
 			void deleteEdge(const DataType startNode, const DataType endNode);
-			void deleteNode(const DataType nodeToDelete); // TODO
+			void deleteNode(const DataType nodeToDelete);
 			size_t getNodeCount() const;
 			size_t getEdgeCount() const;
+
+			std::unordered_set<DataType> getNodeSet() const;
 
 			double getDensity() const;
 			// ...
@@ -474,6 +476,17 @@ namespace GraphClasses {
 			count += neighbors.size();
 		}
 		return count;
+	}
+
+	template<typename DataType, typename WeightType>
+	std::unordered_set<DataType> Graph<DataType, WeightType>::getNodeSet() const {
+		std::unordered_set<DataType> nodeSet;
+
+		for (auto& [node, neighbors] : m_neighbors) {
+			nodeSet.emplace(node);
+		}
+
+		return nodeSet;
 	}
 
 	template<typename DataType, typename WeightType>
