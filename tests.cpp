@@ -256,6 +256,23 @@ void test_graph_class_member_functions() {
     assert(g1.getNodeCount() == 0);
     assert(g1.getEdgeCount() == 0);
 
+    // test member functions specific to directed graphs
+    GraphClasses::Graph<CustomClass, float> g2;
+    g2.configureDirections(GraphClasses::GraphType::Directed);
+    g2.configureWeights(GraphClasses::GraphWeights::Weighted);
+    const char* fileName2 = "testInputs/custom_float.txt";
+    g2.readFromTxt(fileName2);
+    // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
+    // std::cout << g2 << std::endl;
+    
+    assert(g2.getInDegreeOfNode(CustomClass(5, 2, 6)) == 1);
+    auto inDegrees = g2.getInDegreesOfNodes();
+    assert(inDegrees[CustomClass(1, 7, 3)] == 1 && inDegrees[CustomClass(1, 2, 3)] == 1);
+    
+    assert(g2.getOutDegreeOfNode(CustomClass(5, 2, 6)) == 2);
+    auto outDegrees = g2.getOutDegreesOfNodes();
+    assert(outDegrees[CustomClass(2, 2, 2)] == 0 && outDegrees[CustomClass(1, 2, 3)] == 1);
+
     std::cout << "SUCCESS" << std::endl;
     std::cout << "=================================================================" << std::endl << std::endl;
 }
