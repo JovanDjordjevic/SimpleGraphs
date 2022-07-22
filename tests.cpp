@@ -223,6 +223,10 @@ void test_graph_class_member_functions() {
 
     assert(g1.getNodeSet().size() == g1.getNodeCount());
 
+    assert(g1.getDegreeOfNode(3) == 4);
+    auto degrees = g1.getDegreesOfNodes();
+    assert(degrees[5] == 4 && degrees[7] == 2);
+
     g1.addNode(10);
     assert(g1.getNodeCount() == 9);
     assert(g1.getEdgeCount() == 26);

@@ -74,6 +74,9 @@ namespace GraphClasses {
 
 			std::unordered_set<DataType> getNodeSet() const;
 
+			size_t getDegreeOfNode(const DataType node) const;	// only for undirected
+			std::unordered_map<DataType, size_t> getDegreesOfNodes() const;	// only for undirected
+
 			double getDensity() const;
 			// ...
 
@@ -487,6 +490,31 @@ namespace GraphClasses {
 		}
 
 		return nodeSet;
+	}
+
+	template<typename DataType, typename WeightType>
+	size_t Graph<DataType, WeightType>::getDegreeOfNode(const DataType node) const {
+		if (!internal::equals(m_graphType, GraphType::Undirected)) {
+			GRAPH_ERROR("Use getter fucntions for in/out degrees for directed graphs!");
+			exit(EXIT_FAILURE);
+		}
+
+		return m_neighbors.at(node).size();
+	}
+
+	template<typename DataType, typename WeightType>
+	std::unordered_map<DataType, size_t> Graph<DataType, WeightType>::getDegreesOfNodes() const {
+		if (!internal::equals(m_graphType, GraphType::Undirected)) {
+			GRAPH_ERROR("Use getter fucntions for in/out degrees for directed graphs!");
+			exit(EXIT_FAILURE);
+		}
+		
+		std::unordered_map<DataType, size_t> degrees;
+		for (auto& [node, neighbors] : m_neighbors) {
+			degrees[node] = neighbors.size();
+		}
+
+		return degrees;
 	}
 
 	template<typename DataType, typename WeightType>
