@@ -60,7 +60,7 @@ namespace GraphClasses {
 			void clearGraph();
 
 			void readFromTxt(const char* filePath);
-			void exportToTxt(const char* filePath); // TODO: export in format that SimpleGraphs can read
+			void exportToTxt(const char* filePath) const; // TODO: export in format that SimpleGraphs can read
 
 			void addNode(const DataType node);
 			void addEdge(const DataType startNode, const DataType neighborNode);    // for unweighted graphs
@@ -233,6 +233,12 @@ namespace internal {
 	greaterThan(const WeightType lhs, const WeightType rhs);
 
 	template<typename DataType, typename WeightType>
+	void exportDirectedGraph(const GraphClasses::Graph<DataType, WeightType>& g, const char* filePath);
+
+	template<typename DataType, typename WeightType>
+	void exportUndirectedGraph(const GraphClasses::Graph<DataType, WeightType>& g, const char* filePath);
+
+	template<typename DataType, typename WeightType>
 	struct EdgeComparator;
 
 	template<typename DataType, typename WeightType>
@@ -355,6 +361,21 @@ namespace GraphClasses {
 		}
 
 		file.close();
+	}
+
+	template<typename DataType, typename WeightType>
+	void Graph<DataType, WeightType>::exportToTxt(const char* filePath) const {
+		if (!isConfigured()) {
+			GRAPH_ERROR("Unconfigured graph cannot be exported!");
+			exit(EXIT_FAILURE);
+		}
+
+		if (internal::equals(m_graphType, GraphType::Directed)) {
+			internal::exportDirectedGraph(*this, filePath);
+		}
+		else {
+			internal::exportUndirectedGraph(*this, filePath);
+		}
 	}
 
 	template<typename DataType, typename WeightType>
@@ -1453,6 +1474,58 @@ namespace internal {
 	std::enable_if_t<!std::is_floating_point_v<WeightType>, bool>
 	greaterThan(const WeightType lhs, const WeightType rhs) {
 		return lhs > rhs;
+	}
+
+	template<typename DataType, typename WeightType>
+	void exportDirectedGraph(const GraphClasses::Graph<DataType, WeightType>& g, const char* filePath) {
+		std::ofstream file(filePath);
+		if (!file) {
+			GRAPH_ERROR("Invalid file!");
+			exit(EXIT_FAILURE);
+		}
+
+		auto neighborList = g.getNeighbors();
+		for (auto& [node, neighbors] : neighborList) {
+			file << node << " ";
+			for (auto& [neighbor, weight] : neighbors) {
+				file << neighbor << " ";
+				if (weight.has_value()) {
+					file << weight.value() << " ";
+				}
+			}
+			file << std::endl;
+		}
+		
+		file.close();
+	}
+
+	template<typename DataType, typename WeightType>
+	void exportUndirectedGraph(const GraphClasses::Graph<DataType, WeightType>& g, const char* filePath) {
+		std::ofstream file(filePath);
+		if (!file) {
+			GRAPH_ERROR("Invalid file!");
+			exit(EXIT_FAILURE);
+		}
+
+		// for undirected graphs, we must only write one direction of an edge, or else on next read from file the number of edges will be doubled
+		std::unordered_map<DataType, std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>>> doNotAdd;
+		auto neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : neighborList) {
+			file << node << " ";
+			for (auto& edge : neighbors) {
+				if (internal::equals(doNotAdd[node].find(edge), std::end(doNotAdd[node]))) {
+					file << edge.neighbor << " ";
+					if (edge.weight.has_value()) {
+						file << edge.weight.value() << " ";
+					}
+					doNotAdd[edge.neighbor].emplace(node, edge.weight);
+				}
+			}
+			file << std::endl;
+		}
+		
+		file.close();
 	}
 
 	template<typename DataType, typename WeightType>

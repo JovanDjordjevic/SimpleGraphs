@@ -256,6 +256,60 @@ void test_graph_class_member_functions() {
     assert(g1.getNodeCount() == 0);
     assert(g1.getEdgeCount() == 0);
 
+    // testing that export/import does not change the graph for all graph configurations
+    // testing 2 times for each configuration
+    g1.configureDirections(GraphClasses::GraphType::Undirected);
+    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    g1.readFromTxt(fileName1);
+    auto orgNodeCount = g1.getNodeCount();
+    auto orgEdgeCount = g1.getEdgeCount();
+    g1.exportToTxt("test.txt");
+    g1.clearGraph();
+    g1.readFromTxt("test.txt");
+    assert(g1.getNodeCount() == orgNodeCount && g1.getEdgeCount() == orgEdgeCount);
+    g1.clearGraph();
+    g1.readFromTxt("test.txt");
+    assert(g1.getNodeCount() == orgNodeCount && g1.getEdgeCount() == orgEdgeCount);
+
+    g1.configureDirections(GraphClasses::GraphType::Undirected);
+    g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    g1.readFromTxt(fileName1);
+    orgNodeCount = g1.getNodeCount();
+    orgEdgeCount = g1.getEdgeCount();
+    g1.exportToTxt("test.txt");
+    g1.clearGraph();
+    g1.readFromTxt("test.txt");
+    assert(g1.getNodeCount() == orgNodeCount && g1.getEdgeCount() == orgEdgeCount);
+    g1.clearGraph();
+    g1.readFromTxt("test.txt");
+    assert(g1.getNodeCount() == orgNodeCount && g1.getEdgeCount() == orgEdgeCount);
+
+    g1.configureDirections(GraphClasses::GraphType::Directed);
+    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    g1.readFromTxt(fileName1);
+    orgNodeCount = g1.getNodeCount();
+    orgEdgeCount = g1.getEdgeCount();
+    g1.exportToTxt("test.txt");
+    g1.clearGraph();
+    g1.readFromTxt("test.txt");
+    assert(g1.getNodeCount() == orgNodeCount && g1.getEdgeCount() == orgEdgeCount);
+    g1.clearGraph();
+    g1.readFromTxt("test.txt");
+    assert(g1.getNodeCount() == orgNodeCount && g1.getEdgeCount() == orgEdgeCount);
+
+    g1.configureDirections(GraphClasses::GraphType::Directed);
+    g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    g1.readFromTxt(fileName1);
+    orgNodeCount = g1.getNodeCount();
+    orgEdgeCount = g1.getEdgeCount();
+    g1.exportToTxt("test.txt");
+    g1.clearGraph();
+    g1.readFromTxt("test.txt");
+    assert(g1.getNodeCount() == orgNodeCount && g1.getEdgeCount() == orgEdgeCount);
+    g1.clearGraph();
+    g1.readFromTxt("test.txt");
+    assert(g1.getNodeCount() == orgNodeCount && g1.getEdgeCount() == orgEdgeCount);
+
     // test member functions specific to directed graphs
     GraphClasses::Graph<CustomClass, float> g2;
     g2.configureDirections(GraphClasses::GraphType::Directed);

@@ -15,4 +15,4 @@ customClass.o : CustomClass/customClass.cpp CustomClass/customClass.hpp
 
 .PHONY: clean
 clean:
-	rm *.o *.out 
+	rm *.o *.out test.txt
