@@ -148,6 +148,16 @@ void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std
     assert(ret.getEdgeCount() == expectedNumOfEdges);
 }
 
+template<typename DataType, typename WeightType>
+void test_transposeOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
+    GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::transposeOfGraph(g);
+    // std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
+    // std::cout << ret << std::endl;
+    // transpose should ahve same number of nodes and edges as the original
+    assert(ret.getNodeCount() == g.getNodeCount());
+    assert(ret.getEdgeCount() == g.getEdgeCount());
+}
+
 void test_internal_operators() {
     std::cout << "=============== test_internal_operators ===============" << std::endl;
 
@@ -381,6 +391,7 @@ void test_string_double_undirected_weighted() {
     test_intersectGraphs(g1, g2);
     std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     test_getSubgraphFromNodes(g1, someNodes, 4, 6);
+    // transposing makes no sense for undirected graphs and is not tested here
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "======================================================================" << std::endl << std::endl;
@@ -434,6 +445,7 @@ void test_int_int_undirected_unweighted() {
     test_intersectGraphs(g1, g2);
     std::unordered_set<int> someNodes{2, 5, 3, 7};
     test_getSubgraphFromNodes(g1, someNodes, 4, 4);
+    // transposing makes no sense for undirected graphs and is not tested here
     
     std::cout << "SUCCESS" << std::endl;
     std::cout << "==================================================================" << std::endl << std::endl;
@@ -488,6 +500,7 @@ void test_custom_float_directed_weighted() {
     test_intersectGraphs(g1, g2);
     std::unordered_set<CustomClass> someNodes{startNode, CustomClass(4, 5, 6), endNode};
     test_getSubgraphFromNodes(g1, someNodes, 3, 1);
+    test_transposeOfGraph(g1);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "===================================================================" << std::endl << std::endl;
@@ -551,6 +564,7 @@ void test_char_ull_directed_unweighted() {
     test_intersectGraphs(g1, g2);
     std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
     test_getSubgraphFromNodes(g1, someNodes, 6, 6);
+    test_transposeOfGraph(g1);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "=================================================================" << std::endl << std::endl;

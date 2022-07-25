@@ -107,7 +107,9 @@ namespace GraphUtility {
 
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> getSubgraphFromNodes(const GraphClasses::Graph<DataType, WeightType>& g, const std::unordered_set<DataType>& nodes);
-
+	
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> transposeOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
 	// ...
 } // namespace GraphUtility
 
@@ -746,6 +748,37 @@ namespace GraphUtility {
 
 		return newGraph;
 	}
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> transposeOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Undirected)) {
+			GRAPH_ERROR("Transposing makes no sense for undirected graphs!");
+			exit(EXIT_FAILURE);
+		}
+
+		GraphClasses::Graph<DataType, WeightType> newGraph;
+
+		newGraph.configureDirections(g.getGraphType());
+		newGraph.configureWeights(g.getGraphWeights());
+
+		auto neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : neighborList) {
+			// needed so that isolated nodes will remain in the transposed graph
+			newGraph.addNode(node);
+			for (auto& [neighbor, weight] : neighbors) {
+				if (internal::equals(newGraph.getGraphWeights(), GraphClasses::GraphWeights::Weighted)) {
+					newGraph.addEdge(neighbor, node, weight.value());
+				}
+				else {
+					newGraph.addEdge(neighbor, node);
+				}
+			}
+		}
+
+		return newGraph;
+	}
+
 } // namespace GraphUtility
 
 
