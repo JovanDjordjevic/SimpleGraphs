@@ -110,6 +110,9 @@ namespace GraphUtility {
 	
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> transposeOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> complementOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
 	// ...
 } // namespace GraphUtility
 
@@ -783,6 +786,38 @@ namespace GraphUtility {
 						newGraph.addEdge(node, neighbor);
 					}
 				}
+			}
+		}
+
+		return newGraph;
+	}
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> complementOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
+		if (internal::equals(g.getGraphWeights(), GraphClasses::GraphWeights::Weighted)) {
+			GRAPH_ERROR("Finding complement of weighted graph not supported!");
+			exit(EXIT_FAILURE);
+		}
+
+		GraphClasses::Graph<DataType, WeightType> newGraph;
+
+		newGraph.configureDirections(g.getGraphType());
+		newGraph.configureWeights(g.getGraphWeights());
+
+		auto nodeSet = g.getNodeSet();
+
+		for (auto& startNode : nodeSet) {
+			for (auto& endNode : nodeSet) {
+				if (!internal::equals(startNode, endNode)) {
+					newGraph.addEdge(startNode, endNode);
+				}
+			}
+		}
+
+		auto neighborList = g.getNeighbors();
+		for (auto& [node, neighbors] : neighborList) {
+			for(auto& [neighbor, weight] : neighbors) {
+				newGraph.deleteEdge(node, neighbor);
 			}
 		}
 

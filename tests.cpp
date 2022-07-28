@@ -158,6 +158,21 @@ void test_transposeOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
     assert(ret.getEdgeCount() == g.getEdgeCount());
 }
 
+template<typename DataType, typename WeightType>
+void test_complementOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
+    GraphClasses::Graph<DataType, WeightType> g_compl = GraphUtility::complementOfGraph(g);
+    
+    auto orgNodeCount = g.getNodeCount();
+    auto orgEdgeCount = g.getEdgeCount();
+
+    assert(g_compl.getNodeCount() == orgNodeCount);
+    assert(g_compl.getEdgeCount() == (orgNodeCount * (orgNodeCount - 1)) - orgEdgeCount);
+
+    GraphClasses::Graph<DataType, WeightType> g_compl_compl = GraphUtility::complementOfGraph(g_compl);
+    assert(g_compl_compl.getNodeCount() == orgNodeCount);
+    assert(g_compl_compl.getEdgeCount() == orgEdgeCount);
+}
+
 void test_internal_operators() {
     std::cout << "=============== test_internal_operators ===============" << std::endl;
 
@@ -395,6 +410,7 @@ void test_string_double_undirected_weighted() {
     std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     test_getSubgraphFromNodes(g1, someNodes, 4, 6);
     // transposing makes no sense for undirected graphs and is not tested here
+    // complement of weighted graps is not supported and is not tested here
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "======================================================================" << std::endl << std::endl;
@@ -449,6 +465,7 @@ void test_int_int_undirected_unweighted() {
     std::unordered_set<int> someNodes{2, 5, 3, 7};
     test_getSubgraphFromNodes(g1, someNodes, 4, 4);
     // transposing makes no sense for undirected graphs and is not tested here
+    test_complementOfGraph(g1);
     
     std::cout << "SUCCESS" << std::endl;
     std::cout << "==================================================================" << std::endl << std::endl;
@@ -504,6 +521,7 @@ void test_custom_float_directed_weighted() {
     std::unordered_set<CustomClass> someNodes{startNode, CustomClass(4, 5, 6), endNode};
     test_getSubgraphFromNodes(g1, someNodes, 3, 1);
     test_transposeOfGraph(g1);
+    // complement of weighted graps is not supported and is not tested here
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "===================================================================" << std::endl << std::endl;
@@ -568,6 +586,7 @@ void test_char_ull_directed_unweighted() {
     std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
     test_getSubgraphFromNodes(g1, someNodes, 6, 6);
     test_transposeOfGraph(g1);
+    test_complementOfGraph(g1);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "=================================================================" << std::endl << std::endl;
@@ -584,7 +603,31 @@ int main() {
 
     test_custom_float_directed_weighted();
 
-    test_char_ull_directed_unweighted();
+    // test_char_ull_directed_unweighted();
+
+    // GraphClasses::Graph<int, int> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Undirected);
+    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    // const char* fileName1 = "testInputs/int_int_u_u.txt";
+    // g1.readFromTxt(fileName1);
+
+    // GraphClasses::Graph<char, unsigned long long> g2;
+    // g2.configureDirections(GraphClasses::GraphType::Directed);
+    // g2.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    // const char* fileName2 = "testInputs/char_ull_d_u.txt";
+    // g2.readFromTxt(fileName2);
+
+
+    // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
+    // std::cout << g2 << std::endl;
+
+    // auto x = GraphUtility::complementOfGraph(g2);
+    // std::cout << "Node count: " << x.getNodeCount() << " Edge count: " << x.getEdgeCount() << " Density: " << x.getDensity() << std::endl;
+    // std::cout << x << std::endl;
+
+    // auto xx = GraphUtility::complementOfGraph(x);
+    // std::cout << "Node count: " << xx.getNodeCount() << " Edge count: " << xx.getEdgeCount() << " Density: " << xx.getDensity() << std::endl;
+    // std::cout << xx << std::endl;
 
     return 0;
 }
