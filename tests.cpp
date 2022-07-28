@@ -242,7 +242,9 @@ void test_graph_class_member_functions() {
     assert(g1.getEdgeCount() == 26);
 
     g1.addEdge(10, 6, 2);
+    g1.addEdge(6, 10, 2);
     g1.addEdge(10, 2, 15);
+    g1.addEdge(2, 10, 15);
     assert(g1.getNodeCount() == 9);
     assert(g1.getEdgeCount() == 30);
 
@@ -259,6 +261,7 @@ void test_graph_class_member_functions() {
     assert(g1.getEdgeCount() == 21);
 
     g1.addEdge(1, 44, 2);
+    g1.addEdge(44, 1, 2);
     assert(g1.getNodeCount() == 10);
     assert(g1.getEdgeCount() == 23);
 
@@ -477,9 +480,9 @@ void test_custom_float_directed_weighted() {
     // bridges without start not supported for directed graphs
     test_findBridges_with_start(g1, startNode, 2);
         // removing edge before topsort testing because this example graph is not acyclic
-        g1.deleteEdge(CustomClass(5,2,6), startNode);
+        g1.deleteEdge(CustomClass(5, 2, 6), startNode);
     test_topsortKhan(g1, startNode, endNode);
-        g1.addEdge(CustomClass(5,2,6), startNode, 124.5f);
+        g1.addEdge(CustomClass(5, 2, 6), startNode, 124.5f);
     // MCST algorithms not supported for directed graphs
     // tarjan alg without start not supported for directed graphs
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);

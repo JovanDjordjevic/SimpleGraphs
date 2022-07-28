@@ -353,11 +353,21 @@ namespace GraphClasses {
 
 			if (internal::equals(m_graphWeights, GraphWeights::Weighted)) {
 				while (lineStream >> neighbor >> weight) {
-					addEdge(node, neighbor, weight);
+					if (internal::equals(m_graphType, GraphType::Directed)) {
+						addEdge(node, neighbor, weight);
+					} else { // undirected
+						addEdge(node, neighbor, weight);
+						addEdge(neighbor, node, weight);
+					}
 				}
 			} else { // unweighted
 				while (lineStream >> neighbor) {
-					addEdge(node, neighbor);
+					if (internal::equals(m_graphType, GraphType::Directed)) {
+						addEdge(node, neighbor);
+					} else { // undirected
+						addEdge(node, neighbor);
+						addEdge(neighbor, node);
+					}
 				}
 			}
 		}
@@ -395,12 +405,7 @@ namespace GraphClasses {
 		// this line is neccessary in case neighbor node is only mentioned as neighbor of another node
 		addNode(neighborNode); 
 
-		if (internal::equals(m_graphType, GraphType::Directed)) {
-			m_neighbors[startNode].emplace_back(neighborNode);
-		} else { // undirected
-			m_neighbors[startNode].emplace_back(neighborNode);
-			m_neighbors[neighborNode].emplace_back(startNode);
-		}
+		m_neighbors[startNode].emplace_back(neighborNode);
 	}
 
 	template<typename DataType, typename WeightType>
@@ -413,12 +418,7 @@ namespace GraphClasses {
 		// this line is neccessary in case neighbor node is only mentioned as neighbor of another node
 		addNode(neighborNode); 
 
-		if (internal::equals(m_graphType, GraphType::Directed)) {
-			m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
-		} else { // undirected
-			m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
-			m_neighbors[neighborNode].emplace_back(startNode, edgeWeight);
-		}
+		m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
 	}
 
 	template<typename DataType, typename WeightType>
@@ -768,10 +768,20 @@ namespace GraphUtility {
 			newGraph.addNode(node);
 			for (auto& [neighbor, weight] : neighbors) {
 				if (internal::equals(newGraph.getGraphWeights(), GraphClasses::GraphWeights::Weighted)) {
-					newGraph.addEdge(neighbor, node, weight.value());
+					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Directed)) {
+						newGraph.addEdge(neighbor, node, weight.value());
+					} else { // undirected
+						newGraph.addEdge(neighbor, node, weight.value());
+						newGraph.addEdge(node, neighbor, weight.value());
+					}
 				}
 				else {
-					newGraph.addEdge(neighbor, node);
+					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Directed)) {
+						newGraph.addEdge(neighbor, node);
+					} else { // undirected
+						newGraph.addEdge(neighbor, node);
+						newGraph.addEdge(node, neighbor);
+					}
 				}
 			}
 		}
