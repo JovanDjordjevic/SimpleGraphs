@@ -111,6 +111,14 @@ namespace GraphUtility {
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> transposeOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
 
+	// constructs unweighted graph
+	template<typename DataType>
+	GraphClasses::Graph<DataType> constructCompleteGraphFromNodes(const std::unordered_set<DataType>& nodes, const GraphClasses::GraphType graphType);
+
+	// cosntructs weighted graph
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> constructCompleteGraphFromNodes(const std::unordered_set<DataType>& nodes, const GraphClasses::GraphType graphType, const WeightType defaultWeight);
+
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> complementOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
 	// ...
@@ -785,6 +793,42 @@ namespace GraphUtility {
 						newGraph.addEdge(neighbor, node);
 						newGraph.addEdge(node, neighbor);
 					}
+				}
+			}
+		}
+
+		return newGraph;
+	}
+
+	template<typename DataType>
+	GraphClasses::Graph<DataType> constructCompleteGraphFromNodes(const std::unordered_set<DataType>& nodes, const GraphClasses::GraphType graphType) {
+		GraphClasses::Graph<DataType> newGraph;
+
+		newGraph.configureDirections(graphType);
+		newGraph.configureWeights(GraphClasses::GraphWeights::Unweighted);
+
+		for (auto& startNode : nodes) {
+			for (auto& endNode : nodes) {
+				if (!internal::equals(startNode, endNode)) {
+					newGraph.addEdge(startNode, endNode);
+				}
+			}
+		}
+
+		return newGraph;
+	}
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> constructCompleteGraphFromNodes(const std::unordered_set<DataType>& nodes, const GraphClasses::GraphType graphType, const WeightType defaultWeight) {
+		GraphClasses::Graph<DataType, WeightType> newGraph;
+
+		newGraph.configureDirections(graphType);
+		newGraph.configureWeights(GraphClasses::GraphWeights::Weighted);
+
+		for (auto& startNode : nodes) {
+			for (auto& endNode : nodes) {
+				if (!internal::equals(startNode, endNode)) {
+					newGraph.addEdge(startNode, endNode, defaultWeight);
 				}
 			}
 		}
