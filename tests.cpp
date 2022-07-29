@@ -105,7 +105,6 @@ void test_findStronglyConnectedComponentsTarjan_with_start(GraphClasses::Graph<D
 
 template<typename DataType, typename WeightType>
 void test_findWeaklyConnectedComponents(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
-    assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
     auto ret = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfComponents);
 }
@@ -471,7 +470,7 @@ void test_custom_float_directed_weighted() {
     // MCST algorithms not supported for directed graphs
     // tarjan alg without start not supported for directed graphs
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
-    // weakly connected components currently not supported for directed graphs
+    test_findWeaklyConnectedComponents(g1, 1);
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -534,7 +533,7 @@ void test_char_ull_directed_unweighted() {
     // MCST algorithms not supported for directed graphs
     // tarjan alg without start not supported for directed graphs
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
-    // weakly connected components currently not supported for directed graphs
+    test_findWeaklyConnectedComponents(g1, 1);
 
     std::cout << "SUCCESS" << std::endl;
 

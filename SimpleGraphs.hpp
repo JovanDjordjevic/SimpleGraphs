@@ -187,8 +187,6 @@ namespace GraphAlgorithms {
 	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
-	// NOTE: currently only works for undirected graphs
-	// TODO: implement a funciton that also works for directed graphs
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findWeaklyConnectedComponents(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
@@ -1394,14 +1392,18 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findWeaklyConnectedComponents(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
-			GRAPH_ERROR("Finding weakly connected components in directed graphs currently not supported!");
-			exit(EXIT_FAILURE);
+		GraphClasses::Graph<DataType, WeightType> gCopy = g;
+		auto neighborList = gCopy.getNeighbors();
+		
+		if (internal::equals(gCopy.getGraphType(), GraphClasses::GraphType::Directed)) {
+			for (auto& [node, neighbors] : neighborList) {
+				for (auto& [neighbor, weight] : neighbors) {
+						gCopy.addEdge(neighbor, GraphClasses::Edge(node, weight));
+				}
+			}
 		}
 
 		std::unordered_map<DataType, bool> visited;
-
-		auto neighborList = g.getNeighbors();
 
 		for (auto& [node, neighbor] : neighborList) {
 			visited[node] = false;
@@ -1411,7 +1413,7 @@ namespace GraphAlgorithms {
 
 		for (auto& [node, neighbor] : neighborList) {
 			if (!visited[node]) {
-				auto dfsSearchTree = GraphAlgorithms::dfs(g, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+				auto dfsSearchTree = GraphAlgorithms::dfs(gCopy, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 				std::unordered_set<DataType> component;
 				for (auto& dfsNode : dfsSearchTree) {
 					visited[dfsNode] = true;
