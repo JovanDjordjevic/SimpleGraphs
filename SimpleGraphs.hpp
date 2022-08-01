@@ -204,6 +204,10 @@ namespace GraphAlgorithms {
 	std::vector<std::unordered_set<DataType>> findWeaklyConnectedComponents(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
+	template<typename DataType, typename WeightType>
+	std::unordered_set<DataType> findIsolatedNodes(const GraphClasses::Graph<DataType, WeightType>& g,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout); 
+
 	// TODO:
 	// cycles
 	// coloring
@@ -1559,6 +1563,48 @@ namespace GraphAlgorithms {
 
 		return weaklyConnectedComponents;
 	}
+
+	template<typename DataType, typename WeightType>
+	std::unordered_set<DataType> findIsolatedNodes(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		std::unordered_set<DataType> isolatedNodes;
+
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Undirected)) {
+			auto degrees = g.getDegreesOfNodes();
+
+			for (auto& [node, degree] : degrees) {
+				if (internal::equals(degree, static_cast<size_t>(0))) {
+					isolatedNodes.emplace(node);
+				}
+			}
+		}
+		else { // directed
+			auto inDegrees = g.getInDegreesOfNodes();
+			auto outDegrees = g.getOutDegreesOfNodes();
+			auto nodeSet = g.getNodeSet();
+
+			for (auto& node : nodeSet) {
+				if (internal::equals(inDegrees[node], static_cast<size_t>(0)) && internal::equals(outDegrees[node], static_cast<size_t>(0))) {
+					isolatedNodes.emplace(node);
+				}
+			}
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			if (internal::equals(isolatedNodes.size(), static_cast<size_t>(0))) {
+				out << "Graph contains no isolated nodes " << std::endl;
+			}
+			else {
+				out << "Found " << isolatedNodes.size() << " isolated nodes: " << std::endl;
+				for (auto& node : isolatedNodes) {
+						out << "[" << node << "] ";
+				}
+				out << std::endl;
+			}
+		}
+
+		return isolatedNodes;
+	}
+
 } // namespace GraphAlgorithms
 
 

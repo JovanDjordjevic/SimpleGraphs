@@ -110,6 +110,12 @@ void test_findWeaklyConnectedComponents(GraphClasses::Graph<DataType, WeightType
 }
 
 template<typename DataType, typename WeightType>
+void test_findIsolatedNodes(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfIsolatedNodes) {
+    auto ret = GraphAlgorithms::findIsolatedNodes(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfIsolatedNodes);
+}
+
+template<typename DataType, typename WeightType>
 void test_mergeGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphClasses::Graph<DataType, WeightType> &g2) {
     assert(g1.getGraphType() == g2.getGraphType());
     assert(g1.getGraphWeights() == g2.getGraphWeights());
@@ -404,6 +410,7 @@ void test_string_double_undirected_weighted() {
     test_findStronglyConnectedComponentsTarjan_without_start(g1, 1);
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 1); //should be same as without start for undirected
     test_findWeaklyConnectedComponents(g1, 1);
+    test_findIsolatedNodes(g1, 0);
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -462,6 +469,7 @@ void test_int_int_undirected_unweighted() {
     test_findStronglyConnectedComponentsTarjan_without_start(g1, 1);
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 1);
     test_findWeaklyConnectedComponents(g1, 1);
+    test_findIsolatedNodes(g1, 0);
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -519,6 +527,7 @@ void test_custom_float_directed_weighted() {
     // tarjan alg without start not supported for directed graphs
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
     test_findWeaklyConnectedComponents(g1, 1);
+    test_findIsolatedNodes(g1, 0);
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -585,6 +594,7 @@ void test_char_ull_directed_unweighted() {
     // tarjan alg without start not supported for directed graphs
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
     test_findWeaklyConnectedComponents(g1, 1);
+    test_findIsolatedNodes(g1, 0);
 
     std::cout << "SUCCESS" << std::endl;
 
