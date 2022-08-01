@@ -107,7 +107,20 @@ namespace GraphUtility {
 
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> getSubgraphFromNodes(const GraphClasses::Graph<DataType, WeightType>& g, const std::unordered_set<DataType>& nodes);
+	
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> transposeOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
 
+	// constructs unweighted graph
+	template<typename DataType>
+	GraphClasses::Graph<DataType> constructCompleteGraphFromNodes(const std::unordered_set<DataType>& nodes, const GraphClasses::GraphType graphType);
+
+	// cosntructs weighted graph
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> constructCompleteGraphFromNodes(const std::unordered_set<DataType>& nodes, const GraphClasses::GraphType graphType, const WeightType defaultWeight);
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> complementOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
 	// ...
 } // namespace GraphUtility
 
@@ -349,11 +362,21 @@ namespace GraphClasses {
 
 			if (internal::equals(m_graphWeights, GraphWeights::Weighted)) {
 				while (lineStream >> neighbor >> weight) {
-					addEdge(node, neighbor, weight);
+					if (internal::equals(m_graphType, GraphType::Directed)) {
+						addEdge(node, neighbor, weight);
+					} else { // undirected
+						addEdge(node, neighbor, weight);
+						addEdge(neighbor, node, weight);
+					}
 				}
 			} else { // unweighted
 				while (lineStream >> neighbor) {
-					addEdge(node, neighbor);
+					if (internal::equals(m_graphType, GraphType::Directed)) {
+						addEdge(node, neighbor);
+					} else { // undirected
+						addEdge(node, neighbor);
+						addEdge(neighbor, node);
+					}
 				}
 			}
 		}
@@ -391,12 +414,7 @@ namespace GraphClasses {
 		// this line is neccessary in case neighbor node is only mentioned as neighbor of another node
 		addNode(neighborNode); 
 
-		if (internal::equals(m_graphType, GraphType::Directed)) {
-			m_neighbors[startNode].emplace_back(neighborNode);
-		} else { // undirected
-			m_neighbors[startNode].emplace_back(neighborNode);
-			m_neighbors[neighborNode].emplace_back(startNode);
-		}
+		m_neighbors[startNode].emplace_back(neighborNode);
 	}
 
 	template<typename DataType, typename WeightType>
@@ -409,12 +427,7 @@ namespace GraphClasses {
 		// this line is neccessary in case neighbor node is only mentioned as neighbor of another node
 		addNode(neighborNode); 
 
-		if (internal::equals(m_graphType, GraphType::Directed)) {
-			m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
-		} else { // undirected
-			m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
-			m_neighbors[neighborNode].emplace_back(startNode, edgeWeight);
-		}
+		m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
 	}
 
 	template<typename DataType, typename WeightType>
@@ -744,6 +757,115 @@ namespace GraphUtility {
 
 		return newGraph;
 	}
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> transposeOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Undirected)) {
+			GRAPH_ERROR("Transposing makes no sense for undirected graphs!");
+			exit(EXIT_FAILURE);
+		}
+
+		GraphClasses::Graph<DataType, WeightType> newGraph;
+
+		newGraph.configureDirections(g.getGraphType());
+		newGraph.configureWeights(g.getGraphWeights());
+
+		auto neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : neighborList) {
+			// needed so that isolated nodes will remain in the transposed graph
+			newGraph.addNode(node);
+			for (auto& [neighbor, weight] : neighbors) {
+				if (internal::equals(newGraph.getGraphWeights(), GraphClasses::GraphWeights::Weighted)) {
+					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Directed)) {
+						newGraph.addEdge(neighbor, node, weight.value());
+					} else { // undirected
+						newGraph.addEdge(neighbor, node, weight.value());
+						newGraph.addEdge(node, neighbor, weight.value());
+					}
+				}
+				else {
+					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Directed)) {
+						newGraph.addEdge(neighbor, node);
+					} else { // undirected
+						newGraph.addEdge(neighbor, node);
+						newGraph.addEdge(node, neighbor);
+					}
+				}
+			}
+		}
+
+		return newGraph;
+	}
+
+	template<typename DataType>
+	GraphClasses::Graph<DataType> constructCompleteGraphFromNodes(const std::unordered_set<DataType>& nodes, const GraphClasses::GraphType graphType) {
+		GraphClasses::Graph<DataType> newGraph;
+
+		newGraph.configureDirections(graphType);
+		newGraph.configureWeights(GraphClasses::GraphWeights::Unweighted);
+
+		for (auto& startNode : nodes) {
+			for (auto& endNode : nodes) {
+				if (!internal::equals(startNode, endNode)) {
+					newGraph.addEdge(startNode, endNode);
+				}
+			}
+		}
+
+		return newGraph;
+	}
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> constructCompleteGraphFromNodes(const std::unordered_set<DataType>& nodes, const GraphClasses::GraphType graphType, const WeightType defaultWeight) {
+		GraphClasses::Graph<DataType, WeightType> newGraph;
+
+		newGraph.configureDirections(graphType);
+		newGraph.configureWeights(GraphClasses::GraphWeights::Weighted);
+
+		for (auto& startNode : nodes) {
+			for (auto& endNode : nodes) {
+				if (!internal::equals(startNode, endNode)) {
+					newGraph.addEdge(startNode, endNode, defaultWeight);
+				}
+			}
+		}
+
+		return newGraph;
+	}
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> complementOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
+		if (internal::equals(g.getGraphWeights(), GraphClasses::GraphWeights::Weighted)) {
+			GRAPH_ERROR("Finding complement of weighted graph not supported!");
+			exit(EXIT_FAILURE);
+		}
+
+		GraphClasses::Graph<DataType, WeightType> newGraph;
+
+		newGraph.configureDirections(g.getGraphType());
+		newGraph.configureWeights(g.getGraphWeights());
+
+		auto nodeSet = g.getNodeSet();
+
+		for (auto& startNode : nodeSet) {
+			for (auto& endNode : nodeSet) {
+				if (!internal::equals(startNode, endNode)) {
+					newGraph.addEdge(startNode, endNode);
+				}
+			}
+		}
+
+		auto neighborList = g.getNeighbors();
+		for (auto& [node, neighbors] : neighborList) {
+			for(auto& [neighbor, weight] : neighbors) {
+				newGraph.deleteEdge(node, neighbor);
+			}
+		}
+
+		return newGraph;
+	}
+
 } // namespace GraphUtility
 
 

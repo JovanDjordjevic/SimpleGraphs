@@ -147,6 +147,45 @@ void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std
     assert(ret.getEdgeCount() == expectedNumOfEdges);
 }
 
+template<typename DataType, typename WeightType>
+void test_transposeOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
+    GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::transposeOfGraph(g);
+    // std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
+    // std::cout << ret << std::endl;
+    // transpose should ahve same number of nodes and edges as the original
+    assert(ret.getNodeCount() == g.getNodeCount());
+    assert(ret.getEdgeCount() == g.getEdgeCount());
+}
+
+template<typename DataType>
+void test_constructCompleteGraphFromNodes_without_default_weight(std::unordered_set<DataType>& nodes, GraphClasses::GraphType graphType) {
+    GraphClasses::Graph<DataType> ret = GraphUtility::constructCompleteGraphFromNodes(nodes, graphType);
+    assert(ret.getNodeCount() == nodes.size());
+    assert(ret.getEdgeCount() == (nodes.size() * (nodes.size() - 1)));
+}
+
+template<typename DataType, typename WeightType>
+void test_constructCompleteGraphFromNodes_with_default_weight(std::unordered_set<DataType>& nodes, GraphClasses::GraphType graphType, WeightType defaultWeight) {
+    GraphClasses::Graph<DataType> ret = GraphUtility::constructCompleteGraphFromNodes(nodes, graphType, defaultWeight);
+    assert(ret.getNodeCount() == nodes.size());
+    assert(ret.getEdgeCount() == (nodes.size() * (nodes.size() - 1)));
+}
+
+template<typename DataType, typename WeightType>
+void test_complementOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
+    GraphClasses::Graph<DataType, WeightType> g_compl = GraphUtility::complementOfGraph(g);
+    
+    auto orgNodeCount = g.getNodeCount();
+    auto orgEdgeCount = g.getEdgeCount();
+
+    assert(g_compl.getNodeCount() == orgNodeCount);
+    assert(g_compl.getEdgeCount() == (orgNodeCount * (orgNodeCount - 1)) - orgEdgeCount);
+
+    GraphClasses::Graph<DataType, WeightType> g_compl_compl = GraphUtility::complementOfGraph(g_compl);
+    assert(g_compl_compl.getNodeCount() == orgNodeCount);
+    assert(g_compl_compl.getEdgeCount() == orgEdgeCount);
+}
+
 void test_internal_operators() {
     std::cout << "=============== test_internal_operators ===============" << std::endl;
 
@@ -231,7 +270,9 @@ void test_graph_class_member_functions() {
     assert(g1.getEdgeCount() == 26);
 
     g1.addEdge(10, 6, 2);
+    g1.addEdge(6, 10, 2);
     g1.addEdge(10, 2, 15);
+    g1.addEdge(2, 10, 15);
     assert(g1.getNodeCount() == 9);
     assert(g1.getEdgeCount() == 30);
 
@@ -248,6 +289,7 @@ void test_graph_class_member_functions() {
     assert(g1.getEdgeCount() == 21);
 
     g1.addEdge(1, 44, 2);
+    g1.addEdge(44, 1, 2);
     assert(g1.getNodeCount() == 10);
     assert(g1.getEdgeCount() == 23);
 
@@ -380,6 +422,9 @@ void test_string_double_undirected_weighted() {
     test_intersectGraphs(g1, g2);
     std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     test_getSubgraphFromNodes(g1, someNodes, 4, 6);
+    // transposing makes no sense for undirected graphs and is not tested here
+    test_constructCompleteGraphFromNodes_with_default_weight(someNodes, g1.getGraphType(), 1);
+    // complement of weighted graps is not supported and is not tested here
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "======================================================================" << std::endl << std::endl;
@@ -433,6 +478,9 @@ void test_int_int_undirected_unweighted() {
     test_intersectGraphs(g1, g2);
     std::unordered_set<int> someNodes{2, 5, 3, 7};
     test_getSubgraphFromNodes(g1, someNodes, 4, 4);
+    // transposing makes no sense for undirected graphs and is not tested here
+    test_constructCompleteGraphFromNodes_without_default_weight(someNodes, g1.getGraphType());
+    test_complementOfGraph(g1);
     
     std::cout << "SUCCESS" << std::endl;
     std::cout << "==================================================================" << std::endl << std::endl;
@@ -464,9 +512,9 @@ void test_custom_float_directed_weighted() {
     // bridges without start not supported for directed graphs
     test_findBridges_with_start(g1, startNode, 2);
         // removing edge before topsort testing because this example graph is not acyclic
-        g1.deleteEdge(CustomClass(5,2,6), startNode);
+        g1.deleteEdge(CustomClass(5, 2, 6), startNode);
     test_topsortKhan(g1, startNode, endNode);
-        g1.addEdge(CustomClass(5,2,6), startNode, 124.5f);
+        g1.addEdge(CustomClass(5, 2, 6), startNode, 124.5f);
     // MCST algorithms not supported for directed graphs
     // tarjan alg without start not supported for directed graphs
     test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
@@ -487,6 +535,9 @@ void test_custom_float_directed_weighted() {
     test_intersectGraphs(g1, g2);
     std::unordered_set<CustomClass> someNodes{startNode, CustomClass(4, 5, 6), endNode};
     test_getSubgraphFromNodes(g1, someNodes, 3, 1);
+    test_transposeOfGraph(g1);
+    test_constructCompleteGraphFromNodes_with_default_weight(someNodes, g1.getGraphType(), 1);
+    // complement of weighted graps is not supported and is not tested here
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "===================================================================" << std::endl << std::endl;
@@ -550,6 +601,9 @@ void test_char_ull_directed_unweighted() {
     test_intersectGraphs(g1, g2);
     std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
     test_getSubgraphFromNodes(g1, someNodes, 6, 6);
+    test_transposeOfGraph(g1);
+    test_constructCompleteGraphFromNodes_without_default_weight(someNodes, g1.getGraphType());
+    test_complementOfGraph(g1);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "=================================================================" << std::endl << std::endl;
