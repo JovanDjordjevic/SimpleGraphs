@@ -131,7 +131,11 @@ namespace GraphAlgorithms {
 	};
 
 	template<typename DataType, typename WeightType>
-	std::vector<DataType> dfs(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
+	std::vector<DataType> depthFirstTraverse(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+	template<typename DataType, typename WeightType>
+	std::pair<bool, std::vector<DataType>> depthFirstSearch(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const DataType nodeToFind,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
@@ -875,9 +879,9 @@ namespace GraphUtility {
 
 namespace GraphAlgorithms {
 	template<typename DataType, typename WeightType>
-	std::vector<DataType> dfs(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
+	std::vector<DataType> depthFirstTraverse(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		std::unordered_map<DataType, bool> visited;
-		std::vector<DataType> dfsSearchTree;
+		std::vector<DataType> traversalOrder;
 
 		auto neighborList = g.getNeighbors();
 
@@ -894,7 +898,7 @@ namespace GraphAlgorithms {
 
 			if (!visited[currentNode]) {
 				visited[currentNode] = true;
-				dfsSearchTree.emplace_back(currentNode);
+				traversalOrder.emplace_back(currentNode);
 			}
 
 			auto it = std::cbegin(neighborList[currentNode]);
@@ -908,15 +912,63 @@ namespace GraphAlgorithms {
 		}
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
-			out << "Order of DFS traversal:\n\t";
-			for (auto& node : dfsSearchTree) {
+			out << "Order of depth first traversal:\n\t";
+			for (auto& node : traversalOrder) {
 				out << "[" << node << "] ";
 			}
 			out << std::endl;
 		}
 
-		return dfsSearchTree;
+		return traversalOrder;
 	}
+
+	template<typename DataType, typename WeightType>
+	std::pair<bool, std::vector<DataType>> depthFirstSearch(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const DataType nodeToFind, const AlgorithmBehavior behavior, std::ostream& out) {
+		std::unordered_map<DataType, bool> visited;
+		std::vector<DataType> traversalOrder;
+
+		auto neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : neighborList) {
+			visited[node] = false;
+		}
+
+		std::stack<DataType> stack;
+		stack.emplace(startNode);
+
+		while (!stack.empty()) {
+			DataType currentNode = stack.top();
+			stack.pop();
+
+			if (!visited[currentNode]) {
+				visited[currentNode] = true;
+				traversalOrder.emplace_back(currentNode);
+			}
+
+			if (internal::equals(currentNode, nodeToFind)) {
+				if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+					out << "Node [" << nodeToFind << "] found" << std::endl;
+				}
+				return std::make_pair(true, traversalOrder);
+			}
+
+			auto it = std::cbegin(neighborList[currentNode]);
+			auto end = std::cend(neighborList[currentNode]);
+			while (!internal::equals(it, end)) {
+				if (!visited[(*it).neighbor]) {
+					stack.emplace((*it).neighbor);
+				}
+				++it;
+			}
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			out << "Node [" << nodeToFind << "] not found" << std::endl;
+		}
+
+		return std::make_pair(false, traversalOrder);
+	}
+
 
 	template<typename DataType, typename WeightType>
 	std::vector<DataType> bfs(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
@@ -1539,9 +1591,9 @@ namespace GraphAlgorithms {
 
 		for (auto& [node, neighbor] : neighborList) {
 			if (!visited[node]) {
-				auto dfsSearchTree = GraphAlgorithms::dfs(gCopy, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+				auto dfTraverseOrder = GraphAlgorithms::depthFirstTraverse(gCopy, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 				std::unordered_set<DataType> component;
-				for (auto& dfsNode : dfsSearchTree) {
+				for (auto& dfsNode : dfTraverseOrder) {
 					visited[dfsNode] = true;
 					component.emplace(dfsNode);
 				}
