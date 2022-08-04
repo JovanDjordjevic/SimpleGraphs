@@ -22,9 +22,15 @@ void test_depthFirstSearch(GraphClasses::Graph<DataType, WeightType> &g, DataTyp
 }
 
 template<typename DataType, typename WeightType>
-void test_bfs(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned bfsTreeSize) {
-    auto ret = GraphAlgorithms::bfs(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+void test_breadthFirstTraverse(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned bfsTreeSize) {
+    auto ret = GraphAlgorithms::breadthFirstTraverse(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == bfsTreeSize);
+}
+
+template<typename DataType, typename WeightType>
+void test_breadthFirstSearch(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType nodeToFind, bool shouldFind) {
+    auto [ifFound, traverseOrder] = GraphAlgorithms::breadthFirstSearch(g, startNode, nodeToFind, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ifFound == shouldFind);
 }
 
 template<typename DataType, typename WeightType>
@@ -402,7 +408,9 @@ void test_string_double_undirected_weighted() {
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, std::string{"node5"}, true);
     test_depthFirstSearch(g1, startNode, std::string{"node222"}, false);
-    test_bfs(g1, startNode, g1.getNodeCount());
+    test_breadthFirstTraverse(g1, startNode, g1.getNodeCount());
+    test_breadthFirstSearch(g1, startNode, std::string{"node5"}, true);
+    test_breadthFirstSearch(g1, startNode, std::string{"node222"}, false);
     std::string endNode = "node6";
     test_dijkstra(g1, startNode, endNode, 4);
     test_bellmanFord(g1, startNode, endNode, 4);
@@ -463,7 +471,9 @@ void test_int_int_undirected_unweighted() {
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, 6, true);
     test_depthFirstSearch(g1, startNode, 222, false);
-    test_bfs(g1, startNode, g1.getNodeCount());
+    test_breadthFirstTraverse(g1, startNode, g1.getNodeCount());
+    test_breadthFirstSearch(g1, startNode, 6, true);
+    test_breadthFirstSearch(g1, startNode, 222, false);
     int endNode = 5;
     test_dijkstra(g1, startNode, endNode, 2);
     test_bellmanFord(g1, startNode, 6, 2);
@@ -522,7 +532,9 @@ void test_custom_float_directed_weighted() {
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, CustomClass(1, 7, 3), true);
     test_depthFirstSearch(g1, startNode, CustomClass(9, 9, 9), false);
-    test_bfs(g1, startNode, g1.getNodeCount());
+    test_breadthFirstTraverse(g1, startNode, g1.getNodeCount());
+    test_breadthFirstSearch(g1, startNode, CustomClass(1, 7, 3), true);
+    test_breadthFirstSearch(g1, startNode, CustomClass(9, 9, 9), false);
     CustomClass endNode = CustomClass(2, 2, 2);
     test_dijkstra(g1, startNode, endNode, 3);
     test_bellmanFord(g1, startNode, endNode, 3);
@@ -581,7 +593,9 @@ void test_char_ull_directed_unweighted() {
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, 'm', true);
     test_depthFirstSearch(g1, startNode, 'x', false);
-    test_bfs(g1, startNode, g1.getNodeCount());
+    test_breadthFirstTraverse(g1, startNode, g1.getNodeCount());
+    test_breadthFirstSearch(g1, startNode, 'm', true);
+    test_breadthFirstSearch(g1, startNode, 'x', false);
     char endNode = 'l';
     test_dijkstra(g1, startNode, endNode, 4);
     test_bellmanFord(g1, startNode, 'o', 5);

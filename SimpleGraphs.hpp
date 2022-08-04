@@ -139,7 +139,11 @@ namespace GraphAlgorithms {
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
-	std::vector<DataType> bfs(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
+	std::vector<DataType> breadthFirstTraverse(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+	template<typename DataType, typename WeightType>
+	std::pair<bool, std::vector<DataType>> breadthFirstSearch(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const DataType nodeToFind,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
@@ -969,11 +973,10 @@ namespace GraphAlgorithms {
 		return std::make_pair(false, traversalOrder);
 	}
 
-
 	template<typename DataType, typename WeightType>
-	std::vector<DataType> bfs(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
+	std::vector<DataType> breadthFirstTraverse(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		std::unordered_map<DataType, bool> visited;
-		std::vector<DataType> bfsTraversalOrder;
+		std::vector<DataType> traversalOrder;
 
 		auto neighborList = g.getNeighbors();
 
@@ -989,7 +992,7 @@ namespace GraphAlgorithms {
 			queue.pop();
 
 			if (!visited[currentNode]) {
-				bfsTraversalOrder.emplace_back(currentNode);
+				traversalOrder.emplace_back(currentNode);
 				visited[currentNode] = true;
 			}
 
@@ -1004,14 +1007,61 @@ namespace GraphAlgorithms {
 		}
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
-			out << "Order of BFS traversal:\n\t";
-			for (auto& node : bfsTraversalOrder) {
+			out << "Order of breadth first traversal:\n\t";
+			for (auto& node : traversalOrder) {
 				out << "[" << node << "] ";
 			}
 			out << std::endl;
 		}
 
-		return bfsTraversalOrder;
+		return traversalOrder;
+	}
+
+	template<typename DataType, typename WeightType>
+	std::pair<bool, std::vector<DataType>> breadthFirstSearch(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const DataType nodeToFind, const AlgorithmBehavior behavior, std::ostream& out) {
+		std::unordered_map<DataType, bool> visited;
+		std::vector<DataType> traversalOrder;
+
+		auto neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : neighborList) {
+			visited[node] = false;
+		}
+
+		std::queue<DataType> queue;
+		queue.emplace(startNode);
+
+		while (!queue.empty()) {
+			DataType currentNode = queue.front();
+			queue.pop();
+
+			if (!visited[currentNode]) {
+				traversalOrder.emplace_back(currentNode);
+				visited[currentNode] = true;
+			}
+
+			if (internal::equals(currentNode, nodeToFind)) {
+				if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+					out << "Node [" << nodeToFind << "] found" << std::endl;
+				}
+				return std::make_pair(true, traversalOrder);
+			}
+
+			auto it = std::cbegin(neighborList[currentNode]);
+			auto end = std::cend(neighborList[currentNode]);
+			while (!internal::equals(it, end)) {
+				if (!visited[(*it).neighbor]) {
+					queue.emplace((*it).neighbor);
+				}
+				++it;
+			}
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			out << "Node [" << nodeToFind << "] not found" << std::endl;
+		}
+
+		return std::make_pair(false, traversalOrder);
 	}
 
 	template<typename DataType, typename WeightType>
