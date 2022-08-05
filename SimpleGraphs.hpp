@@ -139,7 +139,7 @@ namespace GraphAlgorithms {
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
-	std::vector<DataType> dijkstra(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const DataType endNode,
+	std::pair<std::vector<DataType>, WeightType> dijkstraShortestPath(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const DataType endNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
@@ -963,7 +963,7 @@ namespace GraphAlgorithms {
 	}
 
 	template<typename DataType, typename WeightType>
-	std::vector<DataType> dijkstra(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const DataType endNode, const AlgorithmBehavior behavior, std::ostream& out) {
+	std::pair<std::vector<DataType>, WeightType> dijkstraShortestPath(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const DataType endNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		std::unordered_map<DataType, WeightType> distances;
 		std::unordered_map<DataType, bool> visited;
 		std::unordered_map<DataType, std::optional<DataType>> parents;
@@ -1041,7 +1041,7 @@ namespace GraphAlgorithms {
 			}
 		}
 
-		return path;
+		return std::make_pair(path, distances[endNode]);
 	}
 
 	template<typename DataType, typename WeightType>
