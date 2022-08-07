@@ -29,9 +29,10 @@ void test_dijkstraShortestPath(GraphClasses::Graph<DataType, WeightType> &g, Dat
 }
 
 template<typename DataType, typename WeightType>
-void test_bellmanFord(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType someEndNode, unsigned edgesOnPathToEndNode) {
-    auto ret = GraphAlgorithms::bellmanFord(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert((ret[someEndNode].size() - 1) == edgesOnPathToEndNode);
+void test_bellmanFordShortestPaths(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType someEndNode, unsigned edgesOnPathToEndNode, WeightType pathDistance) {
+    auto ret = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert((ret[someEndNode].first.size() - 1) == edgesOnPathToEndNode);
+    assert(internal::equals(ret[someEndNode].second, pathDistance));
 }
 
 template<typename DataType, typename WeightType>
@@ -398,7 +399,7 @@ void test_string_double_undirected_weighted() {
     test_bfs(g1, startNode, g1.getNodeCount());
     std::string endNode = "node6";
     test_dijkstraShortestPath(g1, startNode, endNode, 4, static_cast<double>(134.236504));
-    test_bellmanFord(g1, startNode, endNode, 4);
+    test_bellmanFordShortestPaths(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_floydWarshall(g1, startNode, endNode, 296.65);
     test_findArticulationPoints_without_start(g1, 2);
     test_findArticulationPoints_with_start(g1, startNode, 2);    //should be same as without start for undirected
@@ -457,7 +458,7 @@ void test_int_int_undirected_unweighted() {
     test_bfs(g1, startNode, g1.getNodeCount());
     int endNode = 5;
     test_dijkstraShortestPath(g1, startNode, endNode, 2, 2);
-    test_bellmanFord(g1, startNode, 6, 2);
+    test_bellmanFordShortestPaths(g1, startNode, 6, 2, 2);
     test_floydWarshall(g1, 4, 5, 2);
     test_findArticulationPoints_without_start(g1, 0);
     test_findArticulationPoints_with_start(g1, startNode, 0);
@@ -514,7 +515,7 @@ void test_custom_float_directed_weighted() {
     test_bfs(g1, startNode, g1.getNodeCount());
     CustomClass endNode = CustomClass(2, 2, 2);
     test_dijkstraShortestPath(g1, startNode, endNode, 3, 13.7f);
-    test_bellmanFord(g1, startNode, endNode, 3);
+    test_bellmanFordShortestPaths(g1, startNode, endNode, 3, 13.7f);
     test_floydWarshall(g1, startNode, endNode, 13.7f);
     // articulation points without start not supported for directed graphs
     test_findArticulationPoints_with_start(g1, startNode, 2);
@@ -571,7 +572,7 @@ void test_char_ull_directed_unweighted() {
     test_bfs(g1, startNode, g1.getNodeCount());
     char endNode = 'l';
     test_dijkstraShortestPath(g1, startNode, endNode, 4, static_cast<unsigned long long>(4));
-    test_bellmanFord(g1, startNode, 'o', 5);
+    test_bellmanFordShortestPaths(g1, startNode, 'o', 5, static_cast<unsigned long long>(5));
     test_floydWarshall(g1, 'h', 'j', static_cast<unsigned long long>(4));
     // articulation points without start not supported for directed graphs
     test_findArticulationPoints_with_start(g1, startNode, 3);

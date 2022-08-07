@@ -143,7 +143,7 @@ namespace GraphAlgorithms {
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
-	std::unordered_map<DataType, std::vector<DataType>> bellmanFord(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
+	std::unordered_map<DataType, std::pair<std::vector<DataType>, WeightType>> bellmanFordShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	// NOTE: at this time, Floyd-Warshall algorithm only returns the distances between pairs of nodes and not the paths themselves
@@ -1045,7 +1045,7 @@ namespace GraphAlgorithms {
 	}
 
 	template<typename DataType, typename WeightType>
-	std::unordered_map<DataType, std::vector<DataType>> bellmanFord(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
+	std::unordered_map<DataType, std::pair<std::vector<DataType>, WeightType>> bellmanFordShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		std::unordered_map<DataType, WeightType> distances;
 		std::unordered_map<DataType, std::optional<DataType>> parents;
 
@@ -1080,54 +1080,50 @@ namespace GraphAlgorithms {
 		// negtive cycle check
 		for (auto& [node, neighbors] : neighborsList) {
 			for (auto& [neighbor, weight] : neighbors) {
-				if (internal::lessThan(distances[node] + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
-					GRAPH_ERROR("Graph contins negative cycle");
-					exit(EXIT_FAILURE);
+				if (!internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>) &&
+					internal::lessThan(distances[node] + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
+						GRAPH_ERROR("Graph contins negative cycle");
+						exit(EXIT_FAILURE);
 				}
 			}
 		}
 
 		// path reconstruction
-		std::unordered_map<DataType, std::vector<DataType>> paths;
+		std::unordered_map<DataType, std::pair<std::vector<DataType>, WeightType>> paths;
 
 		for (auto& [node, distFromStart] : distances) {
-			paths[node] = {};
+			paths[node] = std::make_pair(std::vector<DataType>{}, distFromStart);
 
 			if (internal::equals(distFromStart, GraphClasses::MAX_WEIGHT<WeightType>) || internal::equals(node, startNode)) {
 				continue;
 			}
 
 			DataType pathNode = node;
-			paths[node].emplace_back(pathNode);
+			paths[node].first.emplace_back(pathNode);
 
 			while (true) {
 				std::optional<DataType> parent = parents[pathNode];
 				if (!parent.has_value()) {
 					break;
 				}
-				paths[node].emplace_back(parent.value());
+				paths[node].first.emplace_back(parent.value());
 				pathNode = parent.value();
 			}
 
-			std::reverse(std::begin(paths[node]), std::end(paths[node]));
+			std::reverse(std::begin(paths[node].first), std::end(paths[node].first));
 		}
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
-			for (auto& [node, path] : paths) {
-				// path to start node itself is irrelevant
-				if (internal::equals(node, startNode)) {
-					continue;
-				}
-
+			for (auto& [node, pathAndDist] : paths) {
 				// there is no path to nodes in different components
-				if (internal::equals(path.size(), static_cast<size_t>(0))) {
+				if (!internal::equals(node, startNode) && internal::equals(pathAndDist.first.size(), static_cast<size_t>(0))) {
 					out << "There is no possible path between [" << startNode << "] and [" << node << "]" << std::endl;
 					continue;
 				}
 
 				out << "Distance from [" << startNode << "] to [" << node << "] is: " << distances[node] << "\n\t Path: ";
-				auto it = std::cbegin(path);
-				auto end = std::cend(path);
+				auto it = std::cbegin(pathAndDist.first);
+				auto end = std::cend(pathAndDist.first);
 				while (!internal::equals(it, end)) {
 					out << "[" << (*it) << "] ";
 					++it;
