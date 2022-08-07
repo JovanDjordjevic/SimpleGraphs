@@ -36,8 +36,8 @@ void test_bellmanFordShortestPaths(GraphClasses::Graph<DataType, WeightType> &g,
 }
 
 template<typename DataType, typename WeightType>
-void test_floydWarshall(GraphClasses::Graph<DataType, WeightType> &g, DataType someStartNode, DataType someEndNode, WeightType distance) {
-    auto ret = GraphAlgorithms::floydWarshall(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+void test_floydWarshallAllShortestPaths(GraphClasses::Graph<DataType, WeightType> &g, DataType someStartNode, DataType someEndNode, WeightType distance) {
+    auto ret = GraphAlgorithms::floydWarshallAllShortestPaths(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(internal::equals(ret[someStartNode][someEndNode], distance));
 }
 
@@ -400,7 +400,7 @@ void test_string_double_undirected_weighted() {
     std::string endNode = "node6";
     test_dijkstraShortestPath(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_bellmanFordShortestPaths(g1, startNode, endNode, 4, static_cast<double>(134.236504));
-    test_floydWarshall(g1, startNode, endNode, 296.65);
+    test_floydWarshallAllShortestPaths(g1, startNode, endNode, 296.65);
     test_findArticulationPoints_without_start(g1, 2);
     test_findArticulationPoints_with_start(g1, startNode, 2);    //should be same as without start for undirected
     test_findBridges_without_start(g1, 2);
@@ -459,7 +459,7 @@ void test_int_int_undirected_unweighted() {
     int endNode = 5;
     test_dijkstraShortestPath(g1, startNode, endNode, 2, 2);
     test_bellmanFordShortestPaths(g1, startNode, 6, 2, 2);
-    test_floydWarshall(g1, 4, 5, 2);
+    test_floydWarshallAllShortestPaths(g1, 4, 5, 2);
     test_findArticulationPoints_without_start(g1, 0);
     test_findArticulationPoints_with_start(g1, startNode, 0);
     test_findBridges_without_start(g1, 0);
@@ -516,7 +516,7 @@ void test_custom_float_directed_weighted() {
     CustomClass endNode = CustomClass(2, 2, 2);
     test_dijkstraShortestPath(g1, startNode, endNode, 3, 13.7f);
     test_bellmanFordShortestPaths(g1, startNode, endNode, 3, 13.7f);
-    test_floydWarshall(g1, startNode, endNode, 13.7f);
+    test_floydWarshallAllShortestPaths(g1, startNode, endNode, 13.7f);
     // articulation points without start not supported for directed graphs
     test_findArticulationPoints_with_start(g1, startNode, 2);
     // bridges without start not supported for directed graphs
@@ -573,7 +573,7 @@ void test_char_ull_directed_unweighted() {
     char endNode = 'l';
     test_dijkstraShortestPath(g1, startNode, endNode, 4, static_cast<unsigned long long>(4));
     test_bellmanFordShortestPaths(g1, startNode, 'o', 5, static_cast<unsigned long long>(5));
-    test_floydWarshall(g1, 'h', 'j', static_cast<unsigned long long>(4));
+    test_floydWarshallAllShortestPaths(g1, 'h', 'j', static_cast<unsigned long long>(4));
     // articulation points without start not supported for directed graphs
     test_findArticulationPoints_with_start(g1, startNode, 3);
     // bridges without start not supported for directed graphs

@@ -147,9 +147,9 @@ namespace GraphAlgorithms {
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	// NOTE: at this time, Floyd-Warshall algorithm only returns the distances between pairs of nodes and not the paths themselves
-	// TODO: implement returning of paths
+	// Also, in the returned map, the path from any node to itself may not be correct, and is not printed if algorithm is called with AlgorithmBehavior::PrintAndReturn
 	template<typename DataType, typename WeightType>
-	std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshall(const GraphClasses::Graph<DataType, WeightType>& g,
+	std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshallAllShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	// without start node (only available for undirected graphs)
@@ -1136,7 +1136,7 @@ namespace GraphAlgorithms {
 	}
 
 	template<typename DataType, typename WeightType>
-	std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshall(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+	std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshallAllShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
 		std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> distances;
 
 		auto neighborList = g.getNeighbors();
@@ -1180,13 +1180,16 @@ namespace GraphAlgorithms {
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			for (auto& [node, neighbors] : distances) {
 				for (auto& [neighbor, distance] : neighbors) {
-					if (internal::equals(distance, GraphClasses::MAX_WEIGHT<WeightType>) || internal::equals(node, neighbor)) {
-						continue;
+					if (!internal::equals(node, neighbor)) {
+						if (internal::equals(distance, GraphClasses::MAX_WEIGHT<WeightType>)) {
+							out << "There is no possible path between [" << node << "] and [" << neighbor << "]" << std::endl;
+						}
+						else {
+							out << "Shortest distance between [" << node << "] and [" << neighbor << "] is: " << distance << std::endl;
+						}
 					}
-					out << "Shortest distance between [" << node << "] and [" << neighbor << "] is: " << distance << std::endl;
 				}
 
-				// FIXME: for string nodes, sometimes 2 new line characters are printed between groups
 				out << std::endl;
 			}
 		}
