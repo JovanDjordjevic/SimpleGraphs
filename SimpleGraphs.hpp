@@ -121,6 +121,10 @@ namespace GraphUtility {
 
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> complementOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
+	
+	// NOTE: the algorithm assumes any node is reachable from itself and the resulting graph will contain the edge from node to itself for all nodes
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> transitiveClosureOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
 	// ...
 } // namespace GraphUtility
 
@@ -878,6 +882,53 @@ namespace GraphUtility {
 		return newGraph;
 	}
 
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> transitiveClosureOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
+		GraphClasses::Graph<DataType, WeightType> closure;
+		closure.configureDirections(GraphClasses::GraphType::Directed);
+		closure.configureWeights(GraphClasses::GraphWeights::Unweighted);
+
+		auto neighborList = g.getNeighbors();
+		auto gNodeSet = g.getNodeSet();
+		std::unordered_map<DataType, std::unordered_map<DataType, bool>> reachMatrix;
+		
+		for (auto& node1 : gNodeSet) {
+			for (auto& node2 : gNodeSet) {
+				if (internal::equals(node1, node2)) {	
+					reachMatrix[node1][node2] = true;
+				}
+				else {
+					reachMatrix[node1][node2] = false;
+				}
+			}
+		}
+
+		for (auto& [node, neighbors] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors) {
+				reachMatrix[node][neighbor] = true;
+			}
+		}
+
+		for (auto& [mid, n1] : neighborList) {
+			for (auto& [start, n2] : neighborList) {
+				if (reachMatrix[start][mid]) {
+					for (auto& [end, n3] : neighborList) {
+						reachMatrix[start][end] |= reachMatrix[mid][end];
+					}
+				}
+			}
+		}
+
+		for (auto& [node1, node2List] : reachMatrix) {
+			for(auto& [node2, canReach] : node2List) {
+				if (canReach) {
+					closure.addEdge(node1, node2);
+				}
+			}
+		}
+
+		return closure;
+	}
 } // namespace GraphUtility
 
 

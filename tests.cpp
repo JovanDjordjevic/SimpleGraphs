@@ -207,6 +207,13 @@ void test_complementOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
     assert(g_compl_compl.getEdgeCount() == orgEdgeCount);
 }
 
+template<typename DataType, typename WeightType>
+void test_transitiveClosureOfGraph(GraphClasses::Graph<DataType, WeightType> &g, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges ) {
+    GraphClasses::Graph<DataType, WeightType> closure = GraphUtility::transitiveClosureOfGraph(g);
+    assert(closure.getNodeCount() == expectedNumOfNodes);
+    assert(closure.getEdgeCount() == expectedNumOfEdges);
+}
+
 void test_internal_operators() {
     std::cout << "=============== test_internal_operators ===============" << std::endl;
 
@@ -451,6 +458,8 @@ void test_string_double_undirected_weighted() {
     // transposing makes no sense for undirected graphs and is not tested here
     test_constructCompleteGraphFromNodes_with_default_weight(someNodes, g1.getGraphType(), 1);
     // complement of weighted graps is not supported and is not tested here
+    auto g1NodeCount = g1.getNodeCount();
+    test_transitiveClosureOfGraph(g1, g1NodeCount, (g1NodeCount * (g1NodeCount - 1) + g1NodeCount));
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "======================================================================" << std::endl << std::endl;
@@ -512,6 +521,8 @@ void test_int_int_undirected_unweighted() {
     // transposing makes no sense for undirected graphs and is not tested here
     test_constructCompleteGraphFromNodes_without_default_weight(someNodes, g1.getGraphType());
     test_complementOfGraph(g1);
+    auto g1NodeCount = g1.getNodeCount();
+    test_transitiveClosureOfGraph(g1, g1NodeCount, (g1NodeCount * (g1NodeCount - 1) + g1NodeCount));
     
     std::cout << "SUCCESS" << std::endl;
     std::cout << "==================================================================" << std::endl << std::endl;
@@ -574,6 +585,7 @@ void test_custom_float_directed_weighted() {
     test_transposeOfGraph(g1);
     test_constructCompleteGraphFromNodes_with_default_weight(someNodes, g1.getGraphType(), 1);
     // complement of weighted graps is not supported and is not tested here
+    test_transitiveClosureOfGraph(g1, g1.getNodeCount(), 17);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "===================================================================" << std::endl << std::endl;
@@ -645,6 +657,7 @@ void test_char_ull_directed_unweighted() {
     test_transposeOfGraph(g1);
     test_constructCompleteGraphFromNodes_without_default_weight(someNodes, g1.getGraphType());
     test_complementOfGraph(g1);
+    test_transitiveClosureOfGraph(g1, g1.getNodeCount(), 226);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "=================================================================" << std::endl << std::endl;
