@@ -125,7 +125,9 @@ namespace GraphUtility {
 	// NOTE: the algorithm assumes any node is reachable from itself and the resulting graph will contain the edge from node to itself for all nodes
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> transitiveClosureOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
-	// ...
+	
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> transitiveReductionOfGraph(const GraphClasses::Graph<DataType, WeightType>& g);
 } // namespace GraphUtility
 
 namespace GraphAlgorithms {
@@ -920,7 +922,7 @@ namespace GraphUtility {
 		}
 
 		for (auto& [node1, node2List] : reachMatrix) {
-			for(auto& [node2, canReach] : node2List) {
+			for (auto& [node2, canReach] : node2List) {
 				if (canReach) {
 					closure.addEdge(node1, node2);
 				}
@@ -928,6 +930,51 @@ namespace GraphUtility {
 		}
 
 		return closure;
+	}
+
+	template<typename DataType, typename WeightType>
+	GraphClasses::Graph<DataType, WeightType> transitiveReductionOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
+		GraphClasses::Graph<DataType, WeightType> reduction;
+		reduction.configureDirections(GraphClasses::GraphType::Directed);
+		reduction.configureWeights(GraphClasses::GraphWeights::Unweighted);
+
+		auto neighborList = g.getNeighbors();
+		auto gNodeSet = g.getNodeSet();
+		std::unordered_map<DataType, std::unordered_map<DataType, bool>> reachMatrix;
+		
+		for (auto& node1 : gNodeSet) {
+			for (auto& node2 : gNodeSet) {
+				reachMatrix[node1][node2] = false;
+			}
+		}
+
+		for (auto& [node, neighbors] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors) {
+				reachMatrix[node][neighbor] = true;
+			}
+		}
+
+		for (auto& [mid, n1] : neighborList) {
+			for (auto& [start, n2] : neighborList) {
+				if (reachMatrix[start][mid]) {
+					for (auto& [end, n3] : neighborList) {
+						if (reachMatrix[mid][end]) {
+							reachMatrix[start][end] = false;
+						}
+					}
+				}
+			}
+		}
+
+		for (auto& [node1, node2List] : reachMatrix) {
+			for (auto& [node2, canReach] : node2List) {
+				if (canReach) {
+					reduction.addEdge(node1, node2);
+				}
+			}
+		}
+
+		return reduction;
 	}
 } // namespace GraphUtility
 

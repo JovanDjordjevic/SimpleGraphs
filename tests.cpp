@@ -214,6 +214,15 @@ void test_transitiveClosureOfGraph(GraphClasses::Graph<DataType, WeightType> &g,
     assert(closure.getEdgeCount() == expectedNumOfEdges);
 }
 
+template<typename DataType, typename WeightType>
+void test_transitiveReductionOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
+    GraphClasses::Graph<DataType, WeightType> reduction = GraphUtility::transitiveReductionOfGraph(g);
+    GraphClasses::Graph<DataType, WeightType> closureOfReduction = GraphUtility::transitiveReductionOfGraph(reduction);
+    GraphClasses::Graph<DataType, WeightType> closureOfOriginal = GraphUtility::transitiveReductionOfGraph(g);
+    test_mergeGraphs(closureOfOriginal, closureOfReduction);
+    test_intersectGraphs(closureOfOriginal, closureOfReduction);
+}
+
 void test_internal_operators() {
     std::cout << "=============== test_internal_operators ===============" << std::endl;
 
@@ -460,6 +469,7 @@ void test_string_double_undirected_weighted() {
     // complement of weighted graps is not supported and is not tested here
     auto g1NodeCount = g1.getNodeCount();
     test_transitiveClosureOfGraph(g1, g1NodeCount, (g1NodeCount * (g1NodeCount - 1) + g1NodeCount));
+    test_transitiveReductionOfGraph(g1);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "======================================================================" << std::endl << std::endl;
@@ -523,6 +533,7 @@ void test_int_int_undirected_unweighted() {
     test_complementOfGraph(g1);
     auto g1NodeCount = g1.getNodeCount();
     test_transitiveClosureOfGraph(g1, g1NodeCount, (g1NodeCount * (g1NodeCount - 1) + g1NodeCount));
+    test_transitiveReductionOfGraph(g1);
     
     std::cout << "SUCCESS" << std::endl;
     std::cout << "==================================================================" << std::endl << std::endl;
@@ -586,6 +597,7 @@ void test_custom_float_directed_weighted() {
     test_constructCompleteGraphFromNodes_with_default_weight(someNodes, g1.getGraphType(), 1);
     // complement of weighted graps is not supported and is not tested here
     test_transitiveClosureOfGraph(g1, g1.getNodeCount(), 17);
+    test_transitiveReductionOfGraph(g1);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "===================================================================" << std::endl << std::endl;
@@ -658,6 +670,7 @@ void test_char_ull_directed_unweighted() {
     test_constructCompleteGraphFromNodes_without_default_weight(someNodes, g1.getGraphType());
     test_complementOfGraph(g1);
     test_transitiveClosureOfGraph(g1, g1.getNodeCount(), 226);
+    test_transitiveReductionOfGraph(g1);
 
     std::cout << "SUCCESS" << std::endl;
     std::cout << "=================================================================" << std::endl << std::endl;
