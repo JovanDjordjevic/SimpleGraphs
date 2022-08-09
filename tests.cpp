@@ -424,6 +424,8 @@ void test_string_double_undirected_weighted() {
     std::cout << "\tTesting algorithms     ";
 
     std::string startNode = "node1";
+    assert(internal::equals(g1.getEccentricityOfNode(startNode), static_cast<double>(6125.78774)));
+
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, std::string{"node5"}, true);
     test_depthFirstSearch(g1, startNode, std::string{"node222"}, false);
@@ -490,6 +492,8 @@ void test_int_int_undirected_unweighted() {
     std::cout << "\tTesting algorithms     ";
 
     int startNode = 1;
+    assert(internal::equals(g1.getEccentricityOfNode(startNode), 3));
+
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, 6, true);
     test_depthFirstSearch(g1, startNode, 222, false);
@@ -554,6 +558,8 @@ void test_custom_float_directed_weighted() {
     std::cout << "\tTesting algorithms     ";
 
     CustomClass startNode = CustomClass(1, 2, 3);
+    assert(internal::equals(g1.getEccentricityOfNode(startNode), 13.69999981f));
+
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, CustomClass(1, 7, 3), true);
     test_depthFirstSearch(g1, startNode, CustomClass(9, 9, 9), false);
@@ -617,6 +623,8 @@ void test_char_ull_directed_unweighted() {
     // ---- alg testing ----
     std::cout << "\tTesting algorithms     ";
     char startNode = 'a';
+    assert(internal::equals(g1.getEccentricityOfNode(startNode), static_cast<unsigned long long>(5)));
+
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, 'm', true);
     test_depthFirstSearch(g1, startNode, 'x', false);

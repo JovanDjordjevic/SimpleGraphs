@@ -81,6 +81,8 @@ namespace GraphClasses {
 			std::unordered_map<DataType, size_t> getOutDegreesOfNodes() const;	// only for directed
 
 			double getDensity() const;
+			// NOTE: for weighted graphs, eccentricity is calculated in terms of edge weights and not number of edges on path
+			WeightType getEccentricityOfNode(const DataType node) const;
 			// ...
 
 			GraphType getGraphType() const;
@@ -637,6 +639,21 @@ namespace GraphClasses {
 		}
 
 		return density;
+	}
+
+	template<typename DataType, typename WeightType>
+	WeightType Graph<DataType, WeightType>::getEccentricityOfNode(const DataType node) const {
+		auto shortestPaths = GraphAlgorithms::bellmanFordShortestPaths(*this, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+		
+		WeightType eccentricity = MIN_WEIGHT<WeightType>;
+
+		for (auto& [neighbor, pathData] : shortestPaths) {
+			if (internal::greaterThan(pathData.second, eccentricity)) {
+				eccentricity = pathData.second;
+			}
+		}
+
+		return eccentricity;
 	}
 
 	template<typename DataType, typename WeightType>
