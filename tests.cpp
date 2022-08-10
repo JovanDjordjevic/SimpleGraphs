@@ -685,17 +685,88 @@ void test_char_ull_directed_unweighted() {
 }
 
 int main() {
-    test_internal_operators();
+    // test_internal_operators();
 
-    test_graph_class_member_functions();
+    // test_graph_class_member_functions();
 
-    test_string_double_undirected_weighted();
+    // test_string_double_undirected_weighted();
 
-    test_int_int_undirected_unweighted();
+    // test_int_int_undirected_unweighted();
 
-    test_custom_float_directed_weighted();
+    // test_custom_float_directed_weighted();
 
-    test_char_ull_directed_unweighted();
+    // test_char_ull_directed_unweighted();
+
+
+
+
+    std::cout << std::setprecision(10) << std::endl;
+
+    // ZA OVAJ RADI SAD
+    // GraphClasses::Graph<std::string, double> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Undirected);
+    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    // const char* fileName1 = "testInputs/string_double.txt";
+    // g1.readFromTxt(fileName1);
+
+    // OVAJ NE RADI KAD JE FLOAT A RADI KAD JE DOUBLE
+    GraphClasses::Graph<CustomClass, float> g1;
+    g1.configureDirections(GraphClasses::GraphType::Undirected);
+    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    const char* fileName1 = "testInputs/custom_float_SPECIAL.txt";
+    g1.readFromTxt(fileName1);
+    g1.deleteNode(CustomClass(3, 3, 3));
+    g1.deleteNode(CustomClass(6, 6, 6));
+    g1.deleteNode(CustomClass(9, 9, 9));
+    std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
+    std::cout << g1 << std::endl;
+
+    // ZA OVAJ RADI
+    // GraphClasses::Graph<int, int> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Undirected);
+    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    // const char* fileName1 = "testInputs/int_int_u_u.txt";
+    // g1.readFromTxt(fileName1);
+    // // int startNode = 1;
+
+    // ZA OVAJ RADI
+    // GraphClasses::Graph<CustomClass, float> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Directed);
+    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    // const char* fileName1 = "testInputs/custom_float.txt";
+    // g1.readFromTxt(fileName1);
+
+    // ZA OVAJ RADI
+    // GraphClasses::Graph<char, unsigned long long> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Directed);
+    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    // const char* fileName1 = "testInputs/char_ull_d_u.txt";
+    // g1.readFromTxt(fileName1);
+
+    int counter = 0;
+    auto ret1 = GraphAlgorithms::floydWarshallAllShortestPaths(g1, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    for (auto& [node, pathData] : ret1) {
+        auto ret = GraphAlgorithms::bellmanFordShortestPaths(g1, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+        for (auto& [neighbor, weight] : pathData) {
+            if (!internal::equals(weight, ret[neighbor].second)) {
+                std::cout << "[" << node << "] to [" << neighbor << "] : FLOYD : " << std::setw(15) << weight  << " \tBELLMAN : " << std::setw(15) << ret[neighbor].second << std::endl;
+                ++counter;
+            }
+        }   
+    }
+
+    std::cout << "WRONG COUNT: " << counter << std::endl;
+
+    // float a = 11.f;
+    // float b = 123.1125f;
+    // float c = 0.124f;
+    // std::cout << a << " " << b << " " << c << " " << a + b + c << std::endl;
+
+    
+    // double a1 = 11;
+    // double b1 = 123.1125;
+    // double c1 = 0.124;
+    // std::cout << a1 << " " << b1 << " " << c1 << " " << a1 + b1 + c1 << std::endl;
 
     return 0;
 }
