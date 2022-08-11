@@ -83,7 +83,7 @@ namespace GraphClasses {
 			double getDensity() const;
 			// NOTE: for weighted graphs, eccentricity is calculated in terms of edge weights and not number of edges on path
 			WeightType getEccentricityOfNode(const DataType node) const;
-			std::pair<WeightType, WeightType> getRadiusAndDiameter() const;
+			std::tuple<WeightType, WeightType, std::unordered_set<DataType>> getRadiusDiameterAndCenter() const;
 			// ...
 
 			GraphType getGraphType() const;
@@ -657,11 +657,12 @@ namespace GraphClasses {
 	}
 
 	template<typename DataType, typename WeightType>
-	std::pair<WeightType, WeightType> Graph<DataType, WeightType>::getRadiusAndDiameter() const {
+	std::tuple<WeightType, WeightType, std::unordered_set<DataType>> Graph<DataType, WeightType>::getRadiusDiameterAndCenter() const {
 		auto allShortestPaths = GraphAlgorithms::floydWarshallAllShortestPaths(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 
 		WeightType radius = MAX_WEIGHT<WeightType>;
 		WeightType diameter = MIN_WEIGHT<WeightType>;
+		std::unordered_set<DataType> center;
 
 		for (auto& [startNode, pathMap] : allShortestPaths) {
 			WeightType eccStartNode = MIN_WEIGHT<WeightType>;
@@ -678,10 +679,15 @@ namespace GraphClasses {
 
 			if (internal::lessThan(eccStartNode, radius)) {
 				radius = eccStartNode;
+				center.clear();
+			}
+
+			if (internal::equals(eccStartNode, radius)) {
+				center.emplace(startNode);
 			}
 		}
 
-		return std::make_pair(radius, diameter);
+		return std::make_tuple(radius, diameter, center);
 	}
 
 	template<typename DataType, typename WeightType>
