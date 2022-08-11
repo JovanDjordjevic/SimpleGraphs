@@ -9,6 +9,8 @@
 // apart from these tests, all functions were tested arbitrarily and seem to be working
 // this DOES NOT guarantee correctness
 
+// NOTE: even though the library supports float as WeightType, usage of double is recommended becasue of calculation precission
+
 template<typename DataType, typename WeightType>
 void test_depthFirstTraverse(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned dfsTreeSize) {
     auto ret = GraphAlgorithms::depthFirstTraverse(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
@@ -52,6 +54,27 @@ template<typename DataType, typename WeightType>
 void test_floydWarshallAllShortestPaths(GraphClasses::Graph<DataType, WeightType> &g, DataType someStartNode, DataType someEndNode, WeightType distance) {
     auto ret = GraphAlgorithms::floydWarshallAllShortestPaths(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(internal::equals(ret[someStartNode][someEndNode], distance));
+}
+
+template<typename DataType, typename WeightType>
+void test_bellmanFord_floydWarshal_dijkstra_equivalence(GraphClasses::Graph<DataType, WeightType> &g) {
+    int wrongCounter = 0;
+    auto floydReturn = GraphAlgorithms::floydWarshallAllShortestPaths(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    for (auto& [startNode, pathData] : floydReturn) {
+        auto bellmanReturn = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+        for (auto& [endNode, weight] : pathData) {
+            auto dijkstraReturn = GraphAlgorithms::dijkstraShortestPath(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+            if (!internal::equals(weight, bellmanReturn[endNode].second) || !internal::equals(weight, dijkstraReturn.second) || !internal::equals(dijkstraReturn.second, bellmanReturn[endNode].second)) {
+                // std::cout << std:setprecission(10);
+                // std::cout << "[" << startNode << "] to [" << endNode << "] : FLOYD : " << std::setw(15) << weight  
+                //                                                     << " \tBELLMAN : " << std::setw(15) << bellmanReturn[endNode].second << std::endl;
+                //                                                     << " \tDIJKSTRA : " << std::setw(15) << dijkstraReturn.second << std::endl;
+                ++wrongCounter;
+            }
+        }   
+    }
+    //std::cout << "WRONG COUNT: " << wrongCounter << std::endl;
+    assert(wrongCounter == 0);
 }
 
 template<typename DataType, typename WeightType>
@@ -435,13 +458,14 @@ void test_string_double_undirected_weighted() {
     std::string endNode = "node6";
     test_dijkstraShortestPath(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_bellmanFordShortestPaths(g1, startNode, endNode, 4, static_cast<double>(134.236504));
-    test_floydWarshallAllShortestPaths(g1, startNode, endNode, 296.65);
+    test_floydWarshallAllShortestPaths(g1, startNode, endNode, static_cast<double>(134.236504));
+    test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
     test_findArticulationPoints_without_start(g1, 2);
     test_findArticulationPoints_with_start(g1, startNode, 2);    //should be same as without start for undirected
     test_findBridges_without_start(g1, 2);
     test_findBridges_with_start(g1, startNode, 2);
     // topsort makes no sense for undirected graphs and is not tested here
-    test_mcstPrimTotalCostOnly(g1, 6199.467744);
+    test_mcstPrimTotalCostOnly(g1, static_cast<double>(6199.467744));
     test_mcstPrim(g1, g1.getNodeCount() - 1);
     test_mcstKruskal(g1, g1.getNodeCount() - 1);
     test_findStronglyConnectedComponentsTarjan_without_start(g1, 1);
@@ -504,6 +528,7 @@ void test_int_int_undirected_unweighted() {
     test_dijkstraShortestPath(g1, startNode, endNode, 2, 2);
     test_bellmanFordShortestPaths(g1, startNode, 6, 2, 2);
     test_floydWarshallAllShortestPaths(g1, 4, 5, 2);
+    test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
     test_findArticulationPoints_without_start(g1, 0);
     test_findArticulationPoints_with_start(g1, startNode, 0);
     test_findBridges_without_start(g1, 0);
@@ -570,6 +595,7 @@ void test_custom_float_directed_weighted() {
     test_dijkstraShortestPath(g1, startNode, endNode, 3, 13.7f);
     test_bellmanFordShortestPaths(g1, startNode, endNode, 3, 13.7f);
     test_floydWarshallAllShortestPaths(g1, startNode, endNode, 13.7f);
+    test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
     // articulation points without start not supported for directed graphs
     test_findArticulationPoints_with_start(g1, startNode, 2);
     // bridges without start not supported for directed graphs
@@ -635,6 +661,7 @@ void test_char_ull_directed_unweighted() {
     test_dijkstraShortestPath(g1, startNode, endNode, 4, static_cast<unsigned long long>(4));
     test_bellmanFordShortestPaths(g1, startNode, 'o', 5, static_cast<unsigned long long>(5));
     test_floydWarshallAllShortestPaths(g1, 'h', 'j', static_cast<unsigned long long>(4));
+    test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
     // articulation points without start not supported for directed graphs
     test_findArticulationPoints_with_start(g1, startNode, 3);
     // bridges without start not supported for directed graphs
@@ -685,88 +712,17 @@ void test_char_ull_directed_unweighted() {
 }
 
 int main() {
-    // test_internal_operators();
+    test_internal_operators();
 
-    // test_graph_class_member_functions();
+    test_graph_class_member_functions();
 
-    // test_string_double_undirected_weighted();
+    test_string_double_undirected_weighted();
 
-    // test_int_int_undirected_unweighted();
+    test_int_int_undirected_unweighted();
 
-    // test_custom_float_directed_weighted();
+    test_custom_float_directed_weighted();
 
-    // test_char_ull_directed_unweighted();
-
-
-
-
-    std::cout << std::setprecision(10) << std::endl;
-
-    // ZA OVAJ RADI SAD
-    // GraphClasses::Graph<std::string, double> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Undirected);
-    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-    // const char* fileName1 = "testInputs/string_double.txt";
-    // g1.readFromTxt(fileName1);
-
-    // OVAJ NE RADI KAD JE FLOAT A RADI KAD JE DOUBLE
-    GraphClasses::Graph<CustomClass, float> g1;
-    g1.configureDirections(GraphClasses::GraphType::Undirected);
-    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName1 = "testInputs/custom_float_SPECIAL.txt";
-    g1.readFromTxt(fileName1);
-    g1.deleteNode(CustomClass(3, 3, 3));
-    g1.deleteNode(CustomClass(6, 6, 6));
-    g1.deleteNode(CustomClass(9, 9, 9));
-    std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
-    std::cout << g1 << std::endl;
-
-    // ZA OVAJ RADI
-    // GraphClasses::Graph<int, int> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Undirected);
-    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    // const char* fileName1 = "testInputs/int_int_u_u.txt";
-    // g1.readFromTxt(fileName1);
-    // // int startNode = 1;
-
-    // ZA OVAJ RADI
-    // GraphClasses::Graph<CustomClass, float> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Directed);
-    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-    // const char* fileName1 = "testInputs/custom_float.txt";
-    // g1.readFromTxt(fileName1);
-
-    // ZA OVAJ RADI
-    // GraphClasses::Graph<char, unsigned long long> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Directed);
-    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    // const char* fileName1 = "testInputs/char_ull_d_u.txt";
-    // g1.readFromTxt(fileName1);
-
-    int counter = 0;
-    auto ret1 = GraphAlgorithms::floydWarshallAllShortestPaths(g1, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    for (auto& [node, pathData] : ret1) {
-        auto ret = GraphAlgorithms::bellmanFordShortestPaths(g1, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-        for (auto& [neighbor, weight] : pathData) {
-            if (!internal::equals(weight, ret[neighbor].second)) {
-                std::cout << "[" << node << "] to [" << neighbor << "] : FLOYD : " << std::setw(15) << weight  << " \tBELLMAN : " << std::setw(15) << ret[neighbor].second << std::endl;
-                ++counter;
-            }
-        }   
-    }
-
-    std::cout << "WRONG COUNT: " << counter << std::endl;
-
-    // float a = 11.f;
-    // float b = 123.1125f;
-    // float c = 0.124f;
-    // std::cout << a << " " << b << " " << c << " " << a + b + c << std::endl;
-
-    
-    // double a1 = 11;
-    // double b1 = 123.1125;
-    // double c1 = 0.124;
-    // std::cout << a1 << " " << b1 << " " << c1 << " " << a1 + b1 + c1 << std::endl;
+    test_char_ull_directed_unweighted();
 
     return 0;
 }

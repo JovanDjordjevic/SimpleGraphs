@@ -1367,12 +1367,6 @@ namespace GraphAlgorithms {
 		for (auto& [node, neighbors] : neighborList) {
 			distances[node][node] = static_cast<WeightType>(0);
 			for (auto& [neighbor, weight] : neighbors) {
-				// if (internal::equals(node, neighbor)) {
-				// 	distances[node][neighbor] = static_cast<WeightType>(0);
-				// } else {
-				// 	distances[node][neighbor] = weight.value_or(static_cast<WeightType>(1));
-				// }
-
 				// check needed in case of multigraph
 				if (weight.value_or(static_cast<WeightType>(1)) < distances[node][neighbor]) {
 					distances[node][neighbor] = weight.value_or(static_cast<WeightType>(1));
@@ -1387,11 +1381,6 @@ namespace GraphAlgorithms {
 					auto& midEnd = distances[mid][end];
 					auto& startEnd = distances[start][end];
 					if (!internal::equals(startMid, GraphClasses::MAX_WEIGHT<WeightType>) && !internal::equals(midEnd, GraphClasses::MAX_WEIGHT<WeightType>) && internal::lessThan((startMid + midEnd), startEnd)) {
-						std::cout << "Start: " << start << " Mid: " << mid << " End: " << end << std::endl;
-						std::cout << "StartMid: " << startMid << " midEnd: " << midEnd << " startEnd: " << startEnd << std::endl;
-						std::cout << std::endl;
-						std::cout << "\t" << startMid + midEnd << std::endl;
-						
 						distances[start][end] = startMid + midEnd;
 					}
 				}
