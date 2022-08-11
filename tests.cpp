@@ -448,6 +448,8 @@ void test_string_double_undirected_weighted() {
 
     std::string startNode = "node1";
     assert(internal::equals(g1.getEccentricityOfNode(startNode), static_cast<double>(6125.78774)));
+    auto [radius, diameter] = g1.getRadiusAndDiameter();
+    assert(internal::equals(radius, static_cast<double>(5991.55124)) && internal::equals(diameter, static_cast<double>(6125.78774)));
 
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, std::string{"node5"}, true);
@@ -517,6 +519,8 @@ void test_int_int_undirected_unweighted() {
 
     int startNode = 1;
     assert(internal::equals(g1.getEccentricityOfNode(startNode), 3));
+    auto [radius, diameter] = g1.getRadiusAndDiameter();
+    assert(internal::equals(radius, 2) && internal::equals(diameter, 3));
 
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, 6, true);
@@ -584,6 +588,8 @@ void test_custom_float_directed_weighted() {
 
     CustomClass startNode = CustomClass(1, 2, 3);
     assert(internal::equals(g1.getEccentricityOfNode(startNode), 13.69999981f));
+    auto [radius, diameter] = g1.getRadiusAndDiameter();
+    assert(internal::equals(radius, 13.69999981f) && internal::equals(diameter, GraphClasses::MAX_WEIGHT<float>));
 
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, CustomClass(1, 7, 3), true);
@@ -650,6 +656,8 @@ void test_char_ull_directed_unweighted() {
     std::cout << "\tTesting algorithms     ";
     char startNode = 'a';
     assert(internal::equals(g1.getEccentricityOfNode(startNode), static_cast<unsigned long long>(5)));
+    auto [radius, diameter] = g1.getRadiusAndDiameter();
+    assert(internal::equals(radius, static_cast<unsigned long long>(5)) && internal::equals(diameter, GraphClasses::MAX_WEIGHT<unsigned long long>));
 
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, 'm', true);

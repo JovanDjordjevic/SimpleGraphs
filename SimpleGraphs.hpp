@@ -83,6 +83,7 @@ namespace GraphClasses {
 			double getDensity() const;
 			// NOTE: for weighted graphs, eccentricity is calculated in terms of edge weights and not number of edges on path
 			WeightType getEccentricityOfNode(const DataType node) const;
+			std::pair<WeightType, WeightType> getRadiusAndDiameter() const;
 			// ...
 
 			GraphType getGraphType() const;
@@ -163,7 +164,6 @@ namespace GraphAlgorithms {
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	// NOTE: at this time, Floyd-Warshall algorithm only returns the distances between pairs of nodes and not the paths themselves
-	// Also, in the returned map, the path from any node to itself may not be correct, and is not printed if algorithm is called with AlgorithmBehavior::PrintAndReturn
 	template<typename DataType, typename WeightType>
 	std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshallAllShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
@@ -654,6 +654,34 @@ namespace GraphClasses {
 		}
 
 		return eccentricity;
+	}
+
+	template<typename DataType, typename WeightType>
+	std::pair<WeightType, WeightType> Graph<DataType, WeightType>::getRadiusAndDiameter() const {
+		auto allShortestPaths = GraphAlgorithms::floydWarshallAllShortestPaths(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+		WeightType radius = MAX_WEIGHT<WeightType>;
+		WeightType diameter = MIN_WEIGHT<WeightType>;
+
+		for (auto& [startNode, pathMap] : allShortestPaths) {
+			WeightType eccStartNode = MIN_WEIGHT<WeightType>;
+
+			for (auto& [endNode, weight] : pathMap) {
+				if (internal::greaterThan(weight, eccStartNode)) {
+					eccStartNode = weight;
+				}
+			}
+
+			if (internal::greaterThan(eccStartNode, diameter)) {
+				diameter = eccStartNode;
+			}
+
+			if (internal::lessThan(eccStartNode, radius)) {
+				radius = eccStartNode;
+			}
+		}
+
+		return std::make_pair(radius, diameter);
 	}
 
 	template<typename DataType, typename WeightType>
