@@ -1265,13 +1265,20 @@ namespace GraphAlgorithms {
 		if (pathFound) {
 			DataType endCpy = endNode;
 			path.emplace_back(endNode);
+			
+			std::optional<DataType> parent = parents[endCpy];
+
 			while (true) {
-				std::optional<DataType> parent = parents[endCpy];
 				if (!parent.has_value()) {
 					break;
 				}
-				path.emplace_back(parent.value());
-				endCpy = parent.value();
+
+				auto&  parentVal = parent.value();
+
+				path.emplace_back(parentVal);
+				endCpy = parentVal;
+
+				parent = parents[endCpy];
 			}
 
 			std::reverse(std::begin(path), std::end(path));
@@ -1279,13 +1286,10 @@ namespace GraphAlgorithms {
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			if (pathFound) {
-				auto it = std::cbegin(path);
-				auto end = std::cend(path);
-				out << "Path found: \n\t";
-				while (!internal::equals(it, end)) {
-					out << "[" << (*it) << "] ";
-					++it;
+				for (auto& elem : path) {
+					out << "[" << elem << "] ";
 				}
+				
 				out << "\nwith total distance: " << distances[endNode] << std::endl;
 			} else {
 				out << "No path found between [" << startNode << "] and [" << endNode << "]" << std::endl;
@@ -1294,7 +1298,7 @@ namespace GraphAlgorithms {
 
 		return std::make_pair(path, distances[endNode]);
 	}
-
+	
 	template<typename DataType, typename WeightType>
 	std::unordered_map<DataType, std::pair<std::vector<DataType>, WeightType>> bellmanFordShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		std::unordered_map<DataType, WeightType> distances;
@@ -1313,16 +1317,16 @@ namespace GraphAlgorithms {
 
 		for (size_t r = static_cast<size_t>(0); internal::lessThan(r, relaxationCount); ++r) {
 			for (auto& [node, neighbors] : neighborsList) {
-				for (auto& [neighbor, weight] : neighbors) {
-					if (internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>)) {
-						continue;
-					}
+				if (!internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>)) {
+					for (auto& [neighbor, weight] : neighbors) {
+						WeightType newDistnce = distances[node] + weight.value_or(static_cast<WeightType>(1));
 					
-					WeightType newDistnce = distances[node] + weight.value_or(static_cast<WeightType>(1));
-					
-					if (internal::lessThan(newDistnce, distances[neighbor])) {
-						distances[neighbor] = newDistnce;
-						parents[neighbor] = node;
+						auto& neighborDist = distances[neighbor];
+
+						if (internal::lessThan(newDistnce, neighborDist)) {
+							neighborDist = newDistnce;
+							parents[neighbor] = node;
+						}
 					}
 				}
 			}
@@ -1331,8 +1335,10 @@ namespace GraphAlgorithms {
 		// negtive cycle check
 		for (auto& [node, neighbors] : neighborsList) {
 			for (auto& [neighbor, weight] : neighbors) {
-				if (!internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>) &&
-					internal::lessThan(distances[node] + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
+				auto& nodeDist = distances[node];
+
+				if (!internal::equals(nodeDist, GraphClasses::MAX_WEIGHT<WeightType>) &&
+					internal::lessThan(nodeDist + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
 						GRAPH_ERROR("Graph contins negative cycle");
 						exit(EXIT_FAILURE);
 				}
@@ -1350,35 +1356,44 @@ namespace GraphAlgorithms {
 			}
 
 			DataType pathNode = node;
-			paths[node].first.emplace_back(pathNode);
+
+			auto& pathVect = paths[node].first;
+			pathVect.emplace_back(pathNode);
+
+			std::optional<DataType> parent = parents[pathNode];
 
 			while (true) {
-				std::optional<DataType> parent = parents[pathNode];
 				if (!parent.has_value()) {
 					break;
 				}
-				paths[node].first.emplace_back(parent.value());
-				pathNode = parent.value();
+
+				auto& parentVal = parent.value();
+
+				pathVect.emplace_back(parentVal);
+				pathNode = parentVal;
+				
+				parent = parents[pathNode];
 			}
 
-			std::reverse(std::begin(paths[node].first), std::end(paths[node].first));
+			std::reverse(std::begin(pathVect), std::end(pathVect));
 		}
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			for (auto& [node, pathAndDist] : paths) {
 				// there is no path to nodes in different components
-				if (!internal::equals(node, startNode) && internal::equals(pathAndDist.first.size(), static_cast<size_t>(0))) {
+				if (internal::equals(pathAndDist.first.size(), static_cast<size_t>(0)) && !internal::equals(node, startNode)) {
 					out << "There is no possible path between [" << startNode << "] and [" << node << "]" << std::endl;
 					continue;
 				}
 
 				out << "Distance from [" << startNode << "] to [" << node << "] is: " << distances[node] << "\n\t Path: ";
-				auto it = std::cbegin(pathAndDist.first);
-				auto end = std::cend(pathAndDist.first);
-				while (!internal::equals(it, end)) {
-					out << "[" << (*it) << "] ";
-					++it;
+
+				auto& pathVect = pathAndDist.first;
+
+				for (auto& elem : pathVect) {
+					out << "[" << elem << "] ";
 				}
+
 				out << std::endl;
 			}
 		}
@@ -1402,20 +1417,30 @@ namespace GraphAlgorithms {
 			distances[node][node] = static_cast<WeightType>(0);
 			for (auto& [neighbor, weight] : neighbors) {
 				// check needed in case of multigraph
-				if (weight.value_or(static_cast<WeightType>(1)) < distances[node][neighbor]) {
-					distances[node][neighbor] = weight.value_or(static_cast<WeightType>(1));
+				auto w = weight.value_or(static_cast<WeightType>(1));
+				auto& dist = distances[node][neighbor];
+				if (w < dist) {
+					dist = w;
 				}
 			}
 		}
 
 		for (auto& [mid, n1] : neighborList) {
 			for (auto& [start, n2] : neighborList) {
-				for (auto& [end, n3] : neighborList) {
-					auto& startMid = distances[start][mid];
-					auto& midEnd = distances[mid][end];
-					auto& startEnd = distances[start][end];
-					if (!internal::equals(startMid, GraphClasses::MAX_WEIGHT<WeightType>) && !internal::equals(midEnd, GraphClasses::MAX_WEIGHT<WeightType>) && internal::lessThan((startMid + midEnd), startEnd)) {
-						distances[start][end] = startMid + midEnd;
+				auto& startMid = distances[start][mid];
+
+				if (!internal::equals(startMid, GraphClasses::MAX_WEIGHT<WeightType>)) {
+					for (auto& [end, n3] : neighborList) {
+						auto& midEnd = distances[mid][end];
+
+						if (!internal::equals(midEnd, GraphClasses::MAX_WEIGHT<WeightType>)) {
+							auto& startEnd = distances[start][end];
+							auto startEndDist = startMid + midEnd;
+							
+							if (internal::lessThan(startEndDist, startEnd)) {
+								distances[start][end] = startEndDist;
+							}
+						}
 					}
 				}
 			}
@@ -1431,13 +1456,11 @@ namespace GraphAlgorithms {
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			for (auto& [node, neighbors] : distances) {
 				for (auto& [neighbor, distance] : neighbors) {
-					if (!internal::equals(node, neighbor)) {
-						if (internal::equals(distance, GraphClasses::MAX_WEIGHT<WeightType>)) {
-							out << "There is no possible path between [" << node << "] and [" << neighbor << "]" << std::endl;
-						}
-						else {
-							out << "Shortest distance between [" << node << "] and [" << neighbor << "] is: " << distance << std::endl;
-						}
+					if (internal::equals(distance, GraphClasses::MAX_WEIGHT<WeightType>)) {
+						out << "There is no possible path between [" << node << "] and [" << neighbor << "]" << std::endl;
+					}
+					else {
+						out << "Shortest distance between [" << node << "] and [" << neighbor << "] is: " << distance << std::endl;
 					}
 				}
 
