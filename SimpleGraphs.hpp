@@ -60,13 +60,15 @@ namespace GraphClasses {
 			void clearGraph();
 
 			void readFromTxt(const char* filePath);
-			void exportToTxt(const char* filePath) const; // TODO: export in format that SimpleGraphs can read
+			void exportToTxt(const char* filePath) const;
 
 			void addNode(const DataType node);
 			void addEdge(const DataType startNode, const DataType neighborNode);    // for unweighted graphs
 			void addEdge(const DataType startNode, const DataType neighborNode, const WeightType edgeWeight); // for weighted graphs
 			void addEdge(const DataType startNode, const Edge<DataType, WeightType>& edge);
-			void deleteEdge(const DataType startNode, const DataType endNode);
+			// deletes all edges from startNode to endNode in case of a multigraph
+			void deleteEdge(const DataType startNode, const DataType endNode);	
+			// removes a node and all edges to/from said node
 			void deleteNode(const DataType nodeToDelete);
 			size_t getNodeCount() const;
 			size_t getEdgeCount() const;
@@ -297,18 +299,21 @@ namespace GraphClasses {
 	template<typename DataType, typename WeightType>
 	std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<DataType, WeightType>& g) {
 		for (auto& [node, neighbors] : g.m_neighbors) {
-			out << "Node [" << node << "] has neighbors:" << std::endl;
+			out << "Node [" << node << "] has neighbors:\n";
 
 			if (internal::equals(g.m_graphWeights, GraphWeights::Weighted)) {
 				for (auto& val : neighbors) {
-					out << "|\t [" << val.neighbor << "], edge weight: " << val.weight.value() << std::endl;
+					out << "|\t [" << val.neighbor << "], edge weight: " << val.weight.value() << '\n';
 				}
 			} else { // unweighted
 				for (auto& val : neighbors) {
-					out << "|\t [" << val.neighbor << "]" << std::endl;
+					out << "|\t [" << val.neighbor << "]\n";
 				}
 			}
 		}
+
+		out << std::endl;
+
 		return out;
 	}
 
@@ -337,11 +342,15 @@ namespace GraphClasses {
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::configureDirections(const GraphType graphType) {
 		m_graphType = graphType;
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::configureWeights(const GraphWeights graphWeights) {
 		m_graphWeights = graphWeights;
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -351,7 +360,9 @@ namespace GraphClasses {
 
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::clearGraph() {
-		m_neighbors.clear(); // TODO: check if this is enough
+		m_neighbors.clear();
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -402,6 +413,8 @@ namespace GraphClasses {
 		}
 
 		file.close();
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -417,11 +430,15 @@ namespace GraphClasses {
 		else {
 			internal::exportUndirectedGraph(*this, filePath);
 		}
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::addNode(const DataType node) {
 		m_neighbors[node];
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -435,6 +452,8 @@ namespace GraphClasses {
 		addNode(neighborNode); 
 
 		m_neighbors[startNode].emplace_back(neighborNode);
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -448,6 +467,8 @@ namespace GraphClasses {
 		addNode(neighborNode); 
 
 		m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -464,10 +485,10 @@ namespace GraphClasses {
 		addNode(edge.neighbor); 
 
 		m_neighbors[startNode].emplace_back(edge.neighbor, edge.weight);
+
 		return;
 	}
 
-	// NOTE: will delete all edges that connect start and end nodes in case of a multigraph
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::deleteEdge(const DataType startNode, const DataType endNode) {
 		auto itStartNode = m_neighbors.find(startNode);
@@ -492,7 +513,6 @@ namespace GraphClasses {
 		return;
 	}
 
-	// removes a node and all edges to/from said node
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::deleteNode(DataType nodeToDelete) {
 		if (internal::equals(m_neighbors.find(nodeToDelete), std::end(m_neighbors))) {
@@ -500,9 +520,8 @@ namespace GraphClasses {
 			return;
 		}
 
-		m_neighbors[nodeToDelete].clear(); // needed?
 		m_neighbors.erase(nodeToDelete);
-
+		
 		for (auto& [node, neighbors] : m_neighbors) {
 			auto itBegin = std::begin(neighbors);
 			auto itEnd = std::end(neighbors);
@@ -521,9 +540,11 @@ namespace GraphClasses {
 	template<typename DataType, typename WeightType>
 	size_t Graph<DataType, WeightType>::getEdgeCount() const {
 		size_t count = static_cast<size_t>(0);
+
 		for (auto& [node, neighbors] : m_neighbors) {
 			count += neighbors.size();
 		}
+
 		return count;
 	}
 
@@ -556,6 +577,7 @@ namespace GraphClasses {
 		}
 		
 		std::unordered_map<DataType, size_t> degrees;
+
 		for (auto& [node, neighbors] : m_neighbors) {
 			degrees[node] = neighbors.size();
 		}
@@ -591,6 +613,7 @@ namespace GraphClasses {
 		}
 
 		std::unordered_map<DataType, size_t> inDegrees;
+
 		for (auto& [node, neighbors] : m_neighbors) {
 			inDegrees[node] = static_cast<size_t>(0);
 		}
@@ -622,6 +645,7 @@ namespace GraphClasses {
 		}
 
 		std::unordered_map<DataType, size_t> outDegrees;
+
 		for (auto& [node, neighbors] : m_neighbors) {
 			outDegrees[node] = neighbors.size();
 		}
@@ -629,10 +653,11 @@ namespace GraphClasses {
 		return outDegrees;
 	}
 
-
 	template<typename DataType, typename WeightType>
 	double Graph<DataType, WeightType>::getDensity() const {
-		double density = static_cast<double>(getEdgeCount()) / (getNodeCount() * (getNodeCount() - static_cast<size_t>(1)));
+		auto nodeCount = getNodeCount();
+
+		double density = static_cast<double>(getEdgeCount()) / (nodeCount * (nodeCount - static_cast<size_t>(1)));
 
 		if (internal::equals(m_graphType, GraphType::Undirected)) {
 			density *= 2;
@@ -1922,6 +1947,7 @@ namespace internal {
 	template<typename DataType, typename WeightType>
 	void exportDirectedGraph(const GraphClasses::Graph<DataType, WeightType>& g, const char* filePath) {
 		std::ofstream file(filePath);
+
 		if (!file) {
 			GRAPH_ERROR("Invalid file!");
 			exit(EXIT_FAILURE);
@@ -1930,16 +1956,21 @@ namespace internal {
 		auto neighborList = g.getNeighbors();
 		for (auto& [node, neighbors] : neighborList) {
 			file << node << " ";
+
 			for (auto& [neighbor, weight] : neighbors) {
 				file << neighbor << " ";
+
 				if (weight.has_value()) {
 					file << weight.value() << " ";
 				}
 			}
+
 			file << std::endl;
 		}
 		
 		file.close();
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -1956,19 +1987,26 @@ namespace internal {
 
 		for (auto& [node, neighbors] : neighborList) {
 			file << node << " ";
+
+			auto& alreadyAddedEdges = doNotAdd[node];
 			for (auto& edge : neighbors) {
-				if (internal::equals(doNotAdd[node].find(edge), std::end(doNotAdd[node]))) {
+				if (internal::equals(alreadyAddedEdges.count(edge), static_cast<size_t>(0))) {
 					file << edge.neighbor << " ";
+
 					if (edge.weight.has_value()) {
 						file << edge.weight.value() << " ";
 					}
+
 					doNotAdd[edge.neighbor].emplace(node, edge.weight);
 				}
 			}
+
 			file << std::endl;
 		}
 		
 		file.close();
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
