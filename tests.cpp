@@ -741,9 +741,9 @@ void string_double() {
     const char* fileName1 = "testInputs/string_double.txt";
     g1.readFromTxt(fileName1);
 
-    // std::string startNode1 = "node1";
+    std::string startNode1 = "node1";
     // std::string endNode1 = "node6";
-    auto ret1 = GraphAlgorithms::floydWarshallAllShortestPaths(g1, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::breadthFirstTraverse(g1, startNode1, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void int_int() {
@@ -753,9 +753,9 @@ void int_int() {
     const char* fileName2 = "testInputs/int_int_u_u.txt";
     g2.readFromTxt(fileName2);
 
-    // int startNode2 = 1;
+    int startNode2 = 1;
     // int endNode2 = 5;
-    auto ret2 = GraphAlgorithms::floydWarshallAllShortestPaths(g2, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret2 = GraphAlgorithms::breadthFirstTraverse(g2, startNode2, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void custom_float() {
@@ -765,9 +765,9 @@ void custom_float() {
     const char* fileName3 = "testInputs/custom_float.txt";
     g3.readFromTxt(fileName3);
 
-    // CustomClass startNode3 = CustomClass(1, 2, 3);
+    CustomClass startNode3 = CustomClass(1, 2, 3);
     // CustomClass endNode3 = CustomClass(2, 2, 2);
-    auto ret3 = GraphAlgorithms::floydWarshallAllShortestPaths(g3, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret3 = GraphAlgorithms::breadthFirstTraverse(g3, startNode3, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void char_ull() {
@@ -777,9 +777,9 @@ void char_ull() {
     const char* fileName4 = "testInputs/char_ull_d_u.txt";
     g4.readFromTxt(fileName4);
 
-    // char startNode4 = 'a';
+    char startNode4 = 'a';
     // char endNode4 = 'l';
-    auto ret4 = GraphAlgorithms::floydWarshallAllShortestPaths(g4, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret4 = GraphAlgorithms::breadthFirstTraverse(g4, startNode4, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 
 }
 

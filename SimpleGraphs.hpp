@@ -1045,22 +1045,22 @@ namespace GraphAlgorithms {
 		std::stack<DataType> stack;
 		stack.emplace(startNode);
 
+		DataType currentNode;
 		while (!stack.empty()) {
-			DataType currentNode = stack.top();
+			currentNode = stack.top();
 			stack.pop();
 
-			if (!visited[currentNode]) {
-				visited[currentNode] = true;
+			auto& ifVisited = visited[currentNode];
+			if (!ifVisited) {
+				ifVisited = true;
 				traversalOrder.emplace_back(currentNode);
 			}
 
-			auto it = std::cbegin(neighborList[currentNode]);
-			auto end = std::cend(neighborList[currentNode]);
-			while (!internal::equals(it, end)) {
-				if (!visited[(*it).neighbor]) {
-					stack.emplace((*it).neighbor);
+			auto& currentNeighbors = neighborList[currentNode];
+			for (auto& [neighbor, weight] : currentNeighbors) {
+				if (!visited[neighbor]) {
+					stack.emplace(neighbor);
 				}
-				++it;
 			}
 		}
 
@@ -1089,12 +1089,14 @@ namespace GraphAlgorithms {
 		std::stack<DataType> stack;
 		stack.emplace(startNode);
 
+		DataType currentNode;
 		while (!stack.empty()) {
-			DataType currentNode = stack.top();
+			currentNode = stack.top();
 			stack.pop();
 
-			if (!visited[currentNode]) {
-				visited[currentNode] = true;
+			auto& ifVisited = visited[currentNode];
+			if (!ifVisited) {
+				ifVisited = true;
 				traversalOrder.emplace_back(currentNode);
 			}
 
@@ -1105,13 +1107,11 @@ namespace GraphAlgorithms {
 				return std::make_pair(true, traversalOrder);
 			}
 
-			auto it = std::cbegin(neighborList[currentNode]);
-			auto end = std::cend(neighborList[currentNode]);
-			while (!internal::equals(it, end)) {
-				if (!visited[(*it).neighbor]) {
-					stack.emplace((*it).neighbor);
+			auto& currentNeighbors = neighborList[currentNode];
+			for (auto& [neighbor, weight] : currentNeighbors) {
+				if (!visited[neighbor]) {
+					stack.emplace(neighbor);
 				}
-				++it;
 			}
 		}
 
@@ -1136,22 +1136,22 @@ namespace GraphAlgorithms {
 		std::queue<DataType> queue;
 		queue.emplace(startNode);
 
+		DataType currentNode;
 		while (!queue.empty()) {
-			DataType currentNode = queue.front();
+			currentNode = queue.front();
 			queue.pop();
 
-			if (!visited[currentNode]) {
+			auto& ifVisited = visited[currentNode];
+			if (!ifVisited) {
+				ifVisited = true;
 				traversalOrder.emplace_back(currentNode);
-				visited[currentNode] = true;
 			}
 
-			auto it = std::cbegin(neighborList[currentNode]);
-			auto end = std::cend(neighborList[currentNode]);
-			while (!internal::equals(it, end)) {
-				if (!visited[(*it).neighbor]) {
-					queue.emplace((*it).neighbor);
+			auto& currentNeighbors = neighborList[currentNode];
+			for (auto& [neighbor, weight] : currentNeighbors) {
+				if (!visited[neighbor]) {
+					queue.emplace(neighbor);
 				}
-				++it;
 			}
 		}
 
@@ -1180,13 +1180,15 @@ namespace GraphAlgorithms {
 		std::queue<DataType> queue;
 		queue.emplace(startNode);
 
+		DataType currentNode;
 		while (!queue.empty()) {
-			DataType currentNode = queue.front();
+			currentNode = queue.front();
 			queue.pop();
-
-			if (!visited[currentNode]) {
+			
+			auto& ifVisited = visited[currentNode];
+			if (!ifVisited) {
+				ifVisited = true;
 				traversalOrder.emplace_back(currentNode);
-				visited[currentNode] = true;
 			}
 
 			if (internal::equals(currentNode, nodeToFind)) {
@@ -1196,13 +1198,11 @@ namespace GraphAlgorithms {
 				return std::make_pair(true, traversalOrder);
 			}
 
-			auto it = std::cbegin(neighborList[currentNode]);
-			auto end = std::cend(neighborList[currentNode]);
-			while (!internal::equals(it, end)) {
-				if (!visited[(*it).neighbor]) {
-					queue.emplace((*it).neighbor);
+			auto& currentNeighbors = neighborList[currentNode];
+			for (auto& [neighbor, weight] : currentNeighbors) {
+				if (!visited[neighbor]) {
+					queue.emplace(neighbor);
 				}
-				++it;
 			}
 		}
 
