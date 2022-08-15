@@ -741,10 +741,19 @@ void string_double() {
     const char* fileName1 = "testInputs/string_double.txt";
     g1.readFromTxt(fileName1);
 
+    GraphClasses::Graph<std::string, double> g1cpy;
+    g1cpy.configureDirections(GraphClasses::GraphType::Undirected);
+    g1cpy.configureWeights(GraphClasses::GraphWeights::Weighted);
+    g1cpy.readFromTxt(fileName1);
+
+    // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
+    auto ret1 = GraphUtility::transitiveReductionOfGraph(g1);
+    
+    // std::cout << "Node count: " << ret1.getNodeCount() << " Edge count: " << ret1.getEdgeCount() << " Density: " << ret1.getDensity() << std::endl;
+    // std::cout << ret1 << std::endl;
+
     // std::string startNode1 = "node1";
     // std::string endNode1 = "node2";
-
-    // auto ret1 = g1.getEccentricityOfNode(startNode1);
 }
 
 void int_int() {
@@ -754,10 +763,24 @@ void int_int() {
     const char* fileName2 = "testInputs/int_int_u_u.txt";
     g2.readFromTxt(fileName2);
 
+    GraphClasses::Graph<int, int> g2cpy;
+    g2cpy.configureDirections(GraphClasses::GraphType::Undirected);
+    g2cpy.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    g2cpy.readFromTxt(fileName2);
+
+    // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
+    // std::cout << g2 << std::endl;
+
+
+    // std::unordered_set<int> someNodes{2, 5, 3, 7};
+    auto ret2 = GraphUtility::transitiveReductionOfGraph(g2);
+
+    // std::cout << "Node count: " << ret2.getNodeCount() << " Edge count: " << ret2.getEdgeCount() << " Density: " << ret2.getDensity() << std::endl;
+    // std::cout << ret2 << std::endl;
+
+
     // int startNode2 = 1;
     // int endNode2 = 3;
-
-    // auto ret2 = g2.getEccentricityOfNode(startNode2);
 }
 
 void custom_float() {
@@ -767,10 +790,16 @@ void custom_float() {
     const char* fileName3 = "testInputs/custom_float.txt";
     g3.readFromTxt(fileName3);
 
+    GraphClasses::Graph<CustomClass, float> g3cpy;
+    g3cpy.configureDirections(GraphClasses::GraphType::Directed);
+    g3cpy.configureWeights(GraphClasses::GraphWeights::Weighted);
+    g3cpy.readFromTxt(fileName3);
+
     // CustomClass startNode3 = CustomClass(1, 2, 3);
-    // CustomClass endNode3 = CustomClass(4, 5, 6);
-    
-    // auto ret3 = g3.getEccentricityOfNode(startNode3);
+    // CustomClass endNode3 = CustomClass(2, 2, 2);;  
+
+    // std::unordered_set<CustomClass> someNodes{startNode3, CustomClass(4, 5, 6), endNode3};
+    auto ret3 = GraphUtility::transitiveReductionOfGraph(g3);  
 }
 
 void char_ull() {
@@ -780,10 +809,16 @@ void char_ull() {
     const char* fileName4 = "testInputs/char_ull_d_u.txt";
     g4.readFromTxt(fileName4);
 
+    GraphClasses::Graph<char, unsigned long long> g4cpy;
+    g4cpy.configureDirections(GraphClasses::GraphType::Directed);
+    g4cpy.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    g4cpy.readFromTxt(fileName4);
+
+    // std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
+    auto ret4 = GraphUtility::transitiveReductionOfGraph(g4);
+
     // char startNode4 = 'a';
     // char endNode4 = 'p';
-
-    // auto ret4 = g4.getEccentricityOfNode(startNode4);
 }
 
 int main() {

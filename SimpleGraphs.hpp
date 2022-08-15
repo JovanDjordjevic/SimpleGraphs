@@ -275,7 +275,10 @@ namespace internal {
 	struct EdgeComparator;
 
 	template<typename DataType, typename WeightType>
-	struct EdgeHasher;
+	struct EdgeStructHasher;
+
+	template<typename DataType, typename WeightType>
+	struct CompleteEdgeHasher;
 
 	template<typename DataType, typename WeightType>
 	struct ArticulationHelper;
@@ -732,7 +735,6 @@ namespace GraphClasses {
 
 } // namespace GraphClasses
 
-
 namespace GraphUtility {
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> mergeGraphs(const GraphClasses::Graph<DataType, WeightType>& g1, const GraphClasses::Graph<DataType, WeightType>& g2) {
@@ -747,43 +749,37 @@ namespace GraphUtility {
 		newGraph.configureWeights(g1.getGraphWeights());
 
 		auto g1NeighborList = g1.getNeighbors();
-		for (auto& [node, neighbors] : g1NeighborList) {
-			newGraph.addNode(node);
-		}
-
 		auto g2NeighborList = g2.getNeighbors();
-		for (auto& [node, neighbors] : g2NeighborList) {
-			newGraph.addNode(node);
+
+		// adding duplicate edges is avoided by putting them in a set first
+		std::unordered_set<std::pair<DataType, GraphClasses::Edge<DataType, WeightType>>, internal::CompleteEdgeHasher<DataType, WeightType>> edgeSet;
+
+		for (auto& [node, neighbors] : g1NeighborList) {
+			// check needed in case of isolated nodes
+			if (internal::equals(neighbors.size(), static_cast<size_t>(0))) {
+				newGraph.addNode(node);
+				continue;
+			}
+			
+			for (auto& edge : neighbors) {
+				edgeSet.emplace(node, edge);
+			}
 		}
 
-		auto neighborList = newGraph.getNeighbors();
-		for (auto& [node, neighbors] : neighborList) {
-			auto it1 = g1NeighborList.find(node);
-			auto it2 = g2NeighborList.find(node);
-
-			if (!internal::equals(it1, std::end(g1NeighborList)) && !internal::equals(it2, std::end(g2NeighborList))) { // node is in both graphs
-				// we avoid adding duplicate edges by putting them in a set first
-				std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>> edgeSet;
-				for (auto& edge : g1NeighborList[node]) {
-					edgeSet.emplace(edge);
-				}
-
-				for (auto& edge : g2NeighborList[node]) {
-					edgeSet.emplace(edge);
-				}
-
-				for (auto& edge : edgeSet) {
-					newGraph.addEdge(node, edge);
-				}
-			} else if (!internal::equals(it1, std::end(g1NeighborList)) && internal::equals(it2, std::end(g2NeighborList))) { // node is only in g1
-				for (auto& edge : g1NeighborList[node]) {
-					newGraph.addEdge(node, edge);
-				}
-			} else if (internal::equals(it1, std::end(g1NeighborList)) && !internal::equals(it2, std::end(g2NeighborList))) { // is only in g2
-				for (auto& edge : g2NeighborList[node]) {
-					newGraph.addEdge(node, edge);
-				}
+		for (auto& [node, neighbors] : g2NeighborList) {
+			// check needed in case of isolated nodes
+			if (internal::equals(neighbors.size(), static_cast<size_t>(0))) {
+				newGraph.addNode(node);
+				continue;
 			}
+
+			for (auto& edge : neighbors) {
+				edgeSet.emplace(node, edge);
+			}
+		}
+
+		for (auto& edge : edgeSet) {
+			newGraph.addEdge(edge.first, edge.second);
 		}
 
 		return newGraph;
@@ -804,14 +800,17 @@ namespace GraphUtility {
 		auto g1NeighborList = g1.getNeighbors();
 		auto g2NeighborList = g2.getNeighbors();
 
+		std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeStructHasher<DataType, WeightType>> edges;
+
 		for (auto& [node, neighbors] : g1NeighborList) {
 			auto it = g2NeighborList.find(node);
+
 			if (!internal::equals(it, std::end(g2NeighborList))) {
 				newGraph.addNode(node);
 
-				std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>> edges;
 				auto& shorter = g1NeighborList[node];
 				auto& longer = g2NeighborList[node];
+
 				if (internal::lessThan(longer.size(), shorter.size())) {
 					std::swap(shorter, longer);
 				}
@@ -821,10 +820,12 @@ namespace GraphUtility {
 				}
 
 				for (auto& edge : longer) {
-					if (!internal::equals(edges.find(edge), std::end(edges))) {
+					if (!internal::equals(edges.count(edge), static_cast<size_t>(0))) {
 						newGraph.addEdge(node, edge);
 					}
 				}
+
+				edges.clear();
 			}
 		}
 
@@ -842,8 +843,9 @@ namespace GraphUtility {
 
 		for (auto& node : nodes) {
 			newGraph.addNode(node);
+			
 			for (auto& edge : neighborList[node]) {
-				if (!internal::equals(nodes.find(edge.neighbor), std::end(nodes))) {
+				if (!internal::equals(nodes.count(edge.neighbor), static_cast<size_t>(0))) {
 					newGraph.addEdge(node, edge);
 				}
 			}
@@ -868,23 +870,25 @@ namespace GraphUtility {
 
 		for (auto& [node, neighbors] : neighborList) {
 			// needed so that isolated nodes will remain in the transposed graph
-			newGraph.addNode(node);
+			if (internal::equals(neighbors.size(), static_cast<size_t>(0))) {
+				newGraph.addNode(node);
+				continue;
+			}
+
 			for (auto& [neighbor, weight] : neighbors) {
 				if (internal::equals(newGraph.getGraphWeights(), GraphClasses::GraphWeights::Weighted)) {
-					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Directed)) {
-						newGraph.addEdge(neighbor, node, weight.value());
-					} else { // undirected
-						newGraph.addEdge(neighbor, node, weight.value());
+					newGraph.addEdge(neighbor, node, weight.value());
+
+					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Undirected)) {
 						newGraph.addEdge(node, neighbor, weight.value());
-					}
+					} 
 				}
-				else {
-					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Directed)) {
-						newGraph.addEdge(neighbor, node);
-					} else { // undirected
-						newGraph.addEdge(neighbor, node);
+				else { // unweighted
+					newGraph.addEdge(neighbor, node);
+
+					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Undirected)) {
 						newGraph.addEdge(node, neighbor);
-					}
+					} 
 				}
 			}
 		}
@@ -940,17 +944,16 @@ namespace GraphUtility {
 		newGraph.configureDirections(g.getGraphType());
 		newGraph.configureWeights(g.getGraphWeights());
 
-		auto nodeSet = g.getNodeSet();
+		auto neighborList = g.getNeighbors();
 
-		for (auto& startNode : nodeSet) {
-			for (auto& endNode : nodeSet) {
+		for (auto& [startNode, startNodeNeighbors] : neighborList) {
+			for (auto& [endNode, endNodeNeighbors] : neighborList) {
 				if (!internal::equals(startNode, endNode)) {
 					newGraph.addEdge(startNode, endNode);
 				}
 			}
 		}
 
-		auto neighborList = g.getNeighbors();
 		for (auto& [node, neighbors] : neighborList) {
 			for(auto& [neighbor, weight] : neighbors) {
 				newGraph.deleteEdge(node, neighbor);
@@ -963,25 +966,23 @@ namespace GraphUtility {
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> transitiveClosureOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
 		GraphClasses::Graph<DataType, WeightType> closure;
+
 		closure.configureDirections(GraphClasses::GraphType::Directed);
 		closure.configureWeights(GraphClasses::GraphWeights::Unweighted);
 
 		auto neighborList = g.getNeighbors();
-		auto gNodeSet = g.getNodeSet();
+
 		std::unordered_map<DataType, std::unordered_map<DataType, bool>> reachMatrix;
 		
-		for (auto& node1 : gNodeSet) {
-			for (auto& node2 : gNodeSet) {
-				if (internal::equals(node1, node2)) {	
-					reachMatrix[node1][node2] = true;
-				}
-				else {
-					reachMatrix[node1][node2] = false;
-				}
+		for (auto& [node1, neighbors1] : neighborList) {
+			for (auto& [node2, neighbors2] : neighborList) {
+				reachMatrix[node1][node2] = false;
 			}
 		}
 
 		for (auto& [node, neighbors] : neighborList) {
+			reachMatrix[node][node] = true;
+
 			for (auto& [neighbor, weight] : neighbors) {
 				reachMatrix[node][neighbor] = true;
 			}
@@ -991,7 +992,9 @@ namespace GraphUtility {
 			for (auto& [start, n2] : neighborList) {
 				if (reachMatrix[start][mid]) {
 					for (auto& [end, n3] : neighborList) {
-						reachMatrix[start][end] |= reachMatrix[mid][end];
+						if (reachMatrix[mid][end]) {
+							reachMatrix[start][end] = true;
+						}
 					}
 				}
 			}
@@ -1011,15 +1014,16 @@ namespace GraphUtility {
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> transitiveReductionOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
 		GraphClasses::Graph<DataType, WeightType> reduction;
+
 		reduction.configureDirections(GraphClasses::GraphType::Directed);
 		reduction.configureWeights(GraphClasses::GraphWeights::Unweighted);
 
 		auto neighborList = g.getNeighbors();
-		auto gNodeSet = g.getNodeSet();
+
 		std::unordered_map<DataType, std::unordered_map<DataType, bool>> reachMatrix;
 		
-		for (auto& node1 : gNodeSet) {
-			for (auto& node2 : gNodeSet) {
+		for (auto& [node1, neighbors1] : neighborList) {
+			for (auto& [node2, neighbors2] : neighborList) {
 				reachMatrix[node1][node2] = false;
 			}
 		}
@@ -1982,7 +1986,7 @@ namespace internal {
 		}
 
 		// for undirected graphs, we must only write one direction of an edge, or else on next read from file the number of edges will be doubled
-		std::unordered_map<DataType, std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>>> doNotAdd;
+		std::unordered_map<DataType, std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeStructHasher<DataType, WeightType>>> doNotAdd;
 		auto neighborList = g.getNeighbors();
 
 		for (auto& [node, neighbors] : neighborList) {
@@ -2017,13 +2021,23 @@ namespace internal {
 	};
 
 	template<typename DataType, typename WeightType>
-	struct EdgeHasher {
-			size_t operator()(const GraphClasses::Edge<DataType, WeightType>& obj) const {
-				std::hash<DataType> nHash;
-				std::hash<WeightType> wHash;
-				// TODO:  try finding a better alternative
-				return nHash(obj.neighbor) + wHash(obj.weight.value_or(0));
-			}
+	struct EdgeStructHasher {
+		size_t operator()(const GraphClasses::Edge<DataType, WeightType>& obj) const {
+			std::hash<DataType> nHash;
+			std::hash<WeightType> wHash;
+			// TODO:  try finding a better alternative
+			return nHash(obj.neighbor) + wHash(obj.weight.value_or(static_cast<size_t>(0)));
+		}
+	};
+
+	template<typename DataType, typename WeightType>
+	struct CompleteEdgeHasher {
+		size_t operator()(const std::pair<DataType, GraphClasses::Edge<DataType, WeightType>>& obj) const {
+			std::hash<DataType> nHash;
+			std::hash<WeightType> wHash;
+			// TODO:  try finding a better alternative
+			return nHash(obj.first) + nHash(obj.second.neighbor) + wHash(obj.second.weight.value_or(static_cast<size_t>(0)));
+		}
 	};
 
 	template<typename DataType, typename WeightType>
