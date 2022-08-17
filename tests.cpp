@@ -747,7 +747,7 @@ void string_double() {
     g1cpy.readFromTxt(fileName1);
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    auto ret1 = GraphUtility::transitiveReductionOfGraph(g1);
+    auto ret1 = GraphAlgorithms::findIsolatedNodes(g1, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     
     // std::cout << "Node count: " << ret1.getNodeCount() << " Edge count: " << ret1.getEdgeCount() << " Density: " << ret1.getDensity() << std::endl;
     // std::cout << ret1 << std::endl;
@@ -773,7 +773,7 @@ void int_int() {
 
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
-    auto ret2 = GraphUtility::transitiveReductionOfGraph(g2);
+    auto ret2 = GraphAlgorithms::findIsolatedNodes(g2, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 
     // std::cout << "Node count: " << ret2.getNodeCount() << " Edge count: " << ret2.getEdgeCount() << " Density: " << ret2.getDensity() << std::endl;
     // std::cout << ret2 << std::endl;
@@ -799,7 +799,7 @@ void custom_float() {
     // CustomClass endNode3 = CustomClass(2, 2, 2);;  
 
     // std::unordered_set<CustomClass> someNodes{startNode3, CustomClass(4, 5, 6), endNode3};
-    auto ret3 = GraphUtility::transitiveReductionOfGraph(g3);  
+    auto ret3 = GraphAlgorithms::findIsolatedNodes(g3, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);  
 }
 
 void char_ull() {
@@ -814,11 +814,11 @@ void char_ull() {
     g4cpy.configureWeights(GraphClasses::GraphWeights::Unweighted);
     g4cpy.readFromTxt(fileName4);
 
-    // std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
-    auto ret4 = GraphUtility::transitiveReductionOfGraph(g4);
-
     // char startNode4 = 'a';
     // char endNode4 = 'p';
+
+    // std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
+    auto ret4 = GraphAlgorithms::findIsolatedNodes(g4, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);  
 }
 
 int main() {
