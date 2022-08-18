@@ -129,15 +129,8 @@ void test_mcstKruskal(GraphClasses::Graph<DataType, WeightType> &g, unsigned edg
 }
 
 template<typename DataType, typename WeightType>
-void test_findStronglyConnectedComponentsTarjan_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
-    assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
+void test_findStronglyConnectedComponentsTarjan(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
     auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfComponents);
-}
-
-template<typename DataType, typename WeightType>
-void test_findStronglyConnectedComponentsTarjan_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfComponents) {
-    auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfComponents);
 }
 
@@ -151,6 +144,12 @@ template<typename DataType, typename WeightType>
 void test_findIsolatedNodes(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfIsolatedNodes) {
     auto ret = GraphAlgorithms::findIsolatedNodes(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfIsolatedNodes);
+}
+
+template<typename DataType, typename WeightType>
+void test_johnsonAllCycles(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfCycles) {
+    auto ret = GraphAlgorithms::johnsonAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfCycles);
 }
 
 template<typename DataType, typename WeightType>
@@ -470,10 +469,10 @@ void test_string_double_undirected_weighted() {
     test_mcstPrimTotalCostOnly(g1, static_cast<double>(6199.467744));
     test_mcstPrim(g1, g1.getNodeCount() - 1);
     test_mcstKruskal(g1, g1.getNodeCount() - 1);
-    test_findStronglyConnectedComponentsTarjan_without_start(g1, 1);
-    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 1); //should be same as without start for undirected
+    test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
+    // johnson algorithm for all cycles not tested for undirected graph
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -541,10 +540,10 @@ void test_int_int_undirected_unweighted() {
     test_mcstPrim(g1, 7);
     test_mcstPrimTotalCostOnly(g1, 7);
     test_mcstKruskal(g1, 7);
-    test_findStronglyConnectedComponentsTarjan_without_start(g1, 1);
-    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 1);
+    test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
+    // johnson algorithm for all cycles not tested for undirected graph
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -611,10 +610,10 @@ void test_custom_float_directed_weighted() {
     test_topsortKhan(g1, startNode, endNode);
         g1.addEdge(CustomClass(5, 2, 6), startNode, 124.5f);
     // MCST algorithms not supported for directed graphs
-    // tarjan alg without start not supported for directed graphs
-    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
+    test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
+    test_johnsonAllCycles(g1, 1);
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -689,10 +688,10 @@ void test_char_ull_directed_unweighted() {
         g1.addEdge('j', 'i');
         g1.addEdge('l', 'h');
     // MCST algorithms not supported for directed graphs
-    // tarjan alg without start not supported for directed graphs
-    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
+    test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
+    test_johnsonAllCycles(g1, 11);
 
     std::cout << "SUCCESS" << std::endl;
 

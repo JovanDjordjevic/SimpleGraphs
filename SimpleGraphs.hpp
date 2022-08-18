@@ -206,14 +206,8 @@ namespace GraphAlgorithms {
 	std::vector<std::tuple<DataType, DataType, WeightType>> mcstKruskal(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
-	// without start node (only available for undirected graphs)
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g,
-		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
-
-	// NOTE: when using this function for directed graphs, only nodes in the corresponding dfs tree will be checked
-	template<typename DataType, typename WeightType>
-	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
@@ -222,6 +216,11 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::unordered_set<DataType> findIsolatedNodes(const GraphClasses::Graph<DataType, WeightType>& g,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout); 
+
+	// only for directed graphs
+	template<typename DataType, typename WeightType>
+	std::vector<std::pair<std::vector<DataType>, WeightType>> johnsonAllCycles(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout); 
 
 	// TODO:
@@ -290,6 +289,12 @@ namespace internal {
 
 	template<typename DataType, typename WeightType>
 	void tarjan__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, TarjanHelper<DataType, WeightType>& internalData);
+
+	template<typename DataType, typename WeightType>
+	struct JohnsonAllCyclesHelper;
+
+	template<typename DataType, typename WeightType>
+	bool johnsonCycles__internal(DataType cycleStartNode, DataType currentNode, WeightType currentCycleWeight, JohnsonAllCyclesHelper<DataType, WeightType>& internalData);
 } // namespace internal
 
 
@@ -1723,21 +1728,8 @@ namespace GraphAlgorithms {
 		return mcst;
 	}
 
-
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
-			GRAPH_ERROR("Must specify startNode for directed graphs. Call the appropriate overload of this function!");
-			exit(EXIT_FAILURE);
-		}
-
-		DataType startNode = (*std::begin(g.getNeighbors())).first;
-		return findStronglyConnectedComponentsTarjan(g, startNode, behavior, out);
-	}
-
-
-	template<typename DataType, typename WeightType>
-	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		internal::TarjanHelper<DataType, WeightType> internalData;
 
 		auto neighborList = g.getNeighbors();
@@ -1749,7 +1741,11 @@ namespace GraphAlgorithms {
 			internalData.times[node] = static_cast<size_t>(0);
 		}
 
-		internal::tarjan__internal(g, startNode, internalData);
+		for (auto& [node, neighbors] : neighborList) {
+			if (internalData.times[node] == static_cast<size_t>(0)) {
+				internal::tarjan__internal(g, node, internalData);
+			}
+		}		
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			size_t i = static_cast<size_t>(1);
@@ -1853,6 +1849,73 @@ namespace GraphAlgorithms {
 		}
 
 		return isolatedNodes;
+	}
+
+	template<typename DataType, typename WeightType>
+	std::vector<std::pair<std::vector<DataType>, WeightType>> johnsonAllCycles(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Undirected)) {
+			GRAPH_ERROR("Do not use this function for undirected graphs");
+			exit(EXIT_FAILURE);
+		}
+
+		internal::JohnsonAllCyclesHelper<DataType, WeightType> internalData;
+		auto& blockedSet = internalData.blockedSet;
+		auto& blockedMap = internalData.blockedMap;
+
+		GraphClasses::Graph<DataType, WeightType> gCopy = g;
+		
+		bool algCanContinue = true;
+		while (algCanContinue) {
+			auto connectedComponents = GraphAlgorithms::findStronglyConnectedComponentsTarjan(gCopy, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+			algCanContinue = false;
+			for (auto& component : connectedComponents) {
+				if (internal::greaterThan(component.size(), static_cast<size_t>(1))) {
+					algCanContinue = true;
+
+					auto subgraph = GraphUtility::getSubgraphFromNodes(gCopy, component);
+					internalData.subgraphNeighborList = subgraph.getNeighbors();
+					
+					DataType cycleStartNode = *std::begin(component);
+					DataType currentNode = cycleStartNode;
+
+					blockedSet.clear();
+					blockedMap.clear();
+					
+					internal::johnsonCycles__internal(cycleStartNode, currentNode, static_cast<WeightType>(0), internalData);
+
+					gCopy.deleteNode(cycleStartNode);
+
+					break;
+				}	
+			}
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			auto& allCycles = internalData.allCycles;
+
+			if (internal::equals(allCycles.size(), static_cast<size_t>(0))) {
+				out << "Graph has no cycles\n" << std::endl;
+			}
+			else {
+				out << "Graph has " << allCycles.size() << " cycles:\n";
+				
+				for (auto& [cycle, weight] : allCycles) {
+					out << "{ ";
+					
+					size_t limit = cycle.size() - 1;
+					for (size_t i = static_cast<size_t>(0); internal::lessThan(i, limit); ++i) {
+						out << "[" << cycle[i] << "] -> ";
+					}
+
+					out << "[" << cycle[limit] << "] }, cycle weight: " << weight << "\n";
+				}
+
+				out << std::endl;
+			}
+		}
+		
+		return internalData.allCycles;
 	}
 
 } // namespace GraphAlgorithms
@@ -2123,6 +2186,75 @@ namespace internal {
 		}
 
 		return;
+	}
+
+	template<typename DataType, typename WeightType>
+	struct JohnsonAllCyclesHelper {
+		public:
+			std::unordered_set<DataType> blockedSet;
+			std::unordered_map<DataType, std::unordered_set<DataType>> blockedMap;
+			std::deque<std::pair<DataType, WeightType>> cycleStack;
+			std::vector<std::pair<std::vector<DataType>, WeightType>> allCycles;
+			std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> subgraphNeighborList;
+	};
+
+	template<typename DataType, typename WeightType>
+	bool johnsonCycles__internal(DataType cycleStartNode, DataType currentNode, WeightType currentCycleWeight, JohnsonAllCyclesHelper<DataType, WeightType>& internalData) {
+		auto& blockedSet = internalData.blockedSet;
+		auto& blockedMap = internalData.blockedMap;
+		auto& cycleStack = internalData.cycleStack;
+		auto& allCycles = internalData.allCycles;
+		auto& subgraphNeighborList = internalData.subgraphNeighborList;
+
+		bool foundCycle = false;
+
+		cycleStack.emplace_back(currentNode, currentCycleWeight);
+		blockedSet.emplace(currentNode);
+
+		for (auto& [neighbor, weight] : subgraphNeighborList[currentNode]) {
+			if (internal::equals(neighbor, cycleStartNode)) {
+				std::vector<DataType> cycle;
+
+				for (auto& [node, cycleWeight] : cycleStack) {
+					cycle.emplace_back(node);
+				}
+
+				cycle.emplace_back(cycleStartNode);
+				allCycles.emplace_back(cycle, currentCycleWeight + weight.value_or(static_cast<WeightType>(1)));
+
+				foundCycle = true;
+			}
+			else if (internal::equals(blockedSet.count(neighbor), static_cast<size_t>(0))) {
+				bool gotCycle = johnsonCycles__internal(cycleStartNode, neighbor, currentCycleWeight + weight.value_or(static_cast<WeightType>(1)), internalData);
+				foundCycle = foundCycle || gotCycle;
+			}
+		}
+
+		if (foundCycle) {
+			// unblock currentNode
+			std::deque<DataType> forRemoval;
+			forRemoval.emplace_back(currentNode);
+
+			while(!forRemoval.empty()) {
+				DataType nodeToUnblock = forRemoval.front();
+				forRemoval.pop_front();
+
+				for (auto& dependentNode : blockedMap[nodeToUnblock]) {
+					forRemoval.emplace_back(dependentNode);
+				}
+
+				blockedSet.erase(nodeToUnblock);
+				blockedMap.erase(nodeToUnblock);
+			}
+		}
+		else {
+			for (auto& [neighbor, weight] : subgraphNeighborList[currentNode]) {
+				blockedMap[neighbor].emplace(currentNode);
+			}
+		}
+
+		cycleStack.pop_back();
+		return foundCycle; 
 	}
 
 } // namespace internal
