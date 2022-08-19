@@ -8,7 +8,7 @@
 //      - default constructor
 //      - copy constructor
 //      - operator==
-//      - operator=<
+//      - operator<
 //      - operator<< (only needed if printing of a node to an output stream/file is needed by user)
 //      - operator>> (only needed if it will be loaded from a file)
 //      - std::hash specialization for the custom class

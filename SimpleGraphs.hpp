@@ -223,6 +223,12 @@ namespace GraphAlgorithms {
 	std::vector<std::pair<std::vector<DataType>, WeightType>> johnsonAllCycles(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout); 
 
+	// for undirected graphs
+	// NOTE: if graph has parallel edge cycles they will be ignored
+	template<typename DataType, typename WeightType>
+	std::vector<std::pair<std::vector<DataType>, WeightType>> findAllCycles(const GraphClasses::Graph<DataType, WeightType>& g,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout); 
+
 	// TODO:
 	// cycles
 	// coloring
@@ -295,6 +301,12 @@ namespace internal {
 
 	template<typename DataType, typename WeightType>
 	bool johnsonCycles__internal(DataType cycleStartNode, DataType currentNode, WeightType currentCycleWeight, JohnsonAllCyclesHelper<DataType, WeightType>& internalData);
+
+	template<typename DataType, typename WeightType>
+	struct CycleHelper;
+
+	template<typename DataType, typename WeightType>
+	void findAllCycles__internal(DataType currentNode, WeightType currentPathWeight, CycleHelper<DataType, WeightType>& internalData);
 } // namespace internal
 
 
@@ -1918,6 +1930,55 @@ namespace GraphAlgorithms {
 		return internalData.allCycles;
 	}
 
+	template<typename DataType, typename WeightType>
+	std::vector<std::pair<std::vector<DataType>, WeightType>> findAllCycles(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		internal::CycleHelper<DataType, WeightType> internalData;
+		internalData.neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : internalData.neighborList) {
+			internalData.visited[node] = false;
+			internalData.currentPathPrefixSum[node] = static_cast<WeightType>(0);
+		}
+
+		for (auto& [node, neighbors] : internalData.neighborList) {
+			if (!internalData.visited[node]) {
+				// only start node will have empty optional
+				internalData.parents[node];
+
+				internalData.currentPath.clear();
+				internalData.currentPath.emplace_back(node);
+
+				internal::findAllCycles__internal(node, static_cast<WeightType>(0), internalData);
+			}
+		}
+		
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			auto& allCycles = internalData.allCycles;
+
+			if (internal::equals(allCycles.size(), static_cast<size_t>(0))) {
+				out << "Graph has no cycles\n" << std::endl;
+			}
+			else {
+				out << "Graph has " << allCycles.size() << " cycles:\n";
+				
+				for (auto& [cycle, weight] : allCycles) {
+					out << "{ ";
+					
+					size_t limit = cycle.size() - 1;
+					for (size_t i = static_cast<size_t>(0); internal::lessThan(i, limit); ++i) {
+						out << "[" << cycle[i] << "] -> ";
+					}
+
+					out << "[" << cycle[limit] << "] }, cycle weight: " << weight << "\n";
+				}
+
+				out << std::endl;
+			}
+		}
+
+		return internalData.allCycles;
+	}
+
 } // namespace GraphAlgorithms
 
 
@@ -2255,6 +2316,77 @@ namespace internal {
 
 		cycleStack.pop_back();
 		return foundCycle; 
+	}
+
+	template<typename DataType, typename WeightType>
+	struct CycleHelper {
+		public:
+			std::unordered_map<DataType, std::optional<DataType>> parents;
+			std::unordered_map<DataType, bool> visited;
+			std::vector<std::pair<std::vector<DataType>, WeightType>> allCycles;
+			std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> neighborList;
+			std::vector<DataType> currentPath;
+			std::unordered_map<DataType, WeightType> currentPathPrefixSum;
+	};
+
+	template<typename DataType, typename WeightType>
+	void findAllCycles__internal(DataType currentNode, WeightType currentPathWeight, CycleHelper<DataType, WeightType>& internalData) {
+		auto& parents = internalData.parents;
+		auto& allCycles = internalData.allCycles;
+		auto& neighborList = internalData.neighborList;
+		auto& currentPath = internalData.currentPath;
+		auto& visited = internalData.visited;
+		auto& currentPathPrefixSum = internalData.currentPathPrefixSum;
+
+		visited[currentNode] = true;
+		currentPathPrefixSum[currentNode] = currentPathWeight;
+
+		for (auto& [neighbor, weight] : neighborList[currentNode]) {
+			if (!parents[currentNode].has_value() || !internal::equals(neighbor, parents[currentNode].value())) {
+				// if neighbor node is detected on currentPath before this point, a cycle is found
+				auto itFindNeighbor = std::find(std::begin(currentPath), std::end(currentPath), neighbor);
+
+				if (!internal::equals(itFindNeighbor, std::end(currentPath))) {
+					std::vector<DataType> cycle(itFindNeighbor, std::end(currentPath));
+
+					auto cycleBegin = std::begin(cycle);
+					auto cycleEnd = std::end(cycle);
+
+					std::rotate(cycleBegin, std::min_element(cycleBegin, cycleEnd), cycleEnd);
+					cycle.emplace_back(*std::begin(cycle));
+
+					// iterators must be renewed because emplace_back may invalidate them 
+					cycleBegin = std::begin(cycle);
+					cycleEnd = std::end(cycle);
+
+					auto cmp = [&](const auto& elem) { return elem.first == cycle; };
+
+					auto itFindCycle = std::find_if(std::begin(allCycles), std::end(allCycles), cmp);
+					if (!internal::equals(itFindCycle, std::end(allCycles))) {
+						continue;
+					}
+
+					std::reverse(cycleBegin, cycleEnd);
+
+					auto itFindReverseOfCycle = std::find_if(std::begin(allCycles), std::end(allCycles), cmp);
+					if (!internal::equals(itFindReverseOfCycle, std::end(allCycles))) {
+						continue;
+					}
+
+					WeightType cycleWeight = currentPathWeight + weight.value_or(static_cast<WeightType>(1)) - currentPathPrefixSum[neighbor];
+					allCycles.emplace_back(cycle, cycleWeight);
+					continue;
+				}
+
+				parents[neighbor] = currentNode;
+				currentPath.emplace_back(neighbor);
+
+				findAllCycles__internal(neighbor, currentPathWeight + weight.value_or(static_cast<WeightType>(1)), internalData);
+				currentPath.pop_back();
+			}
+		}
+
+		return;
 	}
 
 } // namespace internal

@@ -153,6 +153,12 @@ void test_johnsonAllCycles(GraphClasses::Graph<DataType, WeightType> &g, unsigne
 }
 
 template<typename DataType, typename WeightType>
+void test_findAllCycles(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfCycles) {
+    auto ret = GraphAlgorithms::findAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfCycles);
+}
+
+template<typename DataType, typename WeightType>
 void test_mergeGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphClasses::Graph<DataType, WeightType> &g2) {
     assert(g1.getGraphType() == g2.getGraphType());
     assert(g1.getGraphWeights() == g2.getGraphWeights());
@@ -473,6 +479,7 @@ void test_string_double_undirected_weighted() {
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
     // johnson algorithm for all cycles not tested for undirected graph
+    test_findAllCycles(g1, 1);
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -544,6 +551,7 @@ void test_int_int_undirected_unweighted() {
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
     // johnson algorithm for all cycles not tested for undirected graph
+    test_findAllCycles(g1, 38);
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -614,6 +622,7 @@ void test_custom_float_directed_weighted() {
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
     test_johnsonAllCycles(g1, 1);
+    // dfs based algorithm for all cycles not tested for directed graph
 
     std::cout << "SUCCESS" << std::endl;
 
@@ -692,6 +701,7 @@ void test_char_ull_directed_unweighted() {
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
     test_johnsonAllCycles(g1, 11);
+    // dfs based algorithm for all cycles not tested for directed graph
 
     std::cout << "SUCCESS" << std::endl;
 
