@@ -2254,7 +2254,7 @@ namespace internal {
 		public:
 			std::unordered_set<DataType> blockedSet;
 			std::unordered_map<DataType, std::unordered_set<DataType>> blockedMap;
-			std::deque<std::pair<DataType, WeightType>> cycleStack;
+			std::deque<DataType> cycleStack;
 			std::vector<std::pair<std::vector<DataType>, WeightType>> allCycles;
 			std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> subgraphNeighborList;
 	};
@@ -2269,14 +2269,14 @@ namespace internal {
 
 		bool foundCycle = false;
 
-		cycleStack.emplace_back(currentNode, currentCycleWeight);
+		cycleStack.emplace_back(currentNode);
 		blockedSet.emplace(currentNode);
 
 		for (auto& [neighbor, weight] : subgraphNeighborList[currentNode]) {
 			if (internal::equals(neighbor, cycleStartNode)) {
 				std::vector<DataType> cycle;
 
-				for (auto& [node, cycleWeight] : cycleStack) {
+				for (auto& node : cycleStack) {
 					cycle.emplace_back(node);
 				}
 
