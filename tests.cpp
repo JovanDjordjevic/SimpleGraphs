@@ -128,15 +128,8 @@ void test_mcstKruskal(GraphClasses::Graph<DataType, WeightType> &g, unsigned edg
 }
 
 template<typename DataType, typename WeightType>
-void test_findStronglyConnectedComponentsTarjan_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
-    assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
+void test_findStronglyConnectedComponentsTarjan(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
     auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfComponents);
-}
-
-template<typename DataType, typename WeightType>
-void test_findStronglyConnectedComponentsTarjan_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfComponents) {
-    auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfComponents);
 }
 
@@ -467,8 +460,7 @@ void test_string_double_undirected_weighted() {
     test_mcstPrimTotalCostOnly(g1, static_cast<double>(6199.467744));
     test_mcstPrim(g1, g1.getNodeCount() - 1);
     test_mcstKruskal(g1, g1.getNodeCount() - 1);
-    test_findStronglyConnectedComponentsTarjan_without_start(g1, 1);
-    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 1); //should be same as without start for undirected
+    test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
 
@@ -536,8 +528,7 @@ void test_int_int_undirected_unweighted() {
     test_mcstPrim(g1, 7);
     test_mcstPrimTotalCostOnly(g1, 7);
     test_mcstKruskal(g1, 7);
-    test_findStronglyConnectedComponentsTarjan_without_start(g1, 1);
-    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 1);
+    test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
 
@@ -604,8 +595,7 @@ void test_custom_float_directed_weighted() {
     test_topsortKhan(g1, startNode, endNode);
         g1.addEdge(CustomClass(5, 2, 6), startNode, 124.5f);
     // MCST algorithms not supported for directed graphs
-    // tarjan alg without start not supported for directed graphs
-    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
+    test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
 
@@ -680,8 +670,7 @@ void test_char_ull_directed_unweighted() {
         g1.addEdge('j', 'i');
         g1.addEdge('l', 'h');
     // MCST algorithms not supported for directed graphs
-    // tarjan alg without start not supported for directed graphs
-    test_findStronglyConnectedComponentsTarjan_with_start(g1, startNode, 3);
+    test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
 
@@ -725,15 +714,14 @@ void string_double() {
     g1cpy.readFromTxt(fileName1);
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    auto ret1 = GraphAlgorithms::findArticulationPoints(g1, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
-    auto ret2 = GraphAlgorithms::findBridges(g1, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     
     // std::cout << "Node count: " << ret1.getNodeCount() << " Edge count: " << ret1.getEdgeCount() << " Density: " << ret1.getDensity() << std::endl;
     // std::cout << ret1 << std::endl;
 
     // std::string startNode1 = "node1";
     // std::string endNode1 = "node2";
+    
+    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g1, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void int_int() {
@@ -752,16 +740,14 @@ void int_int() {
     // std::cout << g2 << std::endl;
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
-    auto ret1 = GraphAlgorithms::findArticulationPoints(g2, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
-    auto ret2 = GraphAlgorithms::findBridges(g2, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 
     // std::cout << "Node count: " << ret2.getNodeCount() << " Edge count: " << ret2.getEdgeCount() << " Density: " << ret2.getDensity() << std::endl;
     // std::cout << ret2 << std::endl;
 
-
     // int startNode2 = 1;
     // int endNode2 = 3;
+
+    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g2, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void custom_float() {
@@ -780,9 +766,7 @@ void custom_float() {
     // CustomClass endNode3 = CustomClass(2, 2, 2);;  
 
     // std::unordered_set<CustomClass> someNodes{startNode3, CustomClass(4, 5, 6), endNode3};
-    auto ret1 = GraphAlgorithms::findArticulationPoints(g3, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
-    auto ret2 = GraphAlgorithms::findBridges(g3, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g3, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void char_ull() {
@@ -801,9 +785,7 @@ void char_ull() {
     // char endNode4 = 'p';
 
     // std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
-    auto ret1 = GraphAlgorithms::findArticulationPoints(g4, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
-    auto ret2 = GraphAlgorithms::findBridges(g4, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g4, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 int main() {

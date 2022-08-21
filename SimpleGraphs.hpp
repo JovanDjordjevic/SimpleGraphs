@@ -194,14 +194,8 @@ namespace GraphAlgorithms {
 	std::vector<std::tuple<DataType, DataType, WeightType>> mcstKruskal(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
-	// without start node (only available for undirected graphs)
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g,
-		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
-
-	// NOTE: when using this function for directed graphs, only nodes in the corresponding dfs tree will be checked
-	template<typename DataType, typename WeightType>
-	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
@@ -279,7 +273,7 @@ namespace internal {
 	struct TarjanHelper;
 
 	template<typename DataType, typename WeightType>
-	void tarjan__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, TarjanHelper<DataType, WeightType>& internalData);
+	void tarjan__internal(const DataType startNode, TarjanHelper<DataType, WeightType>& internalData);
 } // namespace internal
 
 
@@ -1767,51 +1761,34 @@ namespace GraphAlgorithms {
 		return mcst;
 	}
 
-
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
-			GRAPH_ERROR("Must specify startNode for directed graphs. Call the appropriate overload of this function!");
-			exit(EXIT_FAILURE);
-		}
-
-		DataType startNode = (*std::begin(g.getNeighbors())).first;
-		return findStronglyConnectedComponentsTarjan(g, startNode, behavior, out);
-	}
-
-
-	template<typename DataType, typename WeightType>
-	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		internal::TarjanHelper<DataType, WeightType> internalData;
 		internalData.time = static_cast<size_t>(1);
-		
-		auto neighborList = g.getNeighbors();
+		internalData.neighborList = g.getNeighbors();
 
-		for (auto& [node, neighbors] : neighborList) {
+		for (auto& [node, neighbors] : internalData.neighborList) {
 			internalData.inStack[node] = false;
 			// unvisited nodes will have their time set to 0
 			internalData.times[node] = static_cast<size_t>(0);
 		}
 
-		internal::tarjan__internal(g, startNode, internalData);
+		for (auto& [node, neighbors] : internalData.neighborList) {
+			if (internalData.times[node] == static_cast<size_t>(0)) {
+				internal::tarjan__internal(node, internalData);
+			}
+		}		
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			size_t i = static_cast<size_t>(1);
-
-			// auto& components = internalData.components;
-
 			for (auto& component : internalData.components) {
 				out << "Component " << i << " consists of " << component.size() << " nodes:\n\t";
-
 				for (auto& node : component) {
 					out << "[" << node << "] ";
 				}
-
-				out << std::endl;
+				std::cout << std::endl;
 				++i;
 			}
-
-			out << std::endl;
 		}
 
 		return internalData.components;
@@ -1819,15 +1796,21 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findWeaklyConnectedComponents(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		GraphClasses::Graph<DataType, WeightType> gCopy = g;
-		auto neighborList = gCopy.getNeighbors();
-		
-		if (internal::equals(gCopy.getGraphType(), GraphClasses::GraphType::Directed)) {
+		GraphClasses::Graph<DataType, WeightType> gCopy;
+		std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> neighborList;
+
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
+			gCopy = g;
+			neighborList = gCopy.getNeighbors();
+
 			for (auto& [node, neighbors] : neighborList) {
 				for (auto& [neighbor, weight] : neighbors) {
 						gCopy.addEdge(neighbor, GraphClasses::Edge(node, weight));
 				}
 			}
+		}
+		else {
+			neighborList = g.getNeighbors();
 		}
 
 		std::unordered_map<DataType, bool> visited;
@@ -1838,18 +1821,30 @@ namespace GraphAlgorithms {
 
 		std::vector<std::unordered_set<DataType>> weaklyConnectedComponents;
 
-		for (auto& [node, neighbor] : neighborList) {
+		for (auto& [node, neighbors] : neighborList) {
 			if (!visited[node]) {
-				auto dfTraverseOrder = GraphAlgorithms::depthFirstTraverse(gCopy, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+				auto& component = weaklyConnectedComponents.emplace_back(std::unordered_set<DataType>{});
 
-				std::unordered_set<DataType> component;
+				std::stack<DataType> stack;
+				stack.emplace(node);
 
-				for (auto& dfsNode : dfTraverseOrder) {
-					visited[dfsNode] = true;
-					component.emplace(dfsNode);
+				DataType currentNode;
+				while (!stack.empty()) {
+					currentNode = stack.top();
+					stack.pop();
+
+					auto& ifVisited = visited[currentNode];
+					if (!ifVisited) {
+						ifVisited = true;
+						component.emplace(currentNode);
+					}
+
+					for (auto& [neighbor, weight] : neighborList[currentNode]) {
+						if (!visited[neighbor]) {
+							stack.emplace(neighbor);
+						}
+					}
 				}
-				
-				weaklyConnectedComponents.emplace_back(component);
 			}
 		}
 
@@ -2175,25 +2170,27 @@ namespace internal {
 			std::unordered_map<DataType, size_t> lowerTimes;
 			std::stack<DataType> traversalOrder;
 			std::unordered_map<DataType, bool> inStack;
+			std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> neighborList;
 			std::vector<std::unordered_set<DataType>> components;
 	};
 
 	template<typename DataType, typename WeightType>
-	void tarjan__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, TarjanHelper<DataType, WeightType>& internalData) {
+	void tarjan__internal(const DataType startNode, TarjanHelper<DataType, WeightType>& internalData) {
 		internalData.times[startNode] = internalData.time;
 		internalData.lowerTimes[startNode] = internalData.time;
 		++internalData.time;
 		internalData.traversalOrder.emplace(startNode);
 		internalData.inStack[startNode] = true;
 
-		auto neighborList = g.getNeighbors();
+		auto& neighborList = internalData.neighborList;
+
 		for (auto& [neighbor, weight] : neighborList[startNode]) {
 			auto& startNodeLowerTime = internalData.lowerTimes[startNode];
 			auto& neighborTime = internalData.times[neighbor];
 			auto& neighborLowerTime = internalData.lowerTimes[neighbor];
 
 			if (internal::equals(neighborTime, static_cast<size_t>(0))) {
-				tarjan__internal(g, neighbor, internalData);
+				tarjan__internal(neighbor, internalData);
 
 				if (internal::lessThan(neighborLowerTime, startNodeLowerTime)) {
 					startNodeLowerTime = neighborLowerTime;
