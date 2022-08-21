@@ -170,26 +170,12 @@ namespace GraphAlgorithms {
 	std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshallAllShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
-	// without start node (only available for undirected graphs)
 	template<typename DataType, typename WeightType>
 	std::unordered_set<DataType> findArticulationPoints(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
-	// with start node (available for both undirected and directed)
-	// NOTE: when using this function for directed graphs, only nodes in the corresponding dfs tree will be checked
-	template<typename DataType, typename WeightType>
-	std::unordered_set<DataType> findArticulationPoints(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
-		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
-
-	// without start node (only available for undirected graphs)
 	template<typename DataType, typename WeightType>
 	std::vector<std::pair<DataType, DataType>> findBridges(const GraphClasses::Graph<DataType, WeightType>& g,
-		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
-
-	// with start node (available for both undirected and directed)
-	// NOTE: when using this function for directed graphs, only nodes in the corresponding dfs tree will be checked
-	template<typename DataType, typename WeightType>
-	std::vector<std::pair<DataType, DataType>> findBridges(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
@@ -284,7 +270,7 @@ namespace internal {
 	struct ArticulationHelper;
 
 	template<typename DataType, typename WeightType>
-	void articulation__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, ArticulationHelper<DataType, WeightType>& internalData);
+	void articulation__internal(const DataType startNode, ArticulationHelper<DataType, WeightType>& internalData);
 
 	template<typename DataType, typename WeightType>
 	class DisjointSet;
@@ -1501,33 +1487,28 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::unordered_set<DataType> findArticulationPoints(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
-			GRAPH_ERROR("Must specify startNode for directed graphs. Call the appropriate overload of this function!");
-			exit(EXIT_FAILURE);
-		}
-
-		DataType startNode = (*std::begin(g.getNeighbors())).first;
-
-		return findArticulationPoints(g, startNode, behavior, out);
-	}
-
-	template<typename DataType, typename WeightType>
-	std::unordered_set<DataType> findArticulationPoints(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		internal::ArticulationHelper<DataType, WeightType> internalData;
 		internalData.time = static_cast<size_t>(0);
-		internalData.parents[startNode];
+		internalData.neighborList = g.getNeighbors();
 
-		auto neighborList = g.getNeighbors();
-
-		for (auto& [node, neighbors] : neighborList) {
+		for (auto& [node, neighbors] : internalData.neighborList) {
 			internalData.visited[node] = false;
 		}
 
-		internal::articulation__internal(g, startNode, internalData);
+		for (auto& [startNode, neighbors] : internalData.neighborList) {
+			if (!internalData.visited[startNode]) {
+				internalData.parents[startNode];
 
+				internalData.previousStartNodes.emplace(startNode);
+				internalData.currentStartNode = startNode;
+
+				internal::articulation__internal(startNode, internalData);
+			}
+		}
+		
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			if (internal::equals(internalData.articulationPoints.size(), static_cast<size_t>(0))) {
-				out << "No articulation points found" << std::endl;
+				out << "No articulation points found\n" << std::endl;
 			} else {
 				out << "Articulation points found:\n\t";
 
@@ -1535,7 +1516,7 @@ namespace GraphAlgorithms {
 					out << "[" << point << "] ";
 				}
 
-				out << std::endl;
+				out << '\n' << std::endl;
 			}
 		}
 
@@ -1544,33 +1525,28 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::vector<std::pair<DataType, DataType>> findBridges(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
-			GRAPH_ERROR("Must specify startNode for directed graphs. Call the appropriate overload of this function!");
-			exit(EXIT_FAILURE);
-		}
-
-		DataType startNode = (*std::begin(g.getNeighbors())).first;
-
-		return findBridges(g, startNode, behavior, out);
-	}
-
-	template<typename DataType, typename WeightType>
-	std::vector<std::pair<DataType, DataType>> findBridges(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		internal::ArticulationHelper<DataType, WeightType> internalData;
 		internalData.time = static_cast<size_t>(0);
-		internalData.parents[startNode];
+		internalData.neighborList = g.getNeighbors();
 
-		auto neighborList = g.getNeighbors();
-
-		for (auto& [node, neighbors] : neighborList) {
+		for (auto& [node, neighbors] : internalData.neighborList) {
 			internalData.visited[node] = false;
 		}
 
-		internal::articulation__internal(g, startNode, internalData);
+		for (auto& [startNode, neighbors] : internalData.neighborList) {
+			if (!internalData.visited[startNode]) {
+				internalData.parents[startNode];
+
+				internalData.previousStartNodes.emplace(startNode);
+				internalData.currentStartNode = startNode;
+
+				internal::articulation__internal(startNode, internalData);
+			}
+		}
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			if (internal::equals(internalData.bridges.size(), static_cast<size_t>(0))) {
-				out << "No bridges found" << std::endl;
+				out << "No bridges found\n" << std::endl;
 			} else {
 				out << "Bridges found:\n";
 
@@ -1578,6 +1554,8 @@ namespace GraphAlgorithms {
 
 					out << "\t{ [" << bridge.first << "] [" << bridge.second << "] }\n";
 				}
+
+				std::cout << std::endl;
 			}
 		}
 
@@ -2079,33 +2057,39 @@ namespace internal {
 			std::unordered_map<DataType, size_t> lowerTimes;
 			std::unordered_map<DataType, bool> visited;
 			std::unordered_map<DataType, std::optional<DataType>> parents;
+			std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> neighborList;
+			std::unordered_set<DataType> previousStartNodes;
+			DataType currentStartNode;
 			std::unordered_set<DataType> articulationPoints;
 			std::vector<std::pair<DataType, DataType>> bridges;
 	};
 
-	// this one internal function is used both for findArticulationPoints and findBridges as these to algorithms are very simmilar
+	// this one internal function is used both for findArticulationPoints and findBridges as these two algorithms are very simmilar
 	template<typename DataType, typename WeightType>
-	void articulation__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, ArticulationHelper<DataType, WeightType>& internalData) {
+	void articulation__internal(const DataType startNode, ArticulationHelper<DataType, WeightType>& internalData) {
 		internalData.visited[startNode] = true;
 		internalData.times[startNode] = internalData.time;
 		internalData.lowerTimes[startNode] = internalData.time;
 		++internalData.time;
 
-		auto neighborList = g.getNeighbors();
 		size_t numChildren = static_cast<size_t>(0);
 
 		auto& startNodeParent = internalData.parents[startNode];
 		auto& startNodeTime = internalData.times[startNode];
 		auto& startNodeLowerTime = internalData.lowerTimes[startNode];
+		auto& neighborList = internalData.neighborList;
+		auto& currentStartNode = internalData.currentStartNode;
+		auto& previousStartNodes = internalData.previousStartNodes;
 
 		for (auto& [neighbor, weight] : neighborList[startNode]) {
 			auto& neighborLowerTime = internalData.lowerTimes[neighbor];
 
-			if (!internalData.visited[neighbor]) {
+			if (!internalData.visited[neighbor] 
+				 || (!internal::equals(neighbor, currentStartNode) && internal::greaterThan(previousStartNodes.count(neighbor), static_cast<size_t>(0)))) {
 				++numChildren;
 				internalData.parents[neighbor] = startNode;
 
-				articulation__internal(g, neighbor, internalData);
+				articulation__internal(neighbor, internalData);
 
 				if (internal::lessThan(neighborLowerTime, startNodeLowerTime)) {
 					startNodeLowerTime = neighborLowerTime;

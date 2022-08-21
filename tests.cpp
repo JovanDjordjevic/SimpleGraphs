@@ -91,28 +91,14 @@ void test_bellmanFord_floydWarshal_dijkstra_equivalence(GraphClasses::Graph<Data
 }
 
 template<typename DataType, typename WeightType>
-void test_findArticulationPoints_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfArticulationPoints) {
-    assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
+void test_findArticulationPoints(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfArticulationPoints) {
     auto ret = GraphAlgorithms::findArticulationPoints(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfArticulationPoints);
 }
 
 template<typename DataType, typename WeightType>
-void test_findArticulationPoints_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfArticulationPoints) {
-    auto ret = GraphAlgorithms::findArticulationPoints(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfArticulationPoints);
-}
-
-template<typename DataType, typename WeightType>
-void test_findBridges_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfBridges) {
-    assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
+void test_findBridges(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfBridges) {
     auto ret = GraphAlgorithms::findBridges(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfBridges);
-}
-
-template<typename DataType, typename WeightType>
-void test_findBridges_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfBridges) {
-    auto ret = GraphAlgorithms::findBridges(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfBridges);
 }
 
@@ -475,10 +461,8 @@ void test_string_double_undirected_weighted() {
     test_bellmanFordShortestPaths(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_floydWarshallAllShortestPaths(g1, startNode, endNode, static_cast<double>(134.236504));
     test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
-    test_findArticulationPoints_without_start(g1, 2);
-    test_findArticulationPoints_with_start(g1, startNode, 2);    //should be same as without start for undirected
-    test_findBridges_without_start(g1, 2);
-    test_findBridges_with_start(g1, startNode, 2);
+    test_findArticulationPoints(g1, 2);
+    test_findBridges(g1, 2);
     // topsort makes no sense for undirected graphs and is not tested here
     test_mcstPrimTotalCostOnly(g1, static_cast<double>(6199.467744));
     test_mcstPrim(g1, g1.getNodeCount() - 1);
@@ -546,10 +530,8 @@ void test_int_int_undirected_unweighted() {
     test_bellmanFordShortestPaths(g1, startNode, 6, 2, 2);
     test_floydWarshallAllShortestPaths(g1, 4, 5, 2);
     test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
-    test_findArticulationPoints_without_start(g1, 0);
-    test_findArticulationPoints_with_start(g1, startNode, 0);
-    test_findBridges_without_start(g1, 0);
-    test_findBridges_with_start(g1, 6, 0);
+    test_findArticulationPoints(g1, 0);
+    test_findBridges(g1, 0);
     // topsort makes no sense for undirected graphs and is not tested here
     test_mcstPrim(g1, 7);
     test_mcstPrimTotalCostOnly(g1, 7);
@@ -615,10 +597,8 @@ void test_custom_float_directed_weighted() {
     test_bellmanFordShortestPaths(g1, startNode, endNode, 3, 13.7f);
     test_floydWarshallAllShortestPaths(g1, startNode, endNode, 13.7f);
     test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
-    // articulation points without start not supported for directed graphs
-    test_findArticulationPoints_with_start(g1, startNode, 2);
-    // bridges without start not supported for directed graphs
-    test_findBridges_with_start(g1, startNode, 2);
+    test_findArticulationPoints(g1, 2);
+    test_findBridges(g1, 2);
         // removing edge before topsort testing because this example graph is not acyclic
         g1.deleteEdge(CustomClass(5, 2, 6), startNode);
     test_topsortKhan(g1, startNode, endNode);
@@ -683,10 +663,8 @@ void test_char_ull_directed_unweighted() {
     test_bellmanFordShortestPaths(g1, startNode, 'o', 5, static_cast<unsigned long long>(5));
     test_floydWarshallAllShortestPaths(g1, 'h', 'j', static_cast<unsigned long long>(4));
     test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
-    // articulation points without start not supported for directed graphs
-    test_findArticulationPoints_with_start(g1, startNode, 3);
-    // bridges without start not supported for directed graphs
-    test_findBridges_with_start(g1, startNode, 3);
+    test_findArticulationPoints(g1, 3);
+    test_findBridges(g1, 3);
     // removing some edges before topsort testing because this example graph is not acyclic
         g1.deleteEdge('p', 'a');
         g1.deleteEdge('o', 'p');
@@ -747,7 +725,9 @@ void string_double() {
     g1cpy.readFromTxt(fileName1);
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    auto ret1 = GraphAlgorithms::findIsolatedNodes(g1, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::findArticulationPoints(g1, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+    auto ret2 = GraphAlgorithms::findBridges(g1, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     
     // std::cout << "Node count: " << ret1.getNodeCount() << " Edge count: " << ret1.getEdgeCount() << " Density: " << ret1.getDensity() << std::endl;
     // std::cout << ret1 << std::endl;
@@ -771,9 +751,10 @@ void int_int() {
     // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
     // std::cout << g2 << std::endl;
 
-
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
-    auto ret2 = GraphAlgorithms::findIsolatedNodes(g2, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::findArticulationPoints(g2, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+    auto ret2 = GraphAlgorithms::findBridges(g2, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 
     // std::cout << "Node count: " << ret2.getNodeCount() << " Edge count: " << ret2.getEdgeCount() << " Density: " << ret2.getDensity() << std::endl;
     // std::cout << ret2 << std::endl;
@@ -799,7 +780,9 @@ void custom_float() {
     // CustomClass endNode3 = CustomClass(2, 2, 2);;  
 
     // std::unordered_set<CustomClass> someNodes{startNode3, CustomClass(4, 5, 6), endNode3};
-    auto ret3 = GraphAlgorithms::findIsolatedNodes(g3, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);  
+    auto ret1 = GraphAlgorithms::findArticulationPoints(g3, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+    auto ret2 = GraphAlgorithms::findBridges(g3, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void char_ull() {
@@ -818,7 +801,9 @@ void char_ull() {
     // char endNode4 = 'p';
 
     // std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
-    auto ret4 = GraphAlgorithms::findIsolatedNodes(g4, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);  
+    auto ret1 = GraphAlgorithms::findArticulationPoints(g4, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+    auto ret2 = GraphAlgorithms::findBridges(g4, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {
