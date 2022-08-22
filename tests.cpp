@@ -455,6 +455,8 @@ void test_string_double_undirected_weighted() {
     assert(internal::equals(g1.getEccentricityOfNode(startNode), static_cast<double>(6125.78774)));
     auto [radius, diameter, center] = g1.getRadiusDiameterAndCenter();
     assert(internal::equals(radius, static_cast<double>(5991.55124)) && internal::equals(diameter, static_cast<double>(6125.78774)) && center.size() == 1);
+    auto [circumference, girth] = g1.getCircumferenceAndGirth();
+    assert(internal::equals(circumference, static_cast<double>(430.886504)) && internal::equals(girth, static_cast<double>(430.886504)));
 
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, std::string{"node5"}, true);
@@ -527,6 +529,8 @@ void test_int_int_undirected_unweighted() {
     assert(internal::equals(g1.getEccentricityOfNode(startNode), 3));
     auto [radius, diameter, center] = g1.getRadiusDiameterAndCenter();
     assert(internal::equals(radius, 2) && internal::equals(diameter, 3) && center.size() == 4);
+    auto [circumference, girth] = g1.getCircumferenceAndGirth();
+    assert(internal::equals(circumference, 8) && internal::equals(girth, 3));
 
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, 6, true);
@@ -597,6 +601,8 @@ void test_custom_float_directed_weighted() {
     assert(internal::equals(g1.getEccentricityOfNode(startNode), 13.69999981f));
     auto [radius, diameter, center] = g1.getRadiusDiameterAndCenter();
     assert(internal::equals(radius, 13.69999981f) && internal::equals(diameter, GraphClasses::MAX_WEIGHT<float>) && center.size() == 1);
+    auto [circumference, girth] = g1.getCircumferenceAndGirth();
+    assert(internal::equals(circumference, static_cast<float>(137.1999969)) && internal::equals(girth, static_cast<float>(137.1999969)));
 
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, CustomClass(1, 7, 3), true);
@@ -666,6 +672,8 @@ void test_char_ull_directed_unweighted() {
     assert(internal::equals(g1.getEccentricityOfNode(startNode), static_cast<unsigned long long>(5)));
     auto [radius, diameter, center] = g1.getRadiusDiameterAndCenter();
     assert(internal::equals(radius, static_cast<unsigned long long>(5)) && internal::equals(diameter, GraphClasses::MAX_WEIGHT<unsigned long long>) && center.size() == 3);
+    auto [circumference, girth] = g1.getCircumferenceAndGirth();
+    assert(internal::equals(circumference, static_cast<unsigned long long>(9)) && internal::equals(girth, static_cast<unsigned long long>(2)));
 
     test_depthFirstTraverse(g1, startNode, g1.getNodeCount());
     test_depthFirstSearch(g1, startNode, 'm', true);
@@ -740,6 +748,37 @@ int main() {
     test_custom_float_directed_weighted();
 
     test_char_ull_directed_unweighted();
+
+    // GraphClasses::Graph<std::string, double> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Undirected);
+    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    // const char* fileName1 = "testInputs/string_double.txt";
+    // g1.readFromTxt(fileName1);
+
+	// GraphClasses::Graph<int, int> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Undirected);
+    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    // const char* fileName1 = "testInputs/int_int_u_u.txt";
+    // g1.readFromTxt(fileName1);
+
+	// GraphClasses::Graph<CustomClass, float> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Directed);
+    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    // const char* fileName1 = "testInputs/custom_float.txt";
+    // g1.readFromTxt(fileName1);
+
+	// GraphClasses::Graph<char, unsigned long long> g1;
+    // g1.configureDirections(GraphClasses::GraphType::Directed);
+    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    // const char* fileName1 = "testInputs/char_ull_d_u.txt";
+    // g1.readFromTxt(fileName1);
+
+    // std::cout << std::setprecision(10);
+
+    // auto ret = GraphAlgorithms::johnsonAllCycles(g1);
+
+    // auto [circ, gir] = g1.getCircumferenceAndGirth();
+    // std::cout << "circ: " << circ << " gir: " << gir << std::endl;  
 
     return 0;
 }

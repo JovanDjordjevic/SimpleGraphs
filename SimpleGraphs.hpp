@@ -84,6 +84,8 @@ namespace GraphClasses {
 			// NOTE: for weighted graphs, eccentricity is calculated in terms of edge weights and not number of edges on path
 			WeightType getEccentricityOfNode(const DataType node) const;
 			std::tuple<WeightType, WeightType, std::unordered_set<DataType>> getRadiusDiameterAndCenter() const;
+			// NOTE: for weighted graphs, circumference and girth are calculated in terms of edge weights and not number of edges in a cycle
+			std::pair<WeightType, WeightType> getCircumferenceAndGirth() const;
 			// ...
 
 			GraphType getGraphType() const;
@@ -705,6 +707,38 @@ namespace GraphClasses {
 		}
 
 		return std::make_tuple(radius, diameter, center);
+	}
+
+	template<typename DataType, typename WeightType>
+	std::pair<WeightType, WeightType> Graph<DataType, WeightType>::getCircumferenceAndGirth() const {
+		std::vector<std::pair<std::vector<DataType>, WeightType>> allCycles;
+		
+		if (internal::equals(m_graphType, GraphType::Undirected)) {
+			allCycles = GraphAlgorithms::findAllCycles(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+		}
+		else { // directed
+			allCycles = GraphAlgorithms::johnsonAllCycles(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+		}
+
+		if (internal::equals(allCycles.size(), static_cast<size_t>(0))) {
+			return std::make_pair(MAX_WEIGHT<WeightType>, MAX_WEIGHT<WeightType>);
+		}
+		else {
+			WeightType circumference = MIN_WEIGHT<WeightType>;
+			WeightType girth = MAX_WEIGHT<WeightType>;
+
+			for (auto& [cycle, cycleWeight] : allCycles) {
+				if (internal::greaterThan(cycleWeight, circumference)) {
+					circumference = cycleWeight;
+				}
+
+				if (internal::lessThan(cycleWeight, girth)) {
+					girth = cycleWeight;
+				}
+			}
+
+			return std::make_pair(circumference, girth);
+		}	
 	}
 
 	template<typename DataType, typename WeightType>
@@ -1932,6 +1966,11 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::vector<std::pair<std::vector<DataType>, WeightType>> findAllCycles(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
+			GRAPH_ERROR("Do not use this function for directed graphs");
+			exit(EXIT_FAILURE);
+		}
+
 		internal::CycleHelper<DataType, WeightType> internalData;
 		internalData.neighborList = g.getNeighbors();
 
