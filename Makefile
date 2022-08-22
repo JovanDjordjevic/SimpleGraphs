@@ -1,7 +1,7 @@
 TEST_PROGRAM = tests.out
 CXX 		 = clang++
 CXXFLAGS     = -std=c++17 -g -Wall -Wextra -pedantic -O0
-# CXXFLAGS     = -std=c++17 -g -O3
+#CXXFLAGS     = -std=c++17 -g -O3
 
 all : $(TEST_PROGRAM)
 
@@ -16,11 +16,13 @@ customClass.o : CustomClass/customClass.cpp CustomClass/customClass.hpp
 
 .PHONY: clean
 clean:
-	rm *.o *.out test.txt
+	rm -f *.o *.out test.txt
 run:
+	make clean
 	make
 	./$(TEST_PROGRAM)
 grind:
+	make clean
 	make
 	valgrind --tool=callgrind --callgrind-out-file=callgrind.out ./$(TEST_PROGRAM)
 	kcachegrind callgrind.out

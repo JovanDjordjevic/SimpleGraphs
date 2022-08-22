@@ -8,56 +8,57 @@
 
 // apart from these tests, all functions were tested arbitrarily and seem to be working
 // this DOES NOT guarantee correctness
+// At this time usage of pointer and reference types as NodeType is not supported
 
 // NOTE: even though the library supports float as WeightType, usage of double is recommended becasue of calculation precission
 
-template<typename DataType, typename WeightType>
-void test_depthFirstTraverse(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned dfsTreeSize) {
+template<typename NodeType, typename WeightType>
+void test_depthFirstTraverse(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, unsigned dfsTreeSize) {
     auto ret = GraphAlgorithms::depthFirstTraverse(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == dfsTreeSize);
 }
 
-template<typename DataType, typename WeightType>
-void test_depthFirstSearch(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType nodeToFind, bool shouldFind) {
+template<typename NodeType, typename WeightType>
+void test_depthFirstSearch(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType nodeToFind, bool shouldFind) {
     auto [ifFound, traverseOrder] = GraphAlgorithms::depthFirstSearch(g, startNode, nodeToFind, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ifFound == shouldFind);
 }
 
-template<typename DataType, typename WeightType>
-void test_breadthFirstTraverse(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned bfsTreeSize) {
+template<typename NodeType, typename WeightType>
+void test_breadthFirstTraverse(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, unsigned bfsTreeSize) {
     auto ret = GraphAlgorithms::breadthFirstTraverse(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == bfsTreeSize);
 }
 
-template<typename DataType, typename WeightType>
-void test_breadthFirstSearch(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType nodeToFind, bool shouldFind) {
+template<typename NodeType, typename WeightType>
+void test_breadthFirstSearch(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType nodeToFind, bool shouldFind) {
     auto [ifFound, traverseOrder] = GraphAlgorithms::breadthFirstSearch(g, startNode, nodeToFind, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ifFound == shouldFind);
 }
 
-template<typename DataType, typename WeightType>
-void test_dijkstraShortestPath(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType endNode, unsigned edgesOnPath, WeightType pathDistance) {
+template<typename NodeType, typename WeightType>
+void test_dijkstraShortestPath(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType endNode, unsigned edgesOnPath, WeightType pathDistance) {
     auto [path, dist] = GraphAlgorithms::dijkstraShortestPath(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert((path.size() - 1) == edgesOnPath);
     assert(internal::equals(pathDistance, dist));
 
 }
 
-template<typename DataType, typename WeightType>
-void test_bellmanFordShortestPaths(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, DataType someEndNode, unsigned edgesOnPathToEndNode, WeightType pathDistance) {
+template<typename NodeType, typename WeightType>
+void test_bellmanFordShortestPaths(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType someEndNode, unsigned edgesOnPathToEndNode, WeightType pathDistance) {
     auto ret = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert((ret[someEndNode].first.size() - 1) == edgesOnPathToEndNode);
     assert(internal::equals(ret[someEndNode].second, pathDistance));
 }
 
-template<typename DataType, typename WeightType>
-void test_floydWarshallAllShortestPaths(GraphClasses::Graph<DataType, WeightType> &g, DataType someStartNode, DataType someEndNode, WeightType distance) {
+template<typename NodeType, typename WeightType>
+void test_floydWarshallAllShortestPaths(GraphClasses::Graph<NodeType, WeightType> &g, NodeType someStartNode, NodeType someEndNode, WeightType distance) {
     auto ret = GraphAlgorithms::floydWarshallAllShortestPaths(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(internal::equals(ret[someStartNode][someEndNode], distance));
 }
 
-template<typename DataType, typename WeightType>
-void test_bellmanFord_floydWarshal_dijkstra_equivalence(GraphClasses::Graph<DataType, WeightType> &g) {
+template<typename NodeType, typename WeightType>
+void test_bellmanFord_floydWarshal_dijkstra_equivalence(GraphClasses::Graph<NodeType, WeightType> &g) {
     // std::cout << std::endl;
     int wrongDistanceCounter = 0;
     int wrongPathCounter = 0;
@@ -90,78 +91,78 @@ void test_bellmanFord_floydWarshal_dijkstra_equivalence(GraphClasses::Graph<Data
     assert(wrongPathCounter == 0);
 }
 
-template<typename DataType, typename WeightType>
-void test_findArticulationPoints(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfArticulationPoints) {
+template<typename NodeType, typename WeightType>
+void test_findArticulationPoints(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfArticulationPoints) {
     auto ret = GraphAlgorithms::findArticulationPoints(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfArticulationPoints);
 }
 
-template<typename DataType, typename WeightType>
-void test_findBridges(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfBridges) {
+template<typename NodeType, typename WeightType>
+void test_findBridges(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfBridges) {
     auto ret = GraphAlgorithms::findBridges(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfBridges);
 }
 
-template<typename DataType, typename WeightType>
-void test_topsortKhan(GraphClasses::Graph<DataType, WeightType> &g, DataType firstNode, DataType lastNode) {
+template<typename NodeType, typename WeightType>
+void test_topsortKhan(GraphClasses::Graph<NodeType, WeightType> &g, NodeType firstNode, NodeType lastNode) {
     auto ret = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret[0] == firstNode);
     assert(ret[g.getNodeCount() - 1] == lastNode);
 }
 
-template<typename DataType, typename WeightType>
-void test_mcstPrimTotalCostOnly(GraphClasses::Graph<DataType, WeightType> &g, WeightType totalCost) {
+template<typename NodeType, typename WeightType>
+void test_mcstPrimTotalCostOnly(GraphClasses::Graph<NodeType, WeightType> &g, WeightType totalCost) {
     auto ret = GraphAlgorithms::mcstPrimTotalCostOnly(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(internal::equals(ret, totalCost));
 }
 
-template<typename DataType, typename WeightType>
-void test_mcstPrim(GraphClasses::Graph<DataType, WeightType> &g, unsigned edgeCount) {
+template<typename NodeType, typename WeightType>
+void test_mcstPrim(GraphClasses::Graph<NodeType, WeightType> &g, unsigned edgeCount) {
     auto ret = GraphAlgorithms::mcstPrim(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == edgeCount);
 }
 
-template<typename DataType, typename WeightType>
-void test_mcstKruskal(GraphClasses::Graph<DataType, WeightType> &g, unsigned edgeCount) {
+template<typename NodeType, typename WeightType>
+void test_mcstKruskal(GraphClasses::Graph<NodeType, WeightType> &g, unsigned edgeCount) {
     auto ret = GraphAlgorithms::mcstKruskal(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == edgeCount);
 }
 
-template<typename DataType, typename WeightType>
-void test_findStronglyConnectedComponentsTarjan(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
+template<typename NodeType, typename WeightType>
+void test_findStronglyConnectedComponentsTarjan(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
     auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfComponents);
 }
 
-template<typename DataType, typename WeightType>
-void test_findWeaklyConnectedComponents(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfComponents) {
+template<typename NodeType, typename WeightType>
+void test_findWeaklyConnectedComponents(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
     auto ret = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfComponents);
 }
 
-template<typename DataType, typename WeightType>
-void test_findIsolatedNodes(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfIsolatedNodes) {
+template<typename NodeType, typename WeightType>
+void test_findIsolatedNodes(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfIsolatedNodes) {
     auto ret = GraphAlgorithms::findIsolatedNodes(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfIsolatedNodes);
 }
 
-template<typename DataType, typename WeightType>
-void test_johnsonAllCycles(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfCycles) {
+template<typename NodeType, typename WeightType>
+void test_johnsonAllCycles(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfCycles) {
     auto ret = GraphAlgorithms::johnsonAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfCycles);
 }
 
-template<typename DataType, typename WeightType>
-void test_findAllCycles(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfCycles) {
+template<typename NodeType, typename WeightType>
+void test_findAllCycles(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfCycles) {
     auto ret = GraphAlgorithms::findAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfCycles);
 }
 
-template<typename DataType, typename WeightType>
-void test_mergeGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphClasses::Graph<DataType, WeightType> &g2) {
+template<typename NodeType, typename WeightType>
+void test_mergeGraphs(GraphClasses::Graph<NodeType, WeightType> &g1, GraphClasses::Graph<NodeType, WeightType> &g2) {
     assert(g1.getGraphType() == g2.getGraphType());
     assert(g1.getGraphWeights() == g2.getGraphWeights());
-    GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::mergeGraphs(g1, g2);
+    GraphClasses::Graph<NodeType, WeightType> ret = GraphUtility::mergeGraphs(g1, g2);
     // std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     // std::cout << ret << std::endl;
     // testing that 2 same graphs do not produce extra nodes or edges after merging
@@ -171,11 +172,11 @@ void test_mergeGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphClasse
     assert(ret.getEdgeCount() == g2.getEdgeCount());
 }
 
-template<typename DataType, typename WeightType>
-void test_intersectGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphClasses::Graph<DataType, WeightType> &g2) {
+template<typename NodeType, typename WeightType>
+void test_intersectGraphs(GraphClasses::Graph<NodeType, WeightType> &g1, GraphClasses::Graph<NodeType, WeightType> &g2) {
     assert(g1.getGraphType() == g2.getGraphType());
     assert(g1.getGraphWeights() == g2.getGraphWeights());
-    GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::intersectGraphs(g1, g2);
+    GraphClasses::Graph<NodeType, WeightType> ret = GraphUtility::intersectGraphs(g1, g2);
     //std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     //std::cout << ret << std::endl;
     // testing that intersection of 2 same graphs is the exact same starting graph
@@ -185,9 +186,9 @@ void test_intersectGraphs(GraphClasses::Graph<DataType, WeightType> &g1, GraphCl
     assert(ret.getEdgeCount() == g2.getEdgeCount());
 }
 
-template<typename DataType, typename WeightType>
-void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std::unordered_set<DataType>& nodes, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges) {
-    GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::getSubgraphFromNodes(g, nodes);
+template<typename NodeType, typename WeightType>
+void test_getSubgraphFromNodes(GraphClasses::Graph<NodeType, WeightType> &g, std::unordered_set<NodeType>& nodes, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges) {
+    GraphClasses::Graph<NodeType, WeightType> ret = GraphUtility::getSubgraphFromNodes(g, nodes);
     // std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     // std::cout << ret << std::endl;
     // testing that intersection of 2 same graphs is the exact same starting graph
@@ -195,9 +196,9 @@ void test_getSubgraphFromNodes(GraphClasses::Graph<DataType, WeightType> &g, std
     assert(ret.getEdgeCount() == expectedNumOfEdges);
 }
 
-template<typename DataType, typename WeightType>
-void test_transposeOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
-    GraphClasses::Graph<DataType, WeightType> ret = GraphUtility::transposeOfGraph(g);
+template<typename NodeType, typename WeightType>
+void test_transposeOfGraph(GraphClasses::Graph<NodeType, WeightType> &g) {
+    GraphClasses::Graph<NodeType, WeightType> ret = GraphUtility::transposeOfGraph(g);
     // std::cout << "Node count: " << ret.getNodeCount() << " Edge count: " << ret.getEdgeCount() << std::endl;
     // std::cout << ret << std::endl;
     // transpose should ahve same number of nodes and edges as the original
@@ -205,23 +206,23 @@ void test_transposeOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
     assert(ret.getEdgeCount() == g.getEdgeCount());
 }
 
-template<typename DataType>
-void test_constructCompleteGraphFromNodes_without_default_weight(std::unordered_set<DataType>& nodes, GraphClasses::GraphType graphType) {
-    GraphClasses::Graph<DataType> ret = GraphUtility::constructCompleteGraphFromNodes(nodes, graphType);
+template<typename NodeType>
+void test_constructCompleteGraphFromNodes_without_default_weight(std::unordered_set<NodeType>& nodes, GraphClasses::GraphType graphType) {
+    GraphClasses::Graph<NodeType> ret = GraphUtility::constructCompleteGraphFromNodes(nodes, graphType);
     assert(ret.getNodeCount() == nodes.size());
     assert(ret.getEdgeCount() == (nodes.size() * (nodes.size() - 1)));
 }
 
-template<typename DataType, typename WeightType>
-void test_constructCompleteGraphFromNodes_with_default_weight(std::unordered_set<DataType>& nodes, GraphClasses::GraphType graphType, WeightType defaultWeight) {
-    GraphClasses::Graph<DataType> ret = GraphUtility::constructCompleteGraphFromNodes(nodes, graphType, defaultWeight);
+template<typename NodeType, typename WeightType>
+void test_constructCompleteGraphFromNodes_with_default_weight(std::unordered_set<NodeType>& nodes, GraphClasses::GraphType graphType, GraphClasses::GraphWeights graphWeights, std::optional<WeightType> defaultWeight) {
+    GraphClasses::Graph<NodeType, WeightType> ret = GraphUtility::constructCompleteGraphFromNodes(nodes, graphType, graphWeights, defaultWeight);
     assert(ret.getNodeCount() == nodes.size());
     assert(ret.getEdgeCount() == (nodes.size() * (nodes.size() - 1)));
 }
 
-template<typename DataType, typename WeightType>
-void test_complementOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
-    GraphClasses::Graph<DataType, WeightType> g_compl = GraphUtility::complementOfGraph(g);
+template<typename NodeType, typename WeightType>
+void test_complementOfGraph(GraphClasses::Graph<NodeType, WeightType> &g) {
+    GraphClasses::Graph<NodeType, WeightType> g_compl = GraphUtility::complementOfGraph(g);
     
     auto orgNodeCount = g.getNodeCount();
     auto orgEdgeCount = g.getEdgeCount();
@@ -229,23 +230,23 @@ void test_complementOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
     assert(g_compl.getNodeCount() == orgNodeCount);
     assert(g_compl.getEdgeCount() == (orgNodeCount * (orgNodeCount - 1)) - orgEdgeCount);
 
-    GraphClasses::Graph<DataType, WeightType> g_compl_compl = GraphUtility::complementOfGraph(g_compl);
+    GraphClasses::Graph<NodeType, WeightType> g_compl_compl = GraphUtility::complementOfGraph(g_compl);
     assert(g_compl_compl.getNodeCount() == orgNodeCount);
     assert(g_compl_compl.getEdgeCount() == orgEdgeCount);
 }
 
-template<typename DataType, typename WeightType>
-void test_transitiveClosureOfGraph(GraphClasses::Graph<DataType, WeightType> &g, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges ) {
-    GraphClasses::Graph<DataType, WeightType> closure = GraphUtility::transitiveClosureOfGraph(g);
+template<typename NodeType, typename WeightType>
+void test_transitiveClosureOfGraph(GraphClasses::Graph<NodeType, WeightType> &g, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges ) {
+    GraphClasses::Graph<NodeType, WeightType> closure = GraphUtility::transitiveClosureOfGraph(g);
     assert(closure.getNodeCount() == expectedNumOfNodes);
     assert(closure.getEdgeCount() == expectedNumOfEdges);
 }
 
-template<typename DataType, typename WeightType>
-void test_transitiveReductionOfGraph(GraphClasses::Graph<DataType, WeightType> &g) {
-    GraphClasses::Graph<DataType, WeightType> reduction = GraphUtility::transitiveReductionOfGraph(g);
-    GraphClasses::Graph<DataType, WeightType> closureOfReduction = GraphUtility::transitiveReductionOfGraph(reduction);
-    GraphClasses::Graph<DataType, WeightType> closureOfOriginal = GraphUtility::transitiveReductionOfGraph(g);
+template<typename NodeType, typename WeightType>
+void test_transitiveReductionOfGraph(GraphClasses::Graph<NodeType, WeightType> &g) {
+    GraphClasses::Graph<NodeType, WeightType> reduction = GraphUtility::transitiveReductionOfGraph(g);
+    GraphClasses::Graph<NodeType, WeightType> closureOfReduction = GraphUtility::transitiveReductionOfGraph(reduction);
+    GraphClasses::Graph<NodeType, WeightType> closureOfOriginal = GraphUtility::transitiveReductionOfGraph(g);
     test_mergeGraphs(closureOfOriginal, closureOfReduction);
     test_intersectGraphs(closureOfOriginal, closureOfReduction);
 }
@@ -498,7 +499,7 @@ void test_string_double_undirected_weighted() {
     std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     test_getSubgraphFromNodes(g1, someNodes, 4, 6);
     // transposing makes no sense for undirected graphs and is not tested here
-    test_constructCompleteGraphFromNodes_with_default_weight(someNodes, g1.getGraphType(), 1);
+    test_constructCompleteGraphFromNodes_with_default_weight<std::string, double>(someNodes, g1.getGraphType(), g1.getGraphWeights(), static_cast<double>(1.0));
     // complement of weighted graps is not supported and is not tested here
     auto g1NodeCount = g1.getNodeCount();
     test_transitiveClosureOfGraph(g1, g1NodeCount, (g1NodeCount * (g1NodeCount - 1) + g1NodeCount));
@@ -639,7 +640,7 @@ void test_custom_float_directed_weighted() {
     std::unordered_set<CustomClass> someNodes{startNode, CustomClass(4, 5, 6), endNode};
     test_getSubgraphFromNodes(g1, someNodes, 3, 1);
     test_transposeOfGraph(g1);
-    test_constructCompleteGraphFromNodes_with_default_weight(someNodes, g1.getGraphType(), 1);
+    test_constructCompleteGraphFromNodes_with_default_weight<CustomClass, float>(someNodes, g1.getGraphType(), g1.getGraphWeights(), 1.0f);
     // complement of weighted graps is not supported and is not tested here
     test_transitiveClosureOfGraph(g1, g1.getNodeCount(), 17);
     test_transitiveReductionOfGraph(g1);
@@ -748,7 +749,7 @@ void string_double() {
     // std::string startNode1 = "node1";
     // std::string endNode1 = "node2";
     
-    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g1, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::findAllCycles(g1, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void int_int() {
@@ -774,7 +775,7 @@ void int_int() {
     // int startNode2 = 1;
     // int endNode2 = 3;
 
-    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g2, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::findAllCycles(g2, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void custom_float() {
@@ -793,7 +794,7 @@ void custom_float() {
     // CustomClass endNode3 = CustomClass(2, 2, 2);;  
 
     // std::unordered_set<CustomClass> someNodes{startNode3, CustomClass(4, 5, 6), endNode3};
-    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g3, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::johnsonAllCycles(g3, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void char_ull() {
@@ -812,7 +813,7 @@ void char_ull() {
     // char endNode4 = 'p';
 
     // std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
-    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g4, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::johnsonAllCycles(g4, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 int main() {
@@ -828,12 +829,12 @@ int main() {
 
     test_char_ull_directed_unweighted();
 
-    // for quicker callgrind testing
-    
+    //for quicker callgrind testing
+
     // string_double();
     // int_int();
     // custom_float();
     // char_ull();
-	
+
     return 0;
 }
