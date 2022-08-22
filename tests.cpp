@@ -58,48 +58,47 @@ void test_floydWarshallAllShortestPaths(GraphClasses::Graph<DataType, WeightType
 
 template<typename DataType, typename WeightType>
 void test_bellmanFord_floydWarshal_dijkstra_equivalence(GraphClasses::Graph<DataType, WeightType> &g) {
-    int wrongCounter = 0;
+    // std::cout << std::endl;
+    int wrongDistanceCounter = 0;
+    int wrongPathCounter = 0;
     auto floydReturn = GraphAlgorithms::floydWarshallAllShortestPaths(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     for (auto& [startNode, pathData] : floydReturn) {
         auto bellmanReturn = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
         for (auto& [endNode, weight] : pathData) {
             auto dijkstraReturn = GraphAlgorithms::dijkstraShortestPath(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
             if (!internal::equals(weight, bellmanReturn[endNode].second) || !internal::equals(weight, dijkstraReturn.second) || !internal::equals(dijkstraReturn.second, bellmanReturn[endNode].second)) {
-                // std::cout << std:setprecission(10);
+                // std::cout << std::setprecision(10);
                 // std::cout << "[" << startNode << "] to [" << endNode << "] : FLOYD : " << std::setw(15) << weight  
-                //                                                     << " \tBELLMAN : " << std::setw(15) << bellmanReturn[endNode].second << std::endl;
+                //                                                     << " \tBELLMAN : " << std::setw(15) << bellmanReturn[endNode].second << std::endl
                 //                                                     << " \tDIJKSTRA : " << std::setw(15) << dijkstraReturn.second << std::endl;
-                ++wrongCounter;
-            }
+                ++wrongDistanceCounter;
+
+                if (dijkstraReturn.first.size() !=0 && bellmanReturn[endNode].first.size() !=0) {
+                    for (size_t i = 0; i < (dijkstraReturn.first).size(); ++i) {
+                        if (!internal::equals((bellmanReturn[endNode].first)[i], (dijkstraReturn.first)[i])) {
+                            // std::cout << "Paths from " << "[" << startNode << "] to [" << endNode << "] do not match" << std::endl;
+                            ++wrongPathCounter;
+                        }
+                    }
+                }    
+            }        
         }   
     }
-    //std::cout << "WRONG COUNT: " << wrongCounter << std::endl;
-    assert(wrongCounter == 0);
+    // std::cout << "WRONG DISTANCE COUNT: " << wrongDistanceCounter << std::endl;
+    // std::cout << "WRONG PATH COUNT: " << wrongPathCounter << std::endl;
+    assert(wrongDistanceCounter == 0);
+    assert(wrongPathCounter == 0);
 }
 
 template<typename DataType, typename WeightType>
-void test_findArticulationPoints_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfArticulationPoints) {
-    assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
+void test_findArticulationPoints(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfArticulationPoints) {
     auto ret = GraphAlgorithms::findArticulationPoints(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfArticulationPoints);
 }
 
 template<typename DataType, typename WeightType>
-void test_findArticulationPoints_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfArticulationPoints) {
-    auto ret = GraphAlgorithms::findArticulationPoints(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfArticulationPoints);
-}
-
-template<typename DataType, typename WeightType>
-void test_findBridges_without_start(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfBridges) {
-    assert(g.getGraphType() == GraphClasses::GraphType::Undirected);
+void test_findBridges(GraphClasses::Graph<DataType, WeightType> &g, unsigned numOfBridges) {
     auto ret = GraphAlgorithms::findBridges(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfBridges);
-}
-
-template<typename DataType, typename WeightType>
-void test_findBridges_with_start(GraphClasses::Graph<DataType, WeightType> &g, DataType startNode, unsigned numOfBridges) {
-    auto ret = GraphAlgorithms::findBridges(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfBridges);
 }
 
@@ -469,10 +468,8 @@ void test_string_double_undirected_weighted() {
     test_bellmanFordShortestPaths(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_floydWarshallAllShortestPaths(g1, startNode, endNode, static_cast<double>(134.236504));
     test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
-    test_findArticulationPoints_without_start(g1, 2);
-    test_findArticulationPoints_with_start(g1, startNode, 2);    //should be same as without start for undirected
-    test_findBridges_without_start(g1, 2);
-    test_findBridges_with_start(g1, startNode, 2);
+    test_findArticulationPoints(g1, 2);
+    test_findBridges(g1, 2);
     // topsort makes no sense for undirected graphs and is not tested here
     test_mcstPrimTotalCostOnly(g1, static_cast<double>(6199.467744));
     test_mcstPrim(g1, g1.getNodeCount() - 1);
@@ -543,10 +540,8 @@ void test_int_int_undirected_unweighted() {
     test_bellmanFordShortestPaths(g1, startNode, 6, 2, 2);
     test_floydWarshallAllShortestPaths(g1, 4, 5, 2);
     test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
-    test_findArticulationPoints_without_start(g1, 0);
-    test_findArticulationPoints_with_start(g1, startNode, 0);
-    test_findBridges_without_start(g1, 0);
-    test_findBridges_with_start(g1, 6, 0);
+    test_findArticulationPoints(g1, 0);
+    test_findBridges(g1, 0);
     // topsort makes no sense for undirected graphs and is not tested here
     test_mcstPrim(g1, 7);
     test_mcstPrimTotalCostOnly(g1, 7);
@@ -615,10 +610,8 @@ void test_custom_float_directed_weighted() {
     test_bellmanFordShortestPaths(g1, startNode, endNode, 3, 13.7f);
     test_floydWarshallAllShortestPaths(g1, startNode, endNode, 13.7f);
     test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
-    // articulation points without start not supported for directed graphs
-    test_findArticulationPoints_with_start(g1, startNode, 2);
-    // bridges without start not supported for directed graphs
-    test_findBridges_with_start(g1, startNode, 2);
+    test_findArticulationPoints(g1, 2);
+    test_findBridges(g1, 2);
         // removing edge before topsort testing because this example graph is not acyclic
         g1.deleteEdge(CustomClass(5, 2, 6), startNode);
     test_topsortKhan(g1, startNode, endNode);
@@ -686,10 +679,8 @@ void test_char_ull_directed_unweighted() {
     test_bellmanFordShortestPaths(g1, startNode, 'o', 5, static_cast<unsigned long long>(5));
     test_floydWarshallAllShortestPaths(g1, 'h', 'j', static_cast<unsigned long long>(4));
     test_bellmanFord_floydWarshal_dijkstra_equivalence(g1);
-    // articulation points without start not supported for directed graphs
-    test_findArticulationPoints_with_start(g1, startNode, 3);
-    // bridges without start not supported for directed graphs
-    test_findBridges_with_start(g1, startNode, 3);
+    test_findArticulationPoints(g1, 3);
+    test_findBridges(g1, 3);
     // removing some edges before topsort testing because this example graph is not acyclic
         g1.deleteEdge('p', 'a');
         g1.deleteEdge('o', 'p');
@@ -736,6 +727,94 @@ void test_char_ull_directed_unweighted() {
     std::cout << "=================================================================" << std::endl << std::endl;
 }
 
+// for quicker callgrind testing
+void string_double() {
+    GraphClasses::Graph<std::string, double> g1;
+    g1.configureDirections(GraphClasses::GraphType::Undirected);
+    g1.configureWeights(GraphClasses::GraphWeights::Weighted);
+    const char* fileName1 = "testInputs/string_double.txt";
+    g1.readFromTxt(fileName1);
+
+    GraphClasses::Graph<std::string, double> g1cpy;
+    g1cpy.configureDirections(GraphClasses::GraphType::Undirected);
+    g1cpy.configureWeights(GraphClasses::GraphWeights::Weighted);
+    g1cpy.readFromTxt(fileName1);
+
+    // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
+    
+    // std::cout << "Node count: " << ret1.getNodeCount() << " Edge count: " << ret1.getEdgeCount() << " Density: " << ret1.getDensity() << std::endl;
+    // std::cout << ret1 << std::endl;
+
+    // std::string startNode1 = "node1";
+    // std::string endNode1 = "node2";
+    
+    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g1, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+}
+
+void int_int() {
+    GraphClasses::Graph<int, int> g2;
+    g2.configureDirections(GraphClasses::GraphType::Undirected);
+    g2.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    const char* fileName2 = "testInputs/int_int_u_u.txt";
+    g2.readFromTxt(fileName2);
+
+    GraphClasses::Graph<int, int> g2cpy;
+    g2cpy.configureDirections(GraphClasses::GraphType::Undirected);
+    g2cpy.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    g2cpy.readFromTxt(fileName2);
+
+    // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
+    // std::cout << g2 << std::endl;
+
+    // std::unordered_set<int> someNodes{2, 5, 3, 7};
+
+    // std::cout << "Node count: " << ret2.getNodeCount() << " Edge count: " << ret2.getEdgeCount() << " Density: " << ret2.getDensity() << std::endl;
+    // std::cout << ret2 << std::endl;
+
+    // int startNode2 = 1;
+    // int endNode2 = 3;
+
+    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g2, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+}
+
+void custom_float() {
+    GraphClasses::Graph<CustomClass, float> g3;
+    g3.configureDirections(GraphClasses::GraphType::Directed);
+    g3.configureWeights(GraphClasses::GraphWeights::Weighted);
+    const char* fileName3 = "testInputs/custom_float.txt";
+    g3.readFromTxt(fileName3);
+
+    GraphClasses::Graph<CustomClass, float> g3cpy;
+    g3cpy.configureDirections(GraphClasses::GraphType::Directed);
+    g3cpy.configureWeights(GraphClasses::GraphWeights::Weighted);
+    g3cpy.readFromTxt(fileName3);
+
+    // CustomClass startNode3 = CustomClass(1, 2, 3);
+    // CustomClass endNode3 = CustomClass(2, 2, 2);;  
+
+    // std::unordered_set<CustomClass> someNodes{startNode3, CustomClass(4, 5, 6), endNode3};
+    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g3, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+}
+
+void char_ull() {
+    GraphClasses::Graph<char, unsigned long long> g4;
+    g4.configureDirections(GraphClasses::GraphType::Directed);
+    g4.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    const char* fileName4 = "testInputs/char_ull_d_u.txt";
+    g4.readFromTxt(fileName4);
+
+    GraphClasses::Graph<char, unsigned long long> g4cpy;
+    g4cpy.configureDirections(GraphClasses::GraphType::Directed);
+    g4cpy.configureWeights(GraphClasses::GraphWeights::Unweighted);
+    g4cpy.readFromTxt(fileName4);
+
+    // char startNode4 = 'a';
+    // char endNode4 = 'p';
+
+    // std::unordered_set<char> someNodes{'a', 'c', 'd', 'e', 'i', 'j'};
+    auto ret1 = GraphAlgorithms::findWeaklyConnectedComponents(g4, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+}
+
 int main() {
     test_internal_operators();
 
@@ -749,36 +828,12 @@ int main() {
 
     test_char_ull_directed_unweighted();
 
-    // GraphClasses::Graph<std::string, double> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Undirected);
-    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-    // const char* fileName1 = "testInputs/string_double.txt";
-    // g1.readFromTxt(fileName1);
-
-	// GraphClasses::Graph<int, int> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Undirected);
-    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    // const char* fileName1 = "testInputs/int_int_u_u.txt";
-    // g1.readFromTxt(fileName1);
-
-	// GraphClasses::Graph<CustomClass, float> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Directed);
-    // g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-    // const char* fileName1 = "testInputs/custom_float.txt";
-    // g1.readFromTxt(fileName1);
-
-	// GraphClasses::Graph<char, unsigned long long> g1;
-    // g1.configureDirections(GraphClasses::GraphType::Directed);
-    // g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    // const char* fileName1 = "testInputs/char_ull_d_u.txt";
-    // g1.readFromTxt(fileName1);
-
-    // std::cout << std::setprecision(10);
-
-    // auto ret = GraphAlgorithms::johnsonAllCycles(g1);
-
-    // auto [circ, gir] = g1.getCircumferenceAndGirth();
-    // std::cout << "circ: " << circ << " gir: " << gir << std::endl;  
-
+    // for quicker callgrind testing
+    
+    // string_double();
+    // int_int();
+    // custom_float();
+    // char_ull();
+	
     return 0;
 }

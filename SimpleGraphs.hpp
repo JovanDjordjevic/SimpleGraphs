@@ -60,13 +60,15 @@ namespace GraphClasses {
 			void clearGraph();
 
 			void readFromTxt(const char* filePath);
-			void exportToTxt(const char* filePath) const; // TODO: export in format that SimpleGraphs can read
+			void exportToTxt(const char* filePath) const;
 
 			void addNode(const DataType node);
 			void addEdge(const DataType startNode, const DataType neighborNode);    // for unweighted graphs
 			void addEdge(const DataType startNode, const DataType neighborNode, const WeightType edgeWeight); // for weighted graphs
 			void addEdge(const DataType startNode, const Edge<DataType, WeightType>& edge);
-			void deleteEdge(const DataType startNode, const DataType endNode);
+			// deletes all edges from startNode to endNode in case of a multigraph
+			void deleteEdge(const DataType startNode, const DataType endNode);	
+			// removes a node and all edges to/from said node
 			void deleteNode(const DataType nodeToDelete);
 			size_t getNodeCount() const;
 			size_t getEdgeCount() const;
@@ -170,26 +172,12 @@ namespace GraphAlgorithms {
 	std::unordered_map<DataType, std::unordered_map<DataType, WeightType>> floydWarshallAllShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
-	// without start node (only available for undirected graphs)
 	template<typename DataType, typename WeightType>
 	std::unordered_set<DataType> findArticulationPoints(const GraphClasses::Graph<DataType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
-	// with start node (available for both undirected and directed)
-	// NOTE: when using this function for directed graphs, only nodes in the corresponding dfs tree will be checked
-	template<typename DataType, typename WeightType>
-	std::unordered_set<DataType> findArticulationPoints(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
-		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
-
-	// without start node (only available for undirected graphs)
 	template<typename DataType, typename WeightType>
 	std::vector<std::pair<DataType, DataType>> findBridges(const GraphClasses::Graph<DataType, WeightType>& g,
-		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
-
-	// with start node (available for both undirected and directed)
-	// NOTE: when using this function for directed graphs, only nodes in the corresponding dfs tree will be checked
-	template<typename DataType, typename WeightType>
-	std::vector<std::pair<DataType, DataType>> findBridges(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename DataType, typename WeightType>
@@ -280,14 +268,16 @@ namespace internal {
 	struct EdgeComparator;
 
 	template<typename DataType, typename WeightType>
-	struct EdgeHasher;
+	struct EdgeStructHasher;
+
+	template<typename DataType, typename WeightType>
+	struct CompleteEdgeHasher;
 
 	template<typename DataType, typename WeightType>
 	struct ArticulationHelper;
 
 	template<typename DataType, typename WeightType>
-	void articulation__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, 
-		const GraphAlgorithms::AlgorithmBehavior behavior, std::ostream& out, ArticulationHelper<DataType, WeightType>& internalData);
+	void articulation__internal(const DataType startNode, ArticulationHelper<DataType, WeightType>& internalData);
 
 	template<typename DataType, typename WeightType>
 	class DisjointSet;
@@ -296,7 +286,7 @@ namespace internal {
 	struct TarjanHelper;
 
 	template<typename DataType, typename WeightType>
-	void tarjan__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, TarjanHelper<DataType, WeightType>& internalData);
+	void tarjan__internal(const DataType startNode, TarjanHelper<DataType, WeightType>& internalData);
 
 	template<typename DataType, typename WeightType>
 	struct JohnsonAllCyclesHelper;
@@ -309,6 +299,7 @@ namespace internal {
 
 	template<typename DataType, typename WeightType>
 	void findAllCycles__internal(DataType currentNode, WeightType currentPathWeight, CycleHelper<DataType, WeightType>& internalData);
+
 } // namespace internal
 
 
@@ -316,18 +307,21 @@ namespace GraphClasses {
 	template<typename DataType, typename WeightType>
 	std::ostream& operator<<(std::ostream& out, const GraphClasses::Graph<DataType, WeightType>& g) {
 		for (auto& [node, neighbors] : g.m_neighbors) {
-			out << "Node [" << node << "] has neighbors:" << std::endl;
+			out << "Node [" << node << "] has neighbors:\n";
 
 			if (internal::equals(g.m_graphWeights, GraphWeights::Weighted)) {
 				for (auto& val : neighbors) {
-					out << "|\t [" << val.neighbor << "], edge weight: " << val.weight.value() << std::endl;
+					out << "|\t [" << val.neighbor << "], edge weight: " << val.weight.value() << '\n';
 				}
 			} else { // unweighted
 				for (auto& val : neighbors) {
-					out << "|\t [" << val.neighbor << "]" << std::endl;
+					out << "|\t [" << val.neighbor << "]\n";
 				}
 			}
 		}
+
+		out << std::endl;
+
 		return out;
 	}
 
@@ -356,11 +350,15 @@ namespace GraphClasses {
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::configureDirections(const GraphType graphType) {
 		m_graphType = graphType;
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::configureWeights(const GraphWeights graphWeights) {
 		m_graphWeights = graphWeights;
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -370,7 +368,9 @@ namespace GraphClasses {
 
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::clearGraph() {
-		m_neighbors.clear(); // TODO: check if this is enough
+		m_neighbors.clear();
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -421,6 +421,8 @@ namespace GraphClasses {
 		}
 
 		file.close();
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -436,11 +438,15 @@ namespace GraphClasses {
 		else {
 			internal::exportUndirectedGraph(*this, filePath);
 		}
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::addNode(const DataType node) {
 		m_neighbors[node];
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -454,6 +460,8 @@ namespace GraphClasses {
 		addNode(neighborNode); 
 
 		m_neighbors[startNode].emplace_back(neighborNode);
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -467,6 +475,8 @@ namespace GraphClasses {
 		addNode(neighborNode); 
 
 		m_neighbors[startNode].emplace_back(neighborNode, edgeWeight);
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -483,10 +493,10 @@ namespace GraphClasses {
 		addNode(edge.neighbor); 
 
 		m_neighbors[startNode].emplace_back(edge.neighbor, edge.weight);
+
 		return;
 	}
 
-	// NOTE: will delete all edges that connect start and end nodes in case of a multigraph
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::deleteEdge(const DataType startNode, const DataType endNode) {
 		auto itStartNode = m_neighbors.find(startNode);
@@ -511,7 +521,6 @@ namespace GraphClasses {
 		return;
 	}
 
-	// removes a node and all edges to/from said node
 	template<typename DataType, typename WeightType>
 	void Graph<DataType, WeightType>::deleteNode(DataType nodeToDelete) {
 		if (internal::equals(m_neighbors.find(nodeToDelete), std::end(m_neighbors))) {
@@ -519,9 +528,8 @@ namespace GraphClasses {
 			return;
 		}
 
-		m_neighbors[nodeToDelete].clear(); // needed?
 		m_neighbors.erase(nodeToDelete);
-
+		
 		for (auto& [node, neighbors] : m_neighbors) {
 			auto itBegin = std::begin(neighbors);
 			auto itEnd = std::end(neighbors);
@@ -540,9 +548,11 @@ namespace GraphClasses {
 	template<typename DataType, typename WeightType>
 	size_t Graph<DataType, WeightType>::getEdgeCount() const {
 		size_t count = static_cast<size_t>(0);
+
 		for (auto& [node, neighbors] : m_neighbors) {
 			count += neighbors.size();
 		}
+
 		return count;
 	}
 
@@ -575,6 +585,7 @@ namespace GraphClasses {
 		}
 		
 		std::unordered_map<DataType, size_t> degrees;
+
 		for (auto& [node, neighbors] : m_neighbors) {
 			degrees[node] = neighbors.size();
 		}
@@ -610,6 +621,7 @@ namespace GraphClasses {
 		}
 
 		std::unordered_map<DataType, size_t> inDegrees;
+
 		for (auto& [node, neighbors] : m_neighbors) {
 			inDegrees[node] = static_cast<size_t>(0);
 		}
@@ -641,6 +653,7 @@ namespace GraphClasses {
 		}
 
 		std::unordered_map<DataType, size_t> outDegrees;
+
 		for (auto& [node, neighbors] : m_neighbors) {
 			outDegrees[node] = neighbors.size();
 		}
@@ -648,10 +661,11 @@ namespace GraphClasses {
 		return outDegrees;
 	}
 
-
 	template<typename DataType, typename WeightType>
 	double Graph<DataType, WeightType>::getDensity() const {
-		double density = static_cast<double>(getEdgeCount()) / (getNodeCount() * (getNodeCount() - static_cast<size_t>(1)));
+		auto nodeCount = getNodeCount();
+
+		double density = static_cast<double>(getEdgeCount()) / (nodeCount * (nodeCount - static_cast<size_t>(1)));
 
 		if (internal::equals(m_graphType, GraphType::Undirected)) {
 			density *= 2;
@@ -758,7 +772,6 @@ namespace GraphClasses {
 
 } // namespace GraphClasses
 
-
 namespace GraphUtility {
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> mergeGraphs(const GraphClasses::Graph<DataType, WeightType>& g1, const GraphClasses::Graph<DataType, WeightType>& g2) {
@@ -773,43 +786,37 @@ namespace GraphUtility {
 		newGraph.configureWeights(g1.getGraphWeights());
 
 		auto g1NeighborList = g1.getNeighbors();
-		for (auto& [node, neighbors] : g1NeighborList) {
-			newGraph.addNode(node);
-		}
-
 		auto g2NeighborList = g2.getNeighbors();
-		for (auto& [node, neighbors] : g2NeighborList) {
-			newGraph.addNode(node);
+
+		// adding duplicate edges is avoided by putting them in a set first
+		std::unordered_set<std::pair<DataType, GraphClasses::Edge<DataType, WeightType>>, internal::CompleteEdgeHasher<DataType, WeightType>> edgeSet;
+
+		for (auto& [node, neighbors] : g1NeighborList) {
+			// check needed in case of isolated nodes
+			if (internal::equals(neighbors.size(), static_cast<size_t>(0))) {
+				newGraph.addNode(node);
+				continue;
+			}
+			
+			for (auto& edge : neighbors) {
+				edgeSet.emplace(node, edge);
+			}
 		}
 
-		auto neighborList = newGraph.getNeighbors();
-		for (auto& [node, neighbors] : neighborList) {
-			auto it1 = g1NeighborList.find(node);
-			auto it2 = g2NeighborList.find(node);
-
-			if (!internal::equals(it1, std::end(g1NeighborList)) && !internal::equals(it2, std::end(g2NeighborList))) { // node is in both graphs
-				// we avoid adding duplicate edges by putting them in a set first
-				std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>> edgeSet;
-				for (auto& edge : g1NeighborList[node]) {
-					edgeSet.emplace(edge);
-				}
-
-				for (auto& edge : g2NeighborList[node]) {
-					edgeSet.emplace(edge);
-				}
-
-				for (auto& edge : edgeSet) {
-					newGraph.addEdge(node, edge);
-				}
-			} else if (!internal::equals(it1, std::end(g1NeighborList)) && internal::equals(it2, std::end(g2NeighborList))) { // node is only in g1
-				for (auto& edge : g1NeighborList[node]) {
-					newGraph.addEdge(node, edge);
-				}
-			} else if (internal::equals(it1, std::end(g1NeighborList)) && !internal::equals(it2, std::end(g2NeighborList))) { // is only in g2
-				for (auto& edge : g2NeighborList[node]) {
-					newGraph.addEdge(node, edge);
-				}
+		for (auto& [node, neighbors] : g2NeighborList) {
+			// check needed in case of isolated nodes
+			if (internal::equals(neighbors.size(), static_cast<size_t>(0))) {
+				newGraph.addNode(node);
+				continue;
 			}
+
+			for (auto& edge : neighbors) {
+				edgeSet.emplace(node, edge);
+			}
+		}
+
+		for (auto& edge : edgeSet) {
+			newGraph.addEdge(edge.first, edge.second);
 		}
 
 		return newGraph;
@@ -830,14 +837,17 @@ namespace GraphUtility {
 		auto g1NeighborList = g1.getNeighbors();
 		auto g2NeighborList = g2.getNeighbors();
 
+		std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeStructHasher<DataType, WeightType>> edges;
+
 		for (auto& [node, neighbors] : g1NeighborList) {
 			auto it = g2NeighborList.find(node);
+
 			if (!internal::equals(it, std::end(g2NeighborList))) {
 				newGraph.addNode(node);
 
-				std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>> edges;
 				auto& shorter = g1NeighborList[node];
 				auto& longer = g2NeighborList[node];
+
 				if (internal::lessThan(longer.size(), shorter.size())) {
 					std::swap(shorter, longer);
 				}
@@ -847,10 +857,12 @@ namespace GraphUtility {
 				}
 
 				for (auto& edge : longer) {
-					if (!internal::equals(edges.find(edge), std::end(edges))) {
+					if (!internal::equals(edges.count(edge), static_cast<size_t>(0))) {
 						newGraph.addEdge(node, edge);
 					}
 				}
+
+				edges.clear();
 			}
 		}
 
@@ -868,8 +880,9 @@ namespace GraphUtility {
 
 		for (auto& node : nodes) {
 			newGraph.addNode(node);
+			
 			for (auto& edge : neighborList[node]) {
-				if (!internal::equals(nodes.find(edge.neighbor), std::end(nodes))) {
+				if (!internal::equals(nodes.count(edge.neighbor), static_cast<size_t>(0))) {
 					newGraph.addEdge(node, edge);
 				}
 			}
@@ -894,23 +907,25 @@ namespace GraphUtility {
 
 		for (auto& [node, neighbors] : neighborList) {
 			// needed so that isolated nodes will remain in the transposed graph
-			newGraph.addNode(node);
+			if (internal::equals(neighbors.size(), static_cast<size_t>(0))) {
+				newGraph.addNode(node);
+				continue;
+			}
+
 			for (auto& [neighbor, weight] : neighbors) {
 				if (internal::equals(newGraph.getGraphWeights(), GraphClasses::GraphWeights::Weighted)) {
-					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Directed)) {
-						newGraph.addEdge(neighbor, node, weight.value());
-					} else { // undirected
-						newGraph.addEdge(neighbor, node, weight.value());
+					newGraph.addEdge(neighbor, node, weight.value());
+
+					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Undirected)) {
 						newGraph.addEdge(node, neighbor, weight.value());
-					}
+					} 
 				}
-				else {
-					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Directed)) {
-						newGraph.addEdge(neighbor, node);
-					} else { // undirected
-						newGraph.addEdge(neighbor, node);
+				else { // unweighted
+					newGraph.addEdge(neighbor, node);
+
+					if (internal::equals(newGraph.getGraphType(), GraphClasses::GraphType::Undirected)) {
 						newGraph.addEdge(node, neighbor);
-					}
+					} 
 				}
 			}
 		}
@@ -966,17 +981,16 @@ namespace GraphUtility {
 		newGraph.configureDirections(g.getGraphType());
 		newGraph.configureWeights(g.getGraphWeights());
 
-		auto nodeSet = g.getNodeSet();
+		auto neighborList = g.getNeighbors();
 
-		for (auto& startNode : nodeSet) {
-			for (auto& endNode : nodeSet) {
+		for (auto& [startNode, startNodeNeighbors] : neighborList) {
+			for (auto& [endNode, endNodeNeighbors] : neighborList) {
 				if (!internal::equals(startNode, endNode)) {
 					newGraph.addEdge(startNode, endNode);
 				}
 			}
 		}
 
-		auto neighborList = g.getNeighbors();
 		for (auto& [node, neighbors] : neighborList) {
 			for(auto& [neighbor, weight] : neighbors) {
 				newGraph.deleteEdge(node, neighbor);
@@ -989,25 +1003,23 @@ namespace GraphUtility {
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> transitiveClosureOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
 		GraphClasses::Graph<DataType, WeightType> closure;
+
 		closure.configureDirections(GraphClasses::GraphType::Directed);
 		closure.configureWeights(GraphClasses::GraphWeights::Unweighted);
 
 		auto neighborList = g.getNeighbors();
-		auto gNodeSet = g.getNodeSet();
+
 		std::unordered_map<DataType, std::unordered_map<DataType, bool>> reachMatrix;
 		
-		for (auto& node1 : gNodeSet) {
-			for (auto& node2 : gNodeSet) {
-				if (internal::equals(node1, node2)) {	
-					reachMatrix[node1][node2] = true;
-				}
-				else {
-					reachMatrix[node1][node2] = false;
-				}
+		for (auto& [node1, neighbors1] : neighborList) {
+			for (auto& [node2, neighbors2] : neighborList) {
+				reachMatrix[node1][node2] = false;
 			}
 		}
 
 		for (auto& [node, neighbors] : neighborList) {
+			reachMatrix[node][node] = true;
+
 			for (auto& [neighbor, weight] : neighbors) {
 				reachMatrix[node][neighbor] = true;
 			}
@@ -1017,7 +1029,9 @@ namespace GraphUtility {
 			for (auto& [start, n2] : neighborList) {
 				if (reachMatrix[start][mid]) {
 					for (auto& [end, n3] : neighborList) {
-						reachMatrix[start][end] |= reachMatrix[mid][end];
+						if (reachMatrix[mid][end]) {
+							reachMatrix[start][end] = true;
+						}
 					}
 				}
 			}
@@ -1037,15 +1051,16 @@ namespace GraphUtility {
 	template<typename DataType, typename WeightType>
 	GraphClasses::Graph<DataType, WeightType> transitiveReductionOfGraph(const GraphClasses::Graph<DataType, WeightType>& g) {
 		GraphClasses::Graph<DataType, WeightType> reduction;
+
 		reduction.configureDirections(GraphClasses::GraphType::Directed);
 		reduction.configureWeights(GraphClasses::GraphWeights::Unweighted);
 
 		auto neighborList = g.getNeighbors();
-		auto gNodeSet = g.getNodeSet();
+
 		std::unordered_map<DataType, std::unordered_map<DataType, bool>> reachMatrix;
 		
-		for (auto& node1 : gNodeSet) {
-			for (auto& node2 : gNodeSet) {
+		for (auto& [node1, neighbors1] : neighborList) {
+			for (auto& [node2, neighbors2] : neighborList) {
 				reachMatrix[node1][node2] = false;
 			}
 		}
@@ -1096,22 +1111,22 @@ namespace GraphAlgorithms {
 		std::stack<DataType> stack;
 		stack.emplace(startNode);
 
+		DataType currentNode;
 		while (!stack.empty()) {
-			DataType currentNode = stack.top();
+			currentNode = stack.top();
 			stack.pop();
 
-			if (!visited[currentNode]) {
-				visited[currentNode] = true;
+			auto& ifVisited = visited[currentNode];
+			if (!ifVisited) {
+				ifVisited = true;
 				traversalOrder.emplace_back(currentNode);
 			}
 
-			auto it = std::cbegin(neighborList[currentNode]);
-			auto end = std::cend(neighborList[currentNode]);
-			while (!internal::equals(it, end)) {
-				if (!visited[(*it).neighbor]) {
-					stack.emplace((*it).neighbor);
+			auto& currentNeighbors = neighborList[currentNode];
+			for (auto& [neighbor, weight] : currentNeighbors) {
+				if (!visited[neighbor]) {
+					stack.emplace(neighbor);
 				}
-				++it;
 			}
 		}
 
@@ -1140,12 +1155,14 @@ namespace GraphAlgorithms {
 		std::stack<DataType> stack;
 		stack.emplace(startNode);
 
+		DataType currentNode;
 		while (!stack.empty()) {
-			DataType currentNode = stack.top();
+			currentNode = stack.top();
 			stack.pop();
 
-			if (!visited[currentNode]) {
-				visited[currentNode] = true;
+			auto& ifVisited = visited[currentNode];
+			if (!ifVisited) {
+				ifVisited = true;
 				traversalOrder.emplace_back(currentNode);
 			}
 
@@ -1156,13 +1173,11 @@ namespace GraphAlgorithms {
 				return std::make_pair(true, traversalOrder);
 			}
 
-			auto it = std::cbegin(neighborList[currentNode]);
-			auto end = std::cend(neighborList[currentNode]);
-			while (!internal::equals(it, end)) {
-				if (!visited[(*it).neighbor]) {
-					stack.emplace((*it).neighbor);
+			auto& currentNeighbors = neighborList[currentNode];
+			for (auto& [neighbor, weight] : currentNeighbors) {
+				if (!visited[neighbor]) {
+					stack.emplace(neighbor);
 				}
-				++it;
 			}
 		}
 
@@ -1187,22 +1202,22 @@ namespace GraphAlgorithms {
 		std::queue<DataType> queue;
 		queue.emplace(startNode);
 
+		DataType currentNode;
 		while (!queue.empty()) {
-			DataType currentNode = queue.front();
+			currentNode = queue.front();
 			queue.pop();
 
-			if (!visited[currentNode]) {
+			auto& ifVisited = visited[currentNode];
+			if (!ifVisited) {
+				ifVisited = true;
 				traversalOrder.emplace_back(currentNode);
-				visited[currentNode] = true;
 			}
 
-			auto it = std::cbegin(neighborList[currentNode]);
-			auto end = std::cend(neighborList[currentNode]);
-			while (!internal::equals(it, end)) {
-				if (!visited[(*it).neighbor]) {
-					queue.emplace((*it).neighbor);
+			auto& currentNeighbors = neighborList[currentNode];
+			for (auto& [neighbor, weight] : currentNeighbors) {
+				if (!visited[neighbor]) {
+					queue.emplace(neighbor);
 				}
-				++it;
 			}
 		}
 
@@ -1231,13 +1246,15 @@ namespace GraphAlgorithms {
 		std::queue<DataType> queue;
 		queue.emplace(startNode);
 
+		DataType currentNode;
 		while (!queue.empty()) {
-			DataType currentNode = queue.front();
+			currentNode = queue.front();
 			queue.pop();
-
-			if (!visited[currentNode]) {
+			
+			auto& ifVisited = visited[currentNode];
+			if (!ifVisited) {
+				ifVisited = true;
 				traversalOrder.emplace_back(currentNode);
-				visited[currentNode] = true;
 			}
 
 			if (internal::equals(currentNode, nodeToFind)) {
@@ -1247,13 +1264,11 @@ namespace GraphAlgorithms {
 				return std::make_pair(true, traversalOrder);
 			}
 
-			auto it = std::cbegin(neighborList[currentNode]);
-			auto end = std::cend(neighborList[currentNode]);
-			while (!internal::equals(it, end)) {
-				if (!visited[(*it).neighbor]) {
-					queue.emplace((*it).neighbor);
+			auto& currentNeighbors = neighborList[currentNode];
+			for (auto& [neighbor, weight] : currentNeighbors) {
+				if (!visited[neighbor]) {
+					queue.emplace(neighbor);
 				}
-				++it;
 			}
 		}
 
@@ -1316,13 +1331,20 @@ namespace GraphAlgorithms {
 		if (pathFound) {
 			DataType endCpy = endNode;
 			path.emplace_back(endNode);
+			
+			std::optional<DataType> parent = parents[endCpy];
+
 			while (true) {
-				std::optional<DataType> parent = parents[endCpy];
 				if (!parent.has_value()) {
 					break;
 				}
-				path.emplace_back(parent.value());
-				endCpy = parent.value();
+
+				auto&  parentVal = parent.value();
+
+				path.emplace_back(parentVal);
+				endCpy = parentVal;
+
+				parent = parents[endCpy];
 			}
 
 			std::reverse(std::begin(path), std::end(path));
@@ -1330,13 +1352,10 @@ namespace GraphAlgorithms {
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			if (pathFound) {
-				auto it = std::cbegin(path);
-				auto end = std::cend(path);
-				out << "Path found: \n\t";
-				while (!internal::equals(it, end)) {
-					out << "[" << (*it) << "] ";
-					++it;
+				for (auto& elem : path) {
+					out << "[" << elem << "] ";
 				}
+				
 				out << "\nwith total distance: " << distances[endNode] << std::endl;
 			} else {
 				out << "No path found between [" << startNode << "] and [" << endNode << "]" << std::endl;
@@ -1345,7 +1364,7 @@ namespace GraphAlgorithms {
 
 		return std::make_pair(path, distances[endNode]);
 	}
-
+	
 	template<typename DataType, typename WeightType>
 	std::unordered_map<DataType, std::pair<std::vector<DataType>, WeightType>> bellmanFordShortestPaths(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		std::unordered_map<DataType, WeightType> distances;
@@ -1364,16 +1383,16 @@ namespace GraphAlgorithms {
 
 		for (size_t r = static_cast<size_t>(0); internal::lessThan(r, relaxationCount); ++r) {
 			for (auto& [node, neighbors] : neighborsList) {
-				for (auto& [neighbor, weight] : neighbors) {
-					if (internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>)) {
-						continue;
-					}
+				if (!internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>)) {
+					for (auto& [neighbor, weight] : neighbors) {
+						WeightType newDistnce = distances[node] + weight.value_or(static_cast<WeightType>(1));
 					
-					WeightType newDistnce = distances[node] + weight.value_or(static_cast<WeightType>(1));
-					
-					if (internal::lessThan(newDistnce, distances[neighbor])) {
-						distances[neighbor] = newDistnce;
-						parents[neighbor] = node;
+						auto& neighborDist = distances[neighbor];
+
+						if (internal::lessThan(newDistnce, neighborDist)) {
+							neighborDist = newDistnce;
+							parents[neighbor] = node;
+						}
 					}
 				}
 			}
@@ -1382,8 +1401,10 @@ namespace GraphAlgorithms {
 		// negtive cycle check
 		for (auto& [node, neighbors] : neighborsList) {
 			for (auto& [neighbor, weight] : neighbors) {
-				if (!internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>) &&
-					internal::lessThan(distances[node] + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
+				auto& nodeDist = distances[node];
+
+				if (!internal::equals(nodeDist, GraphClasses::MAX_WEIGHT<WeightType>) &&
+					internal::lessThan(nodeDist + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
 						GRAPH_ERROR("Graph contins negative cycle");
 						exit(EXIT_FAILURE);
 				}
@@ -1401,35 +1422,44 @@ namespace GraphAlgorithms {
 			}
 
 			DataType pathNode = node;
-			paths[node].first.emplace_back(pathNode);
+
+			auto& pathVect = paths[node].first;
+			pathVect.emplace_back(pathNode);
+
+			std::optional<DataType> parent = parents[pathNode];
 
 			while (true) {
-				std::optional<DataType> parent = parents[pathNode];
 				if (!parent.has_value()) {
 					break;
 				}
-				paths[node].first.emplace_back(parent.value());
-				pathNode = parent.value();
+
+				auto& parentVal = parent.value();
+
+				pathVect.emplace_back(parentVal);
+				pathNode = parentVal;
+				
+				parent = parents[pathNode];
 			}
 
-			std::reverse(std::begin(paths[node].first), std::end(paths[node].first));
+			std::reverse(std::begin(pathVect), std::end(pathVect));
 		}
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			for (auto& [node, pathAndDist] : paths) {
 				// there is no path to nodes in different components
-				if (!internal::equals(node, startNode) && internal::equals(pathAndDist.first.size(), static_cast<size_t>(0))) {
+				if (internal::equals(pathAndDist.first.size(), static_cast<size_t>(0)) && !internal::equals(node, startNode)) {
 					out << "There is no possible path between [" << startNode << "] and [" << node << "]" << std::endl;
 					continue;
 				}
 
 				out << "Distance from [" << startNode << "] to [" << node << "] is: " << distances[node] << "\n\t Path: ";
-				auto it = std::cbegin(pathAndDist.first);
-				auto end = std::cend(pathAndDist.first);
-				while (!internal::equals(it, end)) {
-					out << "[" << (*it) << "] ";
-					++it;
+
+				auto& pathVect = pathAndDist.first;
+
+				for (auto& elem : pathVect) {
+					out << "[" << elem << "] ";
 				}
+
 				out << std::endl;
 			}
 		}
@@ -1453,20 +1483,30 @@ namespace GraphAlgorithms {
 			distances[node][node] = static_cast<WeightType>(0);
 			for (auto& [neighbor, weight] : neighbors) {
 				// check needed in case of multigraph
-				if (weight.value_or(static_cast<WeightType>(1)) < distances[node][neighbor]) {
-					distances[node][neighbor] = weight.value_or(static_cast<WeightType>(1));
+				auto w = weight.value_or(static_cast<WeightType>(1));
+				auto& dist = distances[node][neighbor];
+				if (w < dist) {
+					dist = w;
 				}
 			}
 		}
 
 		for (auto& [mid, n1] : neighborList) {
 			for (auto& [start, n2] : neighborList) {
-				for (auto& [end, n3] : neighborList) {
-					auto& startMid = distances[start][mid];
-					auto& midEnd = distances[mid][end];
-					auto& startEnd = distances[start][end];
-					if (!internal::equals(startMid, GraphClasses::MAX_WEIGHT<WeightType>) && !internal::equals(midEnd, GraphClasses::MAX_WEIGHT<WeightType>) && internal::lessThan((startMid + midEnd), startEnd)) {
-						distances[start][end] = startMid + midEnd;
+				auto& startMid = distances[start][mid];
+
+				if (!internal::equals(startMid, GraphClasses::MAX_WEIGHT<WeightType>)) {
+					for (auto& [end, n3] : neighborList) {
+						auto& midEnd = distances[mid][end];
+
+						if (!internal::equals(midEnd, GraphClasses::MAX_WEIGHT<WeightType>)) {
+							auto& startEnd = distances[start][end];
+							auto startEndDist = startMid + midEnd;
+							
+							if (internal::lessThan(startEndDist, startEnd)) {
+								distances[start][end] = startEndDist;
+							}
+						}
 					}
 				}
 			}
@@ -1482,13 +1522,11 @@ namespace GraphAlgorithms {
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			for (auto& [node, neighbors] : distances) {
 				for (auto& [neighbor, distance] : neighbors) {
-					if (!internal::equals(node, neighbor)) {
-						if (internal::equals(distance, GraphClasses::MAX_WEIGHT<WeightType>)) {
-							out << "There is no possible path between [" << node << "] and [" << neighbor << "]" << std::endl;
-						}
-						else {
-							out << "Shortest distance between [" << node << "] and [" << neighbor << "] is: " << distance << std::endl;
-						}
+					if (internal::equals(distance, GraphClasses::MAX_WEIGHT<WeightType>)) {
+						out << "There is no possible path between [" << node << "] and [" << neighbor << "]" << std::endl;
+					}
+					else {
+						out << "Shortest distance between [" << node << "] and [" << neighbor << "] is: " << distance << std::endl;
 					}
 				}
 
@@ -1501,38 +1539,36 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::unordered_set<DataType> findArticulationPoints(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
-			GRAPH_ERROR("Must specify startNode for directed graphs. Call the appropriate overload of this function!");
-			exit(EXIT_FAILURE);
-		}
-
-		DataType startNode = (*std::begin(g.getNeighbors())).first;
-		return findArticulationPoints(g, startNode, behavior, out);
-	}
-
-	template<typename DataType, typename WeightType>
-	std::unordered_set<DataType> findArticulationPoints(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		internal::ArticulationHelper<DataType, WeightType> internalData;
-
-		auto neighborList = g.getNeighbors();
-
 		internalData.time = static_cast<size_t>(0);
-		internalData.parents[startNode];
-		for (auto& [node, neighbors] : neighborList) {
+		internalData.neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : internalData.neighborList) {
 			internalData.visited[node] = false;
 		}
 
-		internal::articulation__internal(g, startNode, behavior, out, internalData);
+		for (auto& [startNode, neighbors] : internalData.neighborList) {
+			if (!internalData.visited[startNode]) {
+				internalData.parents[startNode];
 
+				internalData.previousStartNodes.emplace(startNode);
+				internalData.currentStartNode = startNode;
+
+				internal::articulation__internal(startNode, internalData);
+			}
+		}
+		
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			if (internal::equals(internalData.articulationPoints.size(), static_cast<size_t>(0))) {
-				out << "No articulation points found" << std::endl;
+				out << "No articulation points found\n" << std::endl;
 			} else {
-				out << "Articulation points found:" << std::endl;
+				out << "Articulation points found:\n\t";
+
 				for (auto& point : internalData.articulationPoints) {
 					out << "[" << point << "] ";
 				}
-				out << std::endl;
+
+				out << '\n' << std::endl;
 			}
 		}
 
@@ -1541,37 +1577,37 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::vector<std::pair<DataType, DataType>> findBridges(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
-			GRAPH_ERROR("Must specify startNode for directed graphs. Call the appropriate overload of this function!");
-			exit(EXIT_FAILURE);
-		}
-
-		DataType startNode = (*std::begin(g.getNeighbors())).first;
-		return findBridges(g, startNode, behavior, out);
-	}
-
-	template<typename DataType, typename WeightType>
-	std::vector<std::pair<DataType, DataType>> findBridges(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		internal::ArticulationHelper<DataType, WeightType> internalData;
-
-		auto neighborList = g.getNeighbors();
-
 		internalData.time = static_cast<size_t>(0);
-		internalData.parents[startNode];
-		for (auto& [node, neighbors] : neighborList) {
+		internalData.neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : internalData.neighborList) {
 			internalData.visited[node] = false;
 		}
 
-		internal::articulation__internal(g, startNode, behavior, out, internalData);
+		for (auto& [startNode, neighbors] : internalData.neighborList) {
+			if (!internalData.visited[startNode]) {
+				internalData.parents[startNode];
+
+				internalData.previousStartNodes.emplace(startNode);
+				internalData.currentStartNode = startNode;
+
+				internal::articulation__internal(startNode, internalData);
+			}
+		}
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			if (internal::equals(internalData.bridges.size(), static_cast<size_t>(0))) {
-				out << "No bridges found" << std::endl;
+				out << "No bridges found\n" << std::endl;
 			} else {
-				out << "Bridges found:" << std::endl;
+				out << "Bridges found:\n";
+
 				for (auto& bridge : internalData.bridges) {
-					out << "\t{ [" << bridge.first << "] [" << bridge.second << "] }" << std::endl;
+
+					out << "\t{ [" << bridge.first << "] [" << bridge.second << "] }\n";
 				}
+
+				std::cout << std::endl;
 			}
 		}
 
@@ -1598,14 +1634,17 @@ namespace GraphAlgorithms {
 			}
 		}
 
+		DataType current;
 		while (!topsortQueue.empty()) {
-			DataType current = topsortQueue.front();
+			current = topsortQueue.front();
 			topsortQueue.pop();
+
 			topologicalOrdering.emplace_back(current);
 			++numVisited;
 
 			for (auto& [neighbor, weight] : neighborList[current]) {
 				--inDegrees[neighbor];
+
 				if (internal::equals(inDegrees[neighbor], static_cast<size_t>(0))) {	
 					topsortQueue.emplace(neighbor);
 				}
@@ -1622,10 +1661,12 @@ namespace GraphAlgorithms {
 				out << "Graph is not acyclic!" << std::endl;
 			} else {
 				out << "Topological ordering:\n\t";
+
 				for (auto& val : topologicalOrdering) {
 					out << "[" << val << "] ";
 				}
-				out << std::endl;
+
+				out << "\n" << std::endl;
 			}
 		}
 
@@ -1712,11 +1753,13 @@ namespace GraphAlgorithms {
 			WeightType totalCost = static_cast<WeightType>(0);
 
 			out << "Minimum cost spanning tree consists of the following edges:\n";
+
 			for (auto& [node1, node2, weight] : mcst) {
 				out << "\t(" << node1 << ", " << node2 << ") weight " << weight << "\n";
 				totalCost += weight;
 			}
-			out << "\nTotal cost of minimum cost spanning tree is: " << totalCost << std::endl;
+
+			out << "\nTotal cost of minimum cost spanning tree is: " << totalCost << "\n" << std::endl;
 		}
 
 		return mcst;
@@ -1731,15 +1774,15 @@ namespace GraphAlgorithms {
 
 		auto neighborList = g.getNeighbors();
 		internal::DisjointSet ds{g};
-		std::vector<std::tuple<DataType, DataType, WeightType>> allEdges;
+
+		auto cmp = [](const auto& t1, const auto& t2) { return internal::lessThan(std::get<2>(t1), std::get<2>(t2)); };
+		std::multiset<std::tuple<DataType, DataType, WeightType>, decltype(cmp)> allEdges(cmp);
 
 		for (auto& [node, neighbors] : neighborList) {
 			for (auto& [neighbor, weight] : neighbors) {
-				allEdges.emplace_back(node, neighbor, weight.value_or(static_cast<WeightType>(1)));
+				allEdges.emplace(node, neighbor, weight.value_or(static_cast<WeightType>(1)));
 			}
 		}
-
-		std::sort(std::begin(allEdges), std::end(allEdges), [](auto& t1, auto& t2) { return internal::lessThan(std::get<2>(t1), std::get<2>(t2)); });
 
 		std::vector<std::tuple<DataType, DataType, WeightType>> mcst;
 		size_t mcstSize = g.getNodeCount() - static_cast<size_t>(1);
@@ -1764,11 +1807,13 @@ namespace GraphAlgorithms {
 			WeightType totalCost = static_cast<WeightType>(0);
 
 			out << "Minimum cost spanning tree consists of the following edges:\n";
+
 			for (auto& [node1, node2, weight] : mcst) {
 				out << "\t(" << node1 << ", " << node2 << ") weight " << weight << "\n";
 				totalCost += weight;
 			}
-			out << "\nTotal cost of minimum cost spanning tree is: " << totalCost << std::endl;
+
+			out << "\nTotal cost of minimum cost spanning tree is: " << totalCost << "\n" << std::endl;
 		}
 
 		return mcst;
@@ -1777,19 +1822,18 @@ namespace GraphAlgorithms {
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
 		internal::TarjanHelper<DataType, WeightType> internalData;
-
-		auto neighborList = g.getNeighbors();
-
 		internalData.time = static_cast<size_t>(1);
-		for (auto& [node, neighbors] : neighborList) {
+		internalData.neighborList = g.getNeighbors();
+
+		for (auto& [node, neighbors] : internalData.neighborList) {
 			internalData.inStack[node] = false;
 			// unvisited nodes will have their time set to 0
 			internalData.times[node] = static_cast<size_t>(0);
 		}
 
-		for (auto& [node, neighbors] : neighborList) {
+		for (auto& [node, neighbors] : internalData.neighborList) {
 			if (internalData.times[node] == static_cast<size_t>(0)) {
-				internal::tarjan__internal(g, node, internalData);
+				internal::tarjan__internal(node, internalData);
 			}
 		}		
 
@@ -1810,15 +1854,21 @@ namespace GraphAlgorithms {
 
 	template<typename DataType, typename WeightType>
 	std::vector<std::unordered_set<DataType>> findWeaklyConnectedComponents(const GraphClasses::Graph<DataType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		GraphClasses::Graph<DataType, WeightType> gCopy = g;
-		auto neighborList = gCopy.getNeighbors();
-		
-		if (internal::equals(gCopy.getGraphType(), GraphClasses::GraphType::Directed)) {
+		GraphClasses::Graph<DataType, WeightType> gCopy;
+		std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> neighborList;
+
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
+			gCopy = g;
+			neighborList = gCopy.getNeighbors();
+
 			for (auto& [node, neighbors] : neighborList) {
 				for (auto& [neighbor, weight] : neighbors) {
 						gCopy.addEdge(neighbor, GraphClasses::Edge(node, weight));
 				}
 			}
+		}
+		else {
+			neighborList = g.getNeighbors();
 		}
 
 		std::unordered_map<DataType, bool> visited;
@@ -1829,28 +1879,48 @@ namespace GraphAlgorithms {
 
 		std::vector<std::unordered_set<DataType>> weaklyConnectedComponents;
 
-		for (auto& [node, neighbor] : neighborList) {
+		for (auto& [node, neighbors] : neighborList) {
 			if (!visited[node]) {
-				auto dfTraverseOrder = GraphAlgorithms::depthFirstTraverse(gCopy, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-				std::unordered_set<DataType> component;
-				for (auto& dfsNode : dfTraverseOrder) {
-					visited[dfsNode] = true;
-					component.emplace(dfsNode);
+				auto& component = weaklyConnectedComponents.emplace_back(std::unordered_set<DataType>{});
+
+				std::stack<DataType> stack;
+				stack.emplace(node);
+
+				DataType currentNode;
+				while (!stack.empty()) {
+					currentNode = stack.top();
+					stack.pop();
+
+					auto& ifVisited = visited[currentNode];
+					if (!ifVisited) {
+						ifVisited = true;
+						component.emplace(currentNode);
+					}
+
+					for (auto& [neighbor, weight] : neighborList[currentNode]) {
+						if (!visited[neighbor]) {
+							stack.emplace(neighbor);
+						}
+					}
 				}
-				weaklyConnectedComponents.emplace_back(component);
 			}
 		}
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			size_t i = static_cast<size_t>(1);
+
 			for (auto& component : weaklyConnectedComponents) {
 				out << "Component " << i << " consists of " << component.size() << " nodes:\n\t";
+
 				for (auto& node : component) {
 					out << "[" << node << "] ";
 				}
-				std::cout << std::endl;
+
+				out << "\n";
 				++i;
 			}
+
+			out << std::endl;
 		}
 
 		return weaklyConnectedComponents;
@@ -1872,9 +1942,9 @@ namespace GraphAlgorithms {
 		else { // directed
 			auto inDegrees = g.getInDegreesOfNodes();
 			auto outDegrees = g.getOutDegreesOfNodes();
-			auto nodeSet = g.getNodeSet();
+			auto neighborList = g.getNeighbors();
 
-			for (auto& node : nodeSet) {
+			for (auto& [node, neighbors] : neighborList) {
 				if (internal::equals(inDegrees[node], static_cast<size_t>(0)) && internal::equals(outDegrees[node], static_cast<size_t>(0))) {
 					isolatedNodes.emplace(node);
 				}
@@ -1883,14 +1953,16 @@ namespace GraphAlgorithms {
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			if (internal::equals(isolatedNodes.size(), static_cast<size_t>(0))) {
-				out << "Graph contains no isolated nodes " << std::endl;
+				out << "Graph contains no isolated nodes" << std::endl;
 			}
 			else {
-				out << "Found " << isolatedNodes.size() << " isolated nodes: " << std::endl;
+				out << "Found " << isolatedNodes.size() << " isolated nodes:\n";
+
 				for (auto& node : isolatedNodes) {
 						out << "[" << node << "] ";
 				}
-				out << std::endl;
+
+				out << "\n" << std::endl;
 			}
 		}
 
@@ -2062,6 +2134,7 @@ namespace internal {
 	template<typename DataType, typename WeightType>
 	void exportDirectedGraph(const GraphClasses::Graph<DataType, WeightType>& g, const char* filePath) {
 		std::ofstream file(filePath);
+
 		if (!file) {
 			GRAPH_ERROR("Invalid file!");
 			exit(EXIT_FAILURE);
@@ -2070,16 +2143,21 @@ namespace internal {
 		auto neighborList = g.getNeighbors();
 		for (auto& [node, neighbors] : neighborList) {
 			file << node << " ";
+
 			for (auto& [neighbor, weight] : neighbors) {
 				file << neighbor << " ";
+
 				if (weight.has_value()) {
 					file << weight.value() << " ";
 				}
 			}
+
 			file << std::endl;
 		}
 		
 		file.close();
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -2091,24 +2169,31 @@ namespace internal {
 		}
 
 		// for undirected graphs, we must only write one direction of an edge, or else on next read from file the number of edges will be doubled
-		std::unordered_map<DataType, std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeHasher<DataType, WeightType>>> doNotAdd;
+		std::unordered_map<DataType, std::unordered_set<GraphClasses::Edge<DataType, WeightType>, internal::EdgeStructHasher<DataType, WeightType>>> doNotAdd;
 		auto neighborList = g.getNeighbors();
 
 		for (auto& [node, neighbors] : neighborList) {
 			file << node << " ";
+
+			auto& alreadyAddedEdges = doNotAdd[node];
 			for (auto& edge : neighbors) {
-				if (internal::equals(doNotAdd[node].find(edge), std::end(doNotAdd[node]))) {
+				if (internal::equals(alreadyAddedEdges.count(edge), static_cast<size_t>(0))) {
 					file << edge.neighbor << " ";
+
 					if (edge.weight.has_value()) {
 						file << edge.weight.value() << " ";
 					}
+
 					doNotAdd[edge.neighbor].emplace(node, edge.weight);
 				}
 			}
+
 			file << std::endl;
 		}
 		
 		file.close();
+
+		return;
 	}
 
 	template<typename DataType, typename WeightType>
@@ -2119,13 +2204,23 @@ namespace internal {
 	};
 
 	template<typename DataType, typename WeightType>
-	struct EdgeHasher {
-			size_t operator()(const GraphClasses::Edge<DataType, WeightType>& obj) const {
-				std::hash<DataType> nHash;
-				std::hash<WeightType> wHash;
-				// TODO:  try finding a better alternative
-				return nHash(obj.neighbor) + wHash(obj.weight.value_or(0));
-			}
+	struct EdgeStructHasher {
+		size_t operator()(const GraphClasses::Edge<DataType, WeightType>& obj) const {
+			std::hash<DataType> nHash;
+			std::hash<WeightType> wHash;
+			// TODO:  try finding a better alternative
+			return nHash(obj.neighbor) + wHash(obj.weight.value_or(static_cast<size_t>(0)));
+		}
+	};
+
+	template<typename DataType, typename WeightType>
+	struct CompleteEdgeHasher {
+		size_t operator()(const std::pair<DataType, GraphClasses::Edge<DataType, WeightType>>& obj) const {
+			std::hash<DataType> nHash;
+			std::hash<WeightType> wHash;
+			// TODO:  try finding a better alternative
+			return nHash(obj.first) + nHash(obj.second.neighbor) + wHash(obj.second.weight.value_or(static_cast<size_t>(0)));
+		}
 	};
 
 	template<typename DataType, typename WeightType>
@@ -2136,41 +2231,50 @@ namespace internal {
 			std::unordered_map<DataType, size_t> lowerTimes;
 			std::unordered_map<DataType, bool> visited;
 			std::unordered_map<DataType, std::optional<DataType>> parents;
+			std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> neighborList;
+			std::unordered_set<DataType> previousStartNodes;
+			DataType currentStartNode;
 			std::unordered_set<DataType> articulationPoints;
 			std::vector<std::pair<DataType, DataType>> bridges;
 	};
 
-	// this one internal function is used both for findArticulationPoints and findBridges as these to algorithms are very simmilar
+	// this one internal function is used both for findArticulationPoints and findBridges as these two algorithms are very simmilar
 	template<typename DataType, typename WeightType>
-	void articulation__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, const GraphAlgorithms::AlgorithmBehavior behavior, std::ostream& out, ArticulationHelper<DataType, WeightType>& internalData) {
+	void articulation__internal(const DataType startNode, ArticulationHelper<DataType, WeightType>& internalData) {
 		internalData.visited[startNode] = true;
 		internalData.times[startNode] = internalData.time;
 		internalData.lowerTimes[startNode] = internalData.time;
 		++internalData.time;
 
-		auto neighborList = g.getNeighbors();
 		size_t numChildren = static_cast<size_t>(0);
 
+		auto& startNodeParent = internalData.parents[startNode];
+		auto& startNodeTime = internalData.times[startNode];
+		auto& startNodeLowerTime = internalData.lowerTimes[startNode];
+		auto& neighborList = internalData.neighborList;
+		auto& currentStartNode = internalData.currentStartNode;
+		auto& previousStartNodes = internalData.previousStartNodes;
+
 		for (auto& [neighbor, weight] : neighborList[startNode]) {
-			auto& startNodeParent = internalData.parents[startNode];
-			auto& startNodeTime = internalData.times[startNode];
-			auto& startNodeLowerTime = internalData.lowerTimes[startNode];
 			auto& neighborLowerTime = internalData.lowerTimes[neighbor];
 
-			if (!internalData.visited[neighbor]) {
+			if (!internalData.visited[neighbor] 
+				 || (!internal::equals(neighbor, currentStartNode) && internal::greaterThan(previousStartNodes.count(neighbor), static_cast<size_t>(0)))) {
 				++numChildren;
 				internalData.parents[neighbor] = startNode;
 
-				articulation__internal(g, neighbor, behavior, out, internalData);
+				articulation__internal(neighbor, internalData);
 
 				if (internal::lessThan(neighborLowerTime, startNodeLowerTime)) {
 					startNodeLowerTime = neighborLowerTime;
 				}
 
 				// for articulation points
-				if ((!startNodeParent.has_value() && internal::greaterThan(numChildren, static_cast<size_t>(1))) ||
-						(startNodeParent.has_value() && (internal::greaterThan(neighborLowerTime, startNodeTime) ||
-						internal::equals(neighborLowerTime, startNodeTime)))) {
+				bool startNodeHasParent = startNodeParent.has_value();
+
+				if ((!startNodeHasParent && internal::greaterThan(numChildren, static_cast<size_t>(1)))
+					 || (startNodeHasParent && (internal::greaterThan(neighborLowerTime, startNodeTime)
+					 ||	internal::equals(neighborLowerTime, startNodeTime)))) {
 					internalData.articulationPoints.emplace(startNode);
 				}
 
@@ -2197,6 +2301,7 @@ namespace internal {
 		public:
 			explicit DisjointSet(const GraphClasses::Graph<DataType, WeightType>& g) {
 				auto neighborList = g.getNeighbors();
+
 				for (auto& [node, neighbors] : neighborList) {
 					parent[node] = node;
 					rank[node] = static_cast<size_t>(0);
@@ -2206,14 +2311,17 @@ namespace internal {
 			DataType findInDisjointSet(const DataType node) {
 				DataType nodeCpy = node;
 				DataType root = node;
+
 				while (!internal::equals(root, parent[root])) {
 					root = parent[root];
 				}
+				
 				while (!internal::equals(nodeCpy, root)) {
 					DataType tmp = parent[nodeCpy];
 					parent[nodeCpy] = root;
 					nodeCpy = tmp;
 				}
+
 				return root;
 			}
 
@@ -2241,25 +2349,27 @@ namespace internal {
 			std::unordered_map<DataType, size_t> lowerTimes;
 			std::stack<DataType> traversalOrder;
 			std::unordered_map<DataType, bool> inStack;
+			std::unordered_map<DataType, std::vector<GraphClasses::Edge<DataType, WeightType>>> neighborList;
 			std::vector<std::unordered_set<DataType>> components;
 	};
 
 	template<typename DataType, typename WeightType>
-	void tarjan__internal(const GraphClasses::Graph<DataType, WeightType>& g, const DataType startNode, TarjanHelper<DataType, WeightType>& internalData) {
+	void tarjan__internal(const DataType startNode, TarjanHelper<DataType, WeightType>& internalData) {
 		internalData.times[startNode] = internalData.time;
 		internalData.lowerTimes[startNode] = internalData.time;
 		++internalData.time;
 		internalData.traversalOrder.emplace(startNode);
 		internalData.inStack[startNode] = true;
 
-		auto neighborList = g.getNeighbors();
+		auto& neighborList = internalData.neighborList;
+
 		for (auto& [neighbor, weight] : neighborList[startNode]) {
 			auto& startNodeLowerTime = internalData.lowerTimes[startNode];
 			auto& neighborTime = internalData.times[neighbor];
 			auto& neighborLowerTime = internalData.lowerTimes[neighbor];
 
 			if (internal::equals(neighborTime, static_cast<size_t>(0))) {
-				tarjan__internal(g, neighbor, internalData);
+				tarjan__internal(neighbor, internalData);
 
 				if (internal::lessThan(neighborLowerTime, startNodeLowerTime)) {
 					startNodeLowerTime = neighborLowerTime;
@@ -2273,11 +2383,14 @@ namespace internal {
 		if (internal::equals(internalData.times[startNode], internalData.lowerTimes[startNode])) {
 			DataType componentNode;
 			std::unordered_set<DataType> component;
+
 			while (true) {
 				componentNode = internalData.traversalOrder.top();
 				internalData.traversalOrder.pop();
+
 				component.emplace(componentNode);
 				internalData.inStack[componentNode] = false;
+
 				if (internal::equals(componentNode, startNode)) {
 					internalData.components.emplace_back(component);
 					break;
