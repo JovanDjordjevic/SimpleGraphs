@@ -71,6 +71,9 @@ namespace GraphClasses {
 			void addEdge(const NodeType startNode, const NodeType neighborNode);    // for unweighted graphs
 			void addEdge(const NodeType startNode, const NodeType neighborNode, const WeightType edgeWeight); // for weighted graphs
 			void addEdge(const NodeType startNode, const Edge<NodeType, WeightType>& edge);
+			// only for weighted graphs, in case of parallel edges, all their weights will be set to newWeight
+			// in case of undirected graphs, both directions will be reweighed
+			void reweighEdge(const NodeType startNode, const NodeType neighborNode, const WeightType newWeight);
 			// deletes all edges from startNode to endNode in case of a multigraph
 			void deleteEdge(const NodeType startNode, const NodeType endNode);	
 			// removes a node and all edges to/from said node
@@ -80,12 +83,18 @@ namespace GraphClasses {
 
 			std::unordered_set<NodeType> getNodeSet() const;
 
-			size_t getDegreeOfNode(const NodeType node) const;	// only for undirected
-			std::unordered_map<NodeType, size_t> getDegreesOfNodes() const;	// only for undirected
-			size_t getInDegreeOfNode(const NodeType node) const;	// only for directed
-			std::unordered_map<NodeType, size_t> getInDegreesOfNodes() const;		// only for directed
-			size_t getOutDegreeOfNode(const NodeType node) const;	// only for directed
-			std::unordered_map<NodeType, size_t> getOutDegreesOfNodes() const;	// only for directed
+			// only for undirected
+			size_t getDegreeOfNode(const NodeType node) const;
+			// only for undirected
+			std::unordered_map<NodeType, size_t> getDegreesOfNodes() const;
+			// only for directed
+			size_t getInDegreeOfNode(const NodeType node) const;
+			// only for directed
+			std::unordered_map<NodeType, size_t> getInDegreesOfNodes() const;
+			// only for directed
+			size_t getOutDegreeOfNode(const NodeType node) const;
+			// only for directed
+			std::unordered_map<NodeType, size_t> getOutDegreesOfNodes() const;
 
 			double getDensity() const;
 			// NOTE: for weighted graphs, eccentricity is calculated in terms of edge weights and not number of edges on path
@@ -93,7 +102,6 @@ namespace GraphClasses {
 			std::tuple<WeightType, WeightType, std::unordered_set<NodeType>> getRadiusDiameterAndCenter() const;
 			// NOTE: for weighted graphs, circumference and girth are calculated in terms of edge weights and not number of edges in a cycle
 			std::pair<WeightType, WeightType> getCircumferenceAndGirth() const;
-			// ...
 
 			GraphType getGraphType() const;
 			GraphWeights getGraphWeights() const;
@@ -531,6 +539,30 @@ namespace GraphClasses {
 		addNode(edge.neighbor); 
 
 		m_neighborList[startNode].emplace_back(edge.neighbor, edge.weight);
+
+		return;
+	}
+
+	template<typename NodeType, typename WeightType>
+	void Graph<NodeType, WeightType>::reweighEdge(const NodeType startNode, const NodeType neighborNode, const WeightType newWeight) {
+		if (internal::equals(m_graphWeights, GraphWeights::Unweighted)) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Function cannot be used for unweighted graphs");
+			exit(EXIT_FAILURE);
+		}
+
+		for (auto& [neighbor, weight] : m_neighborList[startNode]) {
+			if (internal::equals(neighborNode, neighbor)) {
+				weight = newWeight;
+			}
+		}
+
+		if (internal::equals(m_graphType, GraphType::Undirected)) {
+			for (auto& [neighbor, weight] : m_neighborList[neighborNode]) {
+				if (internal::equals(startNode, neighbor)) {
+					weight = newWeight;
+				}
+			}
+		}
 
 		return;
 	}
