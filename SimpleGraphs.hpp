@@ -183,6 +183,13 @@ namespace GraphAlgorithms {
 	std::unordered_map<NodeType, std::unordered_map<NodeType, WeightType>> floydWarshallAllShortestPaths(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 	
+	// NOTE: In order to use this function, NodeType{} must be constructible, and NodeType{} must not be an already existing node in the graph
+	// If that is not possible, the value of artificialStartValue must be passed as an argument
+	template<typename NodeType, typename WeightType>
+	std::unordered_map<NodeType, std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>>> johnsonAllShortestsPaths(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType> artificialStartValue = {}, 
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+	
+
 	// ----- articulation point and bridge algorithms -----
 
 	template<typename NodeType, typename WeightType>
@@ -1772,6 +1779,100 @@ namespace GraphAlgorithms {
 		}
 
 		return distances;
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::unordered_map<NodeType, std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>>> johnsonAllShortestsPaths(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType> artificialStartValue, const AlgorithmBehavior behavior, std::ostream& out) {
+		if (internal::equals(g.getGraphWeights(), GraphClasses::GraphWeights::Unweighted)) {
+			GRAPH_ERROR(__FILE__, __LINE__, "This function is not supported for unweighted graphs");
+			exit(EXIT_FAILURE);
+		}
+
+		std::unordered_map<NodeType, std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>>> allShortestPaths;
+
+		GraphClasses::Graph<NodeType, WeightType> gCopy = g;
+		auto neighborList = g.getNeighborList();
+		
+		NodeType artificialStart = NodeType{};
+
+		if (!artificialStartValue.has_value()) {
+			for (auto& [node, neighbors] : neighborList) {
+				if (internal::equals(node, artificialStart)) {
+					GRAPH_ERROR(__FILE__, __LINE__, "NodeType{} is already a node in the graph but no value is provided for artificial start node");
+					exit(EXIT_FAILURE);
+				}
+			}
+		}
+		else {
+			artificialStart = artificialStartValue.value();
+		}
+
+		for(auto& [node, neighbors] : neighborList) {
+			gCopy.addEdge(artificialStart, node, static_cast<WeightType>(0));
+		}
+
+		auto bellmanFordResult = GraphAlgorithms::bellmanFordShortestPaths(gCopy, artificialStart, AlgorithmBehavior::ReturnOnly);
+		
+		// if bellman ford finds a negative cycle we return empty here
+		if (internal::equals(bellmanFordResult.size(), static_cast<size_t>(0))) {
+			if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+				out << "Graph contains one or more negative cycles\n" << std::endl;
+			}
+			
+			return {};
+		}
+
+		gCopy.deleteNode(artificialStart);
+
+		for(auto& [node, neighbors] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors) {
+				weight.value() += bellmanFordResult[node].second - bellmanFordResult[neighbor].second;
+			}
+		}
+
+		for (auto& [startNode, neighbors] : neighborList) {
+			allShortestPaths[startNode] = GraphAlgorithms::dijkstraAllShortestPathsFromStart(gCopy, startNode, AlgorithmBehavior::ReturnOnly);
+
+			for (auto& [endNode, pathVectAndWeight] : allShortestPaths[startNode]) {
+				auto& pathWeight = pathVectAndWeight.second;
+
+				if (!internal::equals(pathWeight, GraphClasses::MAX_WEIGHT<WeightType>)) {
+					pathWeight += (bellmanFordResult[endNode].second - bellmanFordResult[startNode].second);
+				}
+			}
+		}
+
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			for (auto& [startNode, endNodeAndPath] : allShortestPaths) {
+				for (auto& [endNode, pathVectAndWeight] : endNodeAndPath) {
+					auto& pathVect = pathVectAndWeight.first;
+					auto& pathWeight = pathVectAndWeight.second;
+
+					// there is no path to nodes in different components
+					if (internal::equals(pathVect.size(), static_cast<size_t>(0)) && !internal::equals(startNode, endNode)) {
+						out << "There is no possible path between [" << startNode << "] and [" << endNode << "]\n";
+
+						continue;
+					}
+					else {
+						out << "Distance from [" << startNode << "] to [" << endNode << "] is: " << pathWeight << "\n\t Path: ";
+
+						for (auto& elem : pathVect) {
+							out << "[" << elem << "] ";
+						}
+
+						out << '\n';
+					}
+				}
+
+				out << '\n';
+			}
+
+			out << std::endl;
+		}
+
+		return allShortestPaths;
 	}
 
 	template<typename NodeType, typename WeightType>
