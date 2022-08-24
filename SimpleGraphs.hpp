@@ -167,6 +167,10 @@ namespace GraphAlgorithms {
 	// ----- path finding algorithms -----
 
 	template<typename NodeType, typename WeightType>
+	std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>> dijkstraAllShortestPathsFromStart(const GraphClasses::Graph<NodeType, WeightType>& g, const NodeType startNode,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+	template<typename NodeType, typename WeightType>
 	std::pair<std::vector<NodeType>, WeightType> dijkstraShortestPath(const GraphClasses::Graph<NodeType, WeightType>& g, const NodeType startNode, const NodeType endNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
@@ -1393,6 +1397,115 @@ namespace GraphAlgorithms {
 	}
 
 	template<typename NodeType, typename WeightType>
+	std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>> dijkstraAllShortestPathsFromStart(const GraphClasses::Graph<NodeType, WeightType>& g, const NodeType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
+		std::unordered_map<NodeType, bool> visited;
+		std::unordered_map<NodeType, WeightType> distances;
+		std::unordered_map<NodeType, std::optional<NodeType>> parents;
+
+		auto neighborList = g.getNeighborList();
+
+		using pqData = GraphClasses::Edge<NodeType, WeightType>;
+		std::priority_queue<pqData, std::vector<pqData>, internal::EdgeComparator<NodeType, WeightType>> pq;
+
+		for (auto& [node, neighbors] : neighborList) {
+			distances[node] = GraphClasses::MAX_WEIGHT<WeightType>;
+			pq.emplace(node, GraphClasses::MAX_WEIGHT<WeightType>);
+			visited[node] = false;
+		}
+
+		pq.emplace(startNode, static_cast<WeightType>(0));
+
+		distances[startNode] = static_cast<WeightType>(0);
+		parents[startNode]; // only startNode will have the empty optional
+
+		size_t numToVisit = g.getNodeCount();
+		size_t numVisited = 0;
+
+		while (!pq.empty()) {
+			auto [currentNode, distToCurrentNode] = pq.top();
+			pq.pop();
+
+			if (internal::equals(numVisited, numToVisit) || internal::equals(distToCurrentNode.value(), GraphClasses::MAX_WEIGHT<WeightType>)) {
+				break;
+			}
+
+			if (!visited[currentNode]) {
+				visited[currentNode] = true;
+				++numVisited;
+				
+				for (auto& [neighbor, weight] : neighborList[currentNode]) {
+					if (!visited[neighbor]) {
+						WeightType oldDistance = distances[neighbor];
+						WeightType newDistance = distances[currentNode] + weight.value_or(static_cast<WeightType>(1));
+
+						if (internal::lessThan(newDistance, oldDistance)) {	
+							pq.emplace(neighbor, newDistance);
+							distances[neighbor] = newDistance;
+							parents[neighbor] = currentNode;
+						}
+					}
+				}
+			}
+		}
+		
+		// path reconstruction
+		std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>> paths;
+
+		for (auto& [node, distFromStart] : distances) {
+			paths[node] = std::make_pair(std::vector<NodeType>{}, distFromStart);
+
+			if (internal::equals(distFromStart, GraphClasses::MAX_WEIGHT<WeightType>) || internal::equals(node, startNode)) {
+				continue;
+			}
+
+			NodeType pathNode = node;
+
+			auto& pathVect = paths[node].first;
+			pathVect.emplace_back(pathNode);
+
+			std::optional<NodeType> parent = parents[pathNode];
+
+			while (true) {
+				if (!parent.has_value()) {
+					break;
+				}
+
+				auto& parentVal = parent.value();
+
+				pathVect.emplace_back(parentVal);
+				pathNode = parentVal;
+				
+				parent = parents[pathNode];
+			}
+
+			std::reverse(std::begin(pathVect), std::end(pathVect));
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			for (auto& [node, pathAndDist] : paths) {
+				// there is no path to nodes in different components
+				if (internal::equals(pathAndDist.first.size(), static_cast<size_t>(0)) && !internal::equals(node, startNode)) {
+					out << "There is no possible path between [" << startNode << "] and [" << node << "]\n" << std::endl;
+
+					continue;
+				}
+
+				out << "Distance from [" << startNode << "] to [" << node << "] is: " << distances[node] << "\n\t Path: ";
+
+				auto& pathVect = pathAndDist.first;
+
+				for (auto& elem : pathVect) {
+					out << "[" << elem << "] ";
+				}
+
+				out << '\n' << std::endl;
+			}
+		}
+
+		return paths;
+	}
+
+	template<typename NodeType, typename WeightType>
 	std::pair<std::vector<NodeType>, WeightType> dijkstraShortestPath(const GraphClasses::Graph<NodeType, WeightType>& g, const NodeType startNode, const NodeType endNode, const AlgorithmBehavior behavior, std::ostream& out) {
 		std::unordered_map<NodeType, WeightType> distances;
 		std::unordered_map<NodeType, bool> visited;
@@ -1486,9 +1599,9 @@ namespace GraphAlgorithms {
 		std::unordered_map<NodeType, WeightType> distances;
 		std::unordered_map<NodeType, std::optional<NodeType>> parents;
 
-		auto neighborsList = g.getNeighborList();
+		auto neighborList = g.getNeighborList();
 
-		for (auto& [node, neighbors] : neighborsList) {
+		for (auto& [node, neighbors] : neighborList) {
 			distances[node] = GraphClasses::MAX_WEIGHT<WeightType>;
 		}
 
@@ -1498,7 +1611,7 @@ namespace GraphAlgorithms {
 		size_t relaxationCount = g.getNodeCount() - static_cast<size_t>(1);
 
 		for (size_t r = static_cast<size_t>(0); internal::lessThan(r, relaxationCount); ++r) {
-			for (auto& [node, neighbors] : neighborsList) {
+			for (auto& [node, neighbors] : neighborList) {
 				if (!internal::equals(distances[node], GraphClasses::MAX_WEIGHT<WeightType>)) {
 					for (auto& [neighbor, weight] : neighbors) {
 						WeightType newDistnce = distances[node] + weight.value_or(static_cast<WeightType>(1));
@@ -1515,7 +1628,7 @@ namespace GraphAlgorithms {
 		}
 
 		// negtive cycle check
-		for (auto& [node, neighbors] : neighborsList) {
+		for (auto& [node, neighbors] : neighborList) {
 			for (auto& [neighbor, weight] : neighbors) {
 				auto& nodeDist = distances[node];
 
