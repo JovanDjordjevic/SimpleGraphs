@@ -58,6 +58,13 @@ void test_bellmanFordShortestPaths(GraphClasses::Graph<NodeType, WeightType> &g,
 }
 
 template<typename NodeType, typename WeightType>
+void test_shortestPathFasterAlgorithm(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType someEndNode, unsigned edgesOnPathToEndNode, WeightType pathDistance) {
+    auto ret = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert((ret[someEndNode].first.size() - 1) == edgesOnPathToEndNode);
+    assert(internal::equals(ret[someEndNode].second, pathDistance));
+}
+
+template<typename NodeType, typename WeightType>
 void test_floydWarshallAllShortestPaths(GraphClasses::Graph<NodeType, WeightType> &g, NodeType someStartNode, NodeType someEndNode, WeightType distance) {
     auto ret = GraphAlgorithms::floydWarshallAllShortestPaths(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(internal::equals(ret[someStartNode][someEndNode], distance));
@@ -114,9 +121,12 @@ void test_all_path_algs_equivalence(GraphClasses::Graph<NodeType, WeightType> &g
     // std::cout << std::endl;
     int wrongDistanceCounter = 0;
     int wrongPathCounter = 0;
+
     auto floydReturn = GraphAlgorithms::floydWarshallAllShortestPaths(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
     for (auto& [startNode, pathData] : floydReturn) {
         auto bellmanReturn = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+        auto spfaReturn = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
         auto dijkstraAllPathsReturn = GraphAlgorithms::dijkstraAllShortestPathsFromStart(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 
         for (auto& [endNode, weight] : pathData) {
@@ -125,20 +135,31 @@ void test_all_path_algs_equivalence(GraphClasses::Graph<NodeType, WeightType> &g
             if (!internal::equals(weight, bellmanReturn[endNode].second) 
                 || !internal::equals(bellmanReturn[endNode].second, dijkstraAllPathsReturn[endNode].second)
                 || !internal::equals(dijkstraAllPathsReturn[endNode].second, dijkstraReturn.second) 
-                || !internal::equals(dijkstraReturn.second, weight)) {
+                || !internal::equals(dijkstraReturn.second, spfaReturn[endNode].second)
+                || !internal::equals(spfaReturn[endNode].second, weight)
+                ) {
                 // std::cout << std::setprecision(10);
                 // std::cout << "[" << startNode << "] to [" << endNode << "] : FLOYD : " << std::setw(15) << weight  
                 //                                                     << " \tBELLMAN : " << std::setw(15) << bellmanReturn[endNode].second << std::endl
                 //                                                     << " \tDIJSKTRA_ALL : " << std::setw(15) << dijkstraAllPathsReturn[endNode].second << std::endl
-                //                                                     << " \tDIJKSTRA : " << std::setw(15) << dijkstraReturn.second << std::endl;
+                //                                                     << " \tDIJKSTRA : " << std::setw(15) << dijkstraReturn.second << std::endl
+                //                                                     << " \tSPFA : " << std::setw(15) << spfaReturn[endNode].second << std::endl;
                 ++wrongDistanceCounter;
 
-                assert(dijkstraReturn.first.size() == bellmanReturn[endNode].first.size() && bellmanReturn[endNode].first.size() == dijkstraAllPathsReturn[endNode].first.size());
+                assert(dijkstraReturn.first.size() == bellmanReturn[endNode].first.size() 
+                        && bellmanReturn[endNode].first.size() == dijkstraAllPathsReturn[endNode].first.size()
+                        && dijkstraAllPathsReturn[endNode].first.size() == spfaReturn[endNode].first.size());
 
-                if (dijkstraReturn.first.size() !=0 && bellmanReturn[endNode].first.size() !=0 && dijkstraAllPathsReturn[endNode].first.size() != 0) {
+                if (dijkstraReturn.first.size() !=0 
+                        && bellmanReturn[endNode].first.size() !=0 
+                        && dijkstraAllPathsReturn[endNode].first.size() != 0
+                        && spfaReturn[endNode].first.size() != 0
+                        ) {
                     for (size_t i = 0; i < (dijkstraReturn.first).size(); ++i) {
                         if (!internal::equals((bellmanReturn[endNode].first)[i], (dijkstraReturn.first)[i])
-                            || !internal::equals((dijkstraReturn.first)[i], (dijkstraAllPathsReturn[endNode].first)[i])) {
+                            || !internal::equals((dijkstraReturn.first)[i], (dijkstraAllPathsReturn[endNode].first)[i])
+                            || !internal::equals((dijkstraAllPathsReturn[endNode].first)[i], (spfaReturn[endNode].first)[i])
+                            ) {
                             // std::cout << "Paths from " << "[" << startNode << "] to [" << endNode << "] do not match" << std::endl;
                             ++wrongPathCounter;
                         }
@@ -530,6 +551,7 @@ void test_string_double_undirected_weighted() {
     test_dijkstraShortestPath(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_dijkstraAllShortestPathsFromStart(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_bellmanFordShortestPaths(g1, startNode, endNode, 4, static_cast<double>(134.236504));
+    test_shortestPathFasterAlgorithm(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_floydWarshallAllShortestPaths(g1, startNode, endNode, static_cast<double>(134.236504));
     test_johnsonAllShortestsPaths(g1, startNode, endNode, 4, static_cast<double>(134.236504));
     test_johnson_bellmanford_equivalence(g1);
@@ -605,6 +627,7 @@ void test_int_int_undirected_unweighted() {
     test_dijkstraShortestPath(g1, startNode, endNode, 2, 2);
     test_dijkstraAllShortestPathsFromStart(g1, startNode, 6, 2, 2);
     test_bellmanFordShortestPaths(g1, startNode, 6, 2, 2);
+    test_shortestPathFasterAlgorithm(g1, startNode, 6, 2, 2);
     test_floydWarshallAllShortestPaths(g1, 4, 5, 2);
     // johnsonAllShortest paths not supported for unweigted graphs and is not tested here
     test_all_path_algs_equivalence(g1);
@@ -677,6 +700,7 @@ void test_custom_float_directed_weighted() {
     test_dijkstraShortestPath(g1, startNode, endNode, 3, 13.7f);
     test_dijkstraAllShortestPathsFromStart(g1, startNode, endNode, 3, 13.7f);
     test_bellmanFordShortestPaths(g1, startNode, endNode, 3, 13.7f);
+    test_shortestPathFasterAlgorithm(g1, startNode, endNode, 3, 13.7f);
     test_floydWarshallAllShortestPaths(g1, startNode, endNode, 13.7f);
     test_johnsonAllShortestsPaths(g1, startNode, endNode, 3, 13.7f);
     test_johnson_bellmanford_equivalence(g1);
@@ -749,6 +773,7 @@ void test_char_ull_directed_unweighted() {
     test_dijkstraShortestPath(g1, startNode, endNode, 4, static_cast<unsigned long long>(4));
     test_dijkstraAllShortestPathsFromStart(g1, startNode, 'o', 5, static_cast<unsigned long long>(5));
     test_bellmanFordShortestPaths(g1, startNode, 'o', 5, static_cast<unsigned long long>(5));
+    test_shortestPathFasterAlgorithm(g1, startNode, 'o', 5, static_cast<unsigned long long>(5));
     test_floydWarshallAllShortestPaths(g1, 'h', 'j', static_cast<unsigned long long>(4));
     // johnsonAllShortest paths not supported for unweigted graphs and is not tested here
     test_all_path_algs_equivalence(g1);
@@ -809,11 +834,10 @@ void string_double() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    // std::string startNode = "node1";
+    std::string startNode = "node1";
 
-    // auto ret1 = GraphAlgorithms::dijkstraAllShortestPathsFromStart(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    auto ret3 = GraphAlgorithms::johnsonAllShortestsPaths(g, {},  GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret3 = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode,  GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void int_int() {
@@ -824,11 +848,10 @@ void int_int() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
-    // int startNode = 1;
+    int startNode = 1;
 
-    // auto ret1 = GraphAlgorithms::dijkstraAllShortestPathsFromStart(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    auto ret3 = GraphAlgorithms::johnsonAllShortestsPaths(g, {},  GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret3 = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode,  GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void custom_float() {
@@ -838,13 +861,12 @@ void custom_float() {
     const char* fileName = "testInputs/custom_float.txt";
     g.readFromTxt(fileName);
 
-    // CustomClass startNode = CustomClass(1, 2, 3);
+    CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);;  
     // std::unordered_set<CustomClass> someNodes{startNode3, CustomClass(4, 5, 6), endNode3};
    
-    // auto ret1 = GraphAlgorithms::dijkstraAllShortestPathsFromStart(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    auto ret3 = GraphAlgorithms::johnsonAllShortestsPaths(g, {},  GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret3 = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode,  GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void char_ull() {
@@ -854,12 +876,11 @@ void char_ull() {
     const char* fileName = "testInputs/char_ull_d_u.txt";
     g.readFromTxt(fileName);
 
-    // char startNode = 'a';
+    char startNode = 'a';
     // char endNode4 = 'p';
 
-    // auto ret1 = GraphAlgorithms::dijkstraAllShortestPathsFromStart(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    auto ret3 = GraphAlgorithms::johnsonAllShortestsPaths(g, {},  GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret3 = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode,  GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {

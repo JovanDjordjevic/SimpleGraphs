@@ -178,6 +178,10 @@ namespace GraphAlgorithms {
 	std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>> bellmanFordShortestPaths(const GraphClasses::Graph<NodeType, WeightType>& g, const NodeType startNode,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
+	template<typename NodeType, typename WeightType>
+	std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>> shortestPathFasterAlgorithm(const GraphClasses::Graph<NodeType, WeightType>& g, const NodeType startNode,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
 	// NOTE: at this time, Floyd-Warshall algorithm only returns the distances between pairs of nodes and not the paths themselves
 	template<typename NodeType, typename WeightType>
 	std::unordered_map<NodeType, std::unordered_map<NodeType, WeightType>> floydWarshallAllShortestPaths(const GraphClasses::Graph<NodeType, WeightType>& g,
@@ -1683,6 +1687,114 @@ namespace GraphAlgorithms {
 			std::reverse(std::begin(pathVect), std::end(pathVect));
 		}
 
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			for (auto& [node, pathAndDist] : paths) {
+				// there is no path to nodes in different components
+				if (internal::equals(pathAndDist.first.size(), static_cast<size_t>(0)) && !internal::equals(node, startNode)) {
+					out << "There is no possible path between [" << startNode << "] and [" << node << "]\n" << std::endl;
+
+					continue;
+				}
+
+				out << "Distance from [" << startNode << "] to [" << node << "] is: " << distances[node] << "\n\t Path: ";
+
+				auto& pathVect = pathAndDist.first;
+
+				for (auto& elem : pathVect) {
+					out << "[" << elem << "] ";
+				}
+
+				out << '\n' << std::endl;
+			}
+		}
+
+		return paths;
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>> shortestPathFasterAlgorithm(const GraphClasses::Graph<NodeType, WeightType>& g, const NodeType startNode, const AlgorithmBehavior behavior, std::ostream& out) {
+		std::unordered_map<NodeType, WeightType> distances;
+		std::unordered_map<NodeType, std::optional<NodeType>> parents;
+
+		auto neighborList = g.getNeighborList();
+
+		for (auto& [node, neighbors] : neighborList) {
+			distances[node] = GraphClasses::MAX_WEIGHT<WeightType>;
+		}
+
+		distances[startNode] = static_cast<WeightType>(0);
+		parents[startNode]; // only startNode will have the empty optional
+
+		std::deque<NodeType> queue;
+		queue.emplace_back(startNode);
+
+		while (!queue.empty()) {
+			NodeType currentNode = queue.front();
+			queue.pop_front();
+
+			for (auto& [neighbor, weight] : neighborList[currentNode]) {
+				WeightType newDistance = distances[currentNode] + weight.value_or(1);
+
+				if (internal::lessThan(newDistance, distances[neighbor])) {
+					distances[neighbor] = newDistance;
+					parents[neighbor] = currentNode;
+
+					if (internal::equals(std::find(std::begin(queue), std::end(queue), neighbor), std::end(queue))) {
+						queue.emplace_back(neighbor);
+					}
+				}
+			}
+		}
+
+		// negtive cycle check
+		for (auto& [node, neighbors] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors) {
+				auto& nodeDist = distances[node];
+
+				if (!internal::equals(nodeDist, GraphClasses::MAX_WEIGHT<WeightType>) &&
+					internal::lessThan(nodeDist + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
+					if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+						out << "Graph contains one or more negative cycles\n" << std::endl;
+					}
+
+					return {};
+				}
+			}
+		}
+
+		// path reconstruction
+		std::unordered_map<NodeType, std::pair<std::vector<NodeType>, WeightType>> paths;
+
+		for (auto& [node, distFromStart] : distances) {
+			paths[node] = std::make_pair(std::vector<NodeType>{}, distFromStart);
+
+			if (internal::equals(distFromStart, GraphClasses::MAX_WEIGHT<WeightType>) || internal::equals(node, startNode)) {
+				continue;
+			}
+
+			NodeType pathNode = node;
+
+			auto& pathVect = paths[node].first;
+			pathVect.emplace_back(pathNode);
+
+			std::optional<NodeType> parent = parents[pathNode];
+
+			while (true) {
+				if (!parent.has_value()) {
+					break;
+				}
+
+				auto& parentVal = parent.value();
+
+				pathVect.emplace_back(parentVal);
+				pathNode = parentVal;
+				
+				parent = parents[pathNode];
+			}
+
+			std::reverse(std::begin(pathVect), std::end(pathVect));
+		}
+		
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			for (auto& [node, pathAndDist] : paths) {
 				// there is no path to nodes in different components
