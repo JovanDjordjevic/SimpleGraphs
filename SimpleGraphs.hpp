@@ -17,6 +17,12 @@
 #include <utility>
 #include <vector>
 
+
+
+
+
+#include <iomanip>
+
 #define GRAPH_ERROR(file, line, message) std::cerr << "ERROR: " << (file) << " line " << (line) << ": " << (message) << std::endl;
 
 //------------------------------------- API -------------------------------------
@@ -255,6 +261,14 @@ namespace GraphAlgorithms {
 	std::vector<std::pair<std::vector<NodeType>, WeightType>> findAllCycles(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout); 
 
+	// ----- flow algorithms -----
+
+	// NOTE: parallel edges in the same direction will be treated as one new edge with capcaity equal to the sum of parallel edge capacities
+	// Edges in unweighted graphs will be treated as having a capacity of 1
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> edmondsKarpMaximumFlow(const GraphClasses::Graph<NodeType, WeightType>& g, NodeType source, NodeType sink,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout); 
+
 	// ----- other algorithms -----
 
 	template<typename NodeType, typename WeightType>
@@ -263,7 +277,6 @@ namespace GraphAlgorithms {
 
 	// TODO:
 	// coloring
-	// maximum flow (ford-fulkerson, edmonds-karp)
 	// pairing
 	//...
 } // namespace GraphAlgorithms
@@ -2564,6 +2577,118 @@ namespace GraphAlgorithms {
 		}
 
 		return internalData.allCycles;
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> edmondsKarpMaximumFlow(const GraphClasses::Graph<NodeType, WeightType>& g, NodeType source, NodeType sink, const AlgorithmBehavior behavior, std::ostream& out) {
+		if (!g.isConfigured()) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+			exit(EXIT_FAILURE);
+		}
+
+		auto neighborList = g.getNeighborList();
+		std::unordered_map<NodeType, std::unordered_map<NodeType, WeightType>> residualGraph;
+
+		for (auto& [node, neighbors] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors) {
+				residualGraph[node][neighbor] = static_cast<WeightType>(0);
+				residualGraph[neighbor][node] = static_cast<WeightType>(0);
+			}
+		}
+
+		for (auto& [node1, neighbors1] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors1) {
+				residualGraph[node1][neighbor] += weight.value_or(static_cast<WeightType>(1));
+			}
+		}
+
+		std::unordered_map<NodeType, std::optional<NodeType>> parents;	 
+		parents[source];	// only source will have the empty optional
+
+		std::unordered_map<NodeType, bool> visited;
+
+		for (auto& [node, neighbors] : neighborList) {
+			visited[node] = false;
+		}
+		
+		WeightType maxFlow = static_cast<WeightType>(0);
+
+		while (true) {
+			bool foundPath = false;
+
+			// breadth first search is used to check if there is a path from source to sink
+			std::queue<NodeType> queue;
+			queue.emplace(source);
+			visited[source] = true;
+
+			while (!queue.empty()) {
+				NodeType currentNode = queue.front();
+				queue.pop();
+
+				if (internal::equals(currentNode, sink)) {
+					foundPath = true;
+					break;
+				}
+
+				for (auto& [neighbor, weight] : neighborList[currentNode]) {
+					if (!visited[neighbor] && internal::greaterThan(residualGraph[currentNode][neighbor], static_cast<WeightType>(0))) {
+						queue.emplace(neighbor);
+						parents[neighbor] = currentNode;
+						visited[neighbor] = true;
+					}
+				}
+			}
+
+			if (!foundPath) {
+				break;
+			}
+
+			for (auto& [node, neighbors] : neighborList) {
+				visited[node] = false;
+			}
+
+			WeightType pathFlow = GraphClasses::MAX_WEIGHT<WeightType>;
+
+			for (NodeType pathNode = sink; parents[pathNode].has_value(); pathNode = parents[pathNode].value()) {				
+				auto& parentVal = parents[pathNode].value();
+
+				if (internal::lessThan(residualGraph[parentVal][pathNode], pathFlow)) {
+					pathFlow = residualGraph[parentVal][pathNode];
+				}
+			}
+
+			for (NodeType pathNode = sink; parents[pathNode].has_value(); pathNode = parents[pathNode].value()) {
+				auto& parentVal = parents[pathNode].value();
+
+				residualGraph[parentVal][pathNode] -= pathFlow;
+				residualGraph[pathNode][parentVal] += pathFlow;
+			}
+
+			maxFlow += pathFlow;
+		}
+
+		GraphClasses::Graph<NodeType, WeightType> residualReturnGraph;
+		residualReturnGraph.configureDirections(GraphClasses::GraphType::Directed);
+		residualReturnGraph.configureWeights(GraphClasses::GraphWeights::Weighted);
+
+		for (auto& [node, neighbors] : residualGraph) {
+			for (auto& [neighbor, weight] : neighbors) {
+				residualReturnGraph.addEdge(node, neighbor, weight);
+			}
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			if (internal::equals(maxFlow, static_cast<WeightType>(0))) {
+				out << "No possible path exists between source [" << source << "] and sink [" << sink << "]\n" << std::endl;
+			}
+			else {
+				out << "Maximum possible flow from [" << source << "] to [" << sink << "] is: " << maxFlow << '\n';
+				out << "Residual graph:\n";
+				out << residualReturnGraph;
+			}
+		}
+
+		return std::make_pair(maxFlow, residualReturnGraph);
 	}
 
 	template<typename NodeType, typename WeightType>
