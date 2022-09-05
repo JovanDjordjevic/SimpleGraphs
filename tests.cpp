@@ -230,6 +230,36 @@ void test_edmondsKarpMaximumFlow(GraphClasses::Graph<NodeType, WeightType> &g, N
 }
 
 template<typename NodeType, typename WeightType>
+void test_pushRelabelMaximumFlow(GraphClasses::Graph<NodeType, WeightType> &g, NodeType source, NodeType sink, WeightType expectedMaxFlow) {
+    auto [maxFlow, flowGraph] = GraphAlgorithms::pushRelabelMaximumFlow(g, source, sink, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(internal::equals(maxFlow, expectedMaxFlow));
+}
+
+template<typename NodeType, typename WeightType>
+void test_all_maxFlow_algs_equivalence(GraphClasses::Graph<NodeType, WeightType> &g) {
+    int wrongFlowCounter = 0;
+
+    auto neighborList = g.getNeighborList();
+
+    for (auto& [startNode, startNodeNeighbors] : neighborList) {
+        for (auto& [endNode, endNodeNeighbors] : startNodeNeighbors) {
+            auto edmondsKarpReturn = GraphAlgorithms::edmondsKarpMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+            auto pushRelabelReturn = GraphAlgorithms::pushRelabelMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+            if (!internal::equals(edmondsKarpReturn.first, pushRelabelReturn.first)) {
+                // std::cout << std::setprecision(10);
+                // std::cout << "[" << startNode << "] to [" << endNode << "] : EDMONDSKARP : " << std::setw(15) << edmondsKarpReturn.first  
+                //                                                      << " \tPUSHRELABEL : " << std::setw(15) <<  pushRelabelReturn.first << std::endl;
+                
+                ++wrongFlowCounter;
+            }
+        }   
+    }
+
+    assert(wrongFlowCounter == 0);
+}
+
+template<typename NodeType, typename WeightType>
 void test_findIsolatedNodes(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfIsolatedNodes) {
     auto ret = GraphAlgorithms::findIsolatedNodes(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfIsolatedNodes);
@@ -571,6 +601,8 @@ void test_string_double_undirected_weighted() {
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     test_edmondsKarpMaximumFlow(g1, startNode, endNode, static_cast<double>(51.550004));
+    test_pushRelabelMaximumFlow(g1, startNode, endNode, static_cast<double>(51.550004));
+    test_all_maxFlow_algs_equivalence(g1);
     test_findIsolatedNodes(g1, 0);
     // johnson algorithm for all cycles not tested for undirected graph
     test_findAllCycles(g1, 1);
@@ -647,6 +679,8 @@ void test_int_int_undirected_unweighted() {
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     test_edmondsKarpMaximumFlow(g1, 1, 8, 3);
+    test_pushRelabelMaximumFlow(g1, 1, 8, 3);
+    test_all_maxFlow_algs_equivalence(g1);
     test_findIsolatedNodes(g1, 0);
     // johnson algorithm for all cycles not tested for undirected graph
     test_findAllCycles(g1, 38);
@@ -723,6 +757,8 @@ void test_custom_float_directed_weighted() {
     test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
     test_edmondsKarpMaximumFlow(g1, startNode, endNode, static_cast<float>(0.3000000119));
+    test_pushRelabelMaximumFlow(g1, startNode, endNode, static_cast<float>(0.3000000119));
+    test_all_maxFlow_algs_equivalence(g1);
     test_findIsolatedNodes(g1, 0);
     test_johnsonAllCycles(g1, 1);
     // dfs based algorithm for all cycles not tested for directed graph
@@ -806,6 +842,8 @@ void test_char_ull_directed_unweighted() {
     test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
     test_edmondsKarpMaximumFlow(g1, startNode, 'd', static_cast<unsigned long long>(2));
+    test_pushRelabelMaximumFlow(g1, startNode, 'd', static_cast<unsigned long long>(2));
+    test_all_maxFlow_algs_equivalence(g1);
     test_findIsolatedNodes(g1, 0);
     test_johnsonAllCycles(g1, 11);
     // dfs based algorithm for all cycles not tested for directed graph
@@ -847,7 +885,7 @@ void string_double() {
     std::string startNode = "node1";
     std::string endNode = "node6";
 
-    auto ret = GraphAlgorithms::edmondsKarpMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = GraphAlgorithms::pushRelabelMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void int_int() {
@@ -861,7 +899,7 @@ void int_int() {
     int startNode = 1;
     int endNode = 8;
 
-    auto ret = GraphAlgorithms::edmondsKarpMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = GraphAlgorithms::pushRelabelMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void custom_float() {
@@ -874,7 +912,7 @@ void custom_float() {
     CustomClass startNode = CustomClass(1, 2, 3);
     CustomClass endNode = CustomClass(2, 2, 2);
 
-    auto ret = GraphAlgorithms::edmondsKarpMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = GraphAlgorithms::pushRelabelMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void char_ull() {
@@ -887,7 +925,7 @@ void char_ull() {
     char startNode = 'a';
     char endNode = 'd';
 
-    auto ret = GraphAlgorithms::edmondsKarpMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = GraphAlgorithms::pushRelabelMaximumFlow(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {

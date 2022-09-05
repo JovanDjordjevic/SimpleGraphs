@@ -17,12 +17,6 @@
 #include <utility>
 #include <vector>
 
-
-
-
-
-#include <iomanip>
-
 #define GRAPH_ERROR(file, line, message) std::cerr << "ERROR: " << (file) << " line " << (line) << ": " << (message) << std::endl;
 
 //------------------------------------- API -------------------------------------
@@ -265,8 +259,16 @@ namespace GraphAlgorithms {
 
 	// NOTE: parallel edges in the same direction will be treated as one new edge with capcaity equal to the sum of parallel edge capacities
 	// Edges in unweighted graphs will be treated as having a capacity of 1
+	// algorithm returs maximum flow and residual graph
 	template<typename NodeType, typename WeightType>
 	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> edmondsKarpMaximumFlow(const GraphClasses::Graph<NodeType, WeightType>& g, NodeType source, NodeType sink,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+	// NOTE: parallel edges in the same direction will be treated as one new edge with capcaity equal to the sum of parallel edge capacities
+	// Edges in unweighted graphs will be treated as having a capacity of 1
+	// algorithm returns maxium flow and graph where edges have weight that enable maximum flow (not residual graph)
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> pushRelabelMaximumFlow(const GraphClasses::Graph<NodeType, WeightType>& g, NodeType source, NodeType sink,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout); 
 
 	// ----- other algorithms -----
@@ -2689,6 +2691,137 @@ namespace GraphAlgorithms {
 		}
 
 		return std::make_pair(maxFlow, residualReturnGraph);
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> pushRelabelMaximumFlow(const GraphClasses::Graph<NodeType, WeightType>& g, NodeType source, NodeType sink, const AlgorithmBehavior behavior, std::ostream& out) {
+		if (!g.isConfigured()) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+			exit(EXIT_FAILURE);
+		}
+	
+		std::unordered_map<NodeType, std::unordered_map<NodeType, WeightType>> flow;
+		std::unordered_map<NodeType, std::unordered_map<NodeType, WeightType>> capacity;
+
+		std::unordered_map<NodeType, size_t> height;
+		std::unordered_map<NodeType, WeightType> excessFlow;
+
+		auto neighborList = g.getNeighborList();
+
+		for (auto& [node, neighbors] : neighborList) {
+			height[node] = static_cast<size_t>(0);
+			excessFlow[node] = static_cast<size_t>(0);
+
+			for (auto& [neighbor, weight] : neighbors) {
+				flow[node][neighbor] = static_cast<size_t>(0);
+				flow[neighbor][node] = static_cast<size_t>(0);
+				capacity[node][neighbor] += weight.value_or(static_cast<WeightType>(1));
+			}
+		}  
+
+		height[source] = g.getNodeCount();
+		excessFlow[source] = GraphClasses::MAX_WEIGHT<WeightType>;
+
+    	for (auto& [node, neighbors] : neighborList) {
+			if (!internal::equals(node, source)) {
+				// push(source, node)
+				WeightType min = std::min(excessFlow[source], capacity[source][node] - flow[source][node]);
+
+				flow[source][node] += min;
+				flow[node][source] -= min;
+				excessFlow[source] -= min;
+				excessFlow[node] += min;
+			}
+		}
+
+		while (true) {
+			std::vector<NodeType> maxHeightNodes;
+			size_t maxHeight = std::numeric_limits<size_t>::min();
+
+			for (auto& [node, neighbors] : neighborList) {
+				if (internal::greaterThan(excessFlow[node], static_cast<WeightType>(0)) && !internal::equals(node, source) && !internal::equals(node, sink)) {
+					if (!maxHeightNodes.empty() && internal::greaterThan(height[node], maxHeight)) {
+						maxHeight = height[node];
+						maxHeightNodes.clear();
+					}
+					if (maxHeightNodes.empty() || internal::equals(height[node], maxHeight)) {
+						maxHeightNodes.emplace_back(node);
+					}
+				}
+			}
+
+			if (maxHeightNodes.empty()) {
+				break;
+			}
+
+			for (auto& maxHeightNode : maxHeightNodes) {
+				bool pushed = false;
+
+				for (auto& [node, neighbors] : neighborList) { 
+					if (internal::equals(excessFlow[maxHeightNode], static_cast<WeightType>(0))) {
+						break;
+					}
+					else if (internal::greaterThan(capacity[maxHeightNode][node] - flow[maxHeightNode][node], static_cast<WeightType>(0)) 
+							 && internal::equals(height[maxHeightNode], height[node] + static_cast<size_t>(1))) {
+						// push (maxHeightNode, node)
+						WeightType min = std::min(excessFlow[maxHeightNode], capacity[maxHeightNode][node] - flow[maxHeightNode][node]);
+
+						flow[maxHeightNode][node] += min;
+						flow[node][maxHeightNode] -= min;
+						excessFlow[maxHeightNode] -= min;
+						excessFlow[node] += min;
+
+						pushed = true;
+					}	
+				}
+
+				if (!pushed) {
+					// relabel(i);
+					size_t minHeight = std::numeric_limits<size_t>::max();
+
+					for (auto& [node, neighbors] : neighborList) {
+						if (internal::greaterThan(capacity[maxHeightNode][node] - flow[maxHeightNode][node], static_cast<WeightType>(0))) {
+							minHeight = std::min(minHeight, height[node]);
+						}
+					}
+
+					if (internal::lessThan(minHeight, std::numeric_limits<size_t>::max())) {
+						height[maxHeightNode] = minHeight + static_cast<size_t>(1);
+					}
+
+					break;
+				}
+			}
+		}
+
+    	WeightType maxFlow = static_cast<WeightType>(0);
+
+		for (auto& [node, neighbors] : neighborList) {
+			maxFlow += flow[node][sink];
+		}
+
+		GraphClasses::Graph<NodeType, WeightType> flowGraph;
+		flowGraph.configureDirections(GraphClasses::GraphType::Directed);
+		flowGraph.configureWeights(GraphClasses::GraphWeights::Weighted);
+
+		for (auto& [node, neighbors] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors) {
+				flowGraph.addEdge(node, neighbor, flow[node][neighbor]);
+			}
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			if (internal::equals(maxFlow, static_cast<WeightType>(0))) {
+				out << "No possible path exists between source [" << source << "] and sink [" << sink << "]\n" << std::endl;
+			}
+			else {
+				out << "Maximum possible flow from [" << source << "] to [" << sink << "] is: " << maxFlow << '\n';
+				out << "Flow graph:\n";
+				out << flowGraph;
+			}
+		}
+
+		return std::make_pair(maxFlow, flowGraph);
 	}
 
 	template<typename NodeType, typename WeightType>
