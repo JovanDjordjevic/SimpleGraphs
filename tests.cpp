@@ -194,21 +194,15 @@ void test_topsortKhan(GraphClasses::Graph<NodeType, WeightType> &g, NodeType fir
 }
 
 template<typename NodeType, typename WeightType>
-void test_mcstPrimTotalCostOnly(GraphClasses::Graph<NodeType, WeightType> &g, WeightType totalCost) {
-    auto ret = GraphAlgorithms::mcstPrimTotalCostOnly(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(internal::equals(ret, totalCost));
+void test_primMinimumSpanningTree(GraphClasses::Graph<NodeType, WeightType> &g, WeightType expectedTotalCost) {
+    auto [totalCost, spanningTree] = GraphAlgorithms::primMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(internal::equals(totalCost, expectedTotalCost));
 }
 
 template<typename NodeType, typename WeightType>
-void test_mcstPrim(GraphClasses::Graph<NodeType, WeightType> &g, unsigned edgeCount) {
-    auto ret = GraphAlgorithms::mcstPrim(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == edgeCount);
-}
-
-template<typename NodeType, typename WeightType>
-void test_mcstKruskal(GraphClasses::Graph<NodeType, WeightType> &g, unsigned edgeCount) {
-    auto ret = GraphAlgorithms::mcstKruskal(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == edgeCount);
+void test_kruskalMinimumSpanningTree(GraphClasses::Graph<NodeType, WeightType> &g, WeightType expectedTotalCost) {
+    auto [totalCost, spanningTree] = GraphAlgorithms::kruskalMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(internal::equals(totalCost, expectedTotalCost));
 }
 
 template<typename NodeType, typename WeightType>
@@ -565,9 +559,8 @@ void test_string_double_undirected_weighted() {
     test_findArticulationPoints(g1, 2);
     test_findBridges(g1, 2);
     // topsort makes no sense for undirected graphs and is not tested here
-    test_mcstPrimTotalCostOnly(g1, static_cast<double>(6199.467744));
-    test_mcstPrim(g1, g1.getNodeCount() - 1);
-    test_mcstKruskal(g1, g1.getNodeCount() - 1);
+    test_primMinimumSpanningTree(g1, static_cast<double>(6199.467744));
+    test_kruskalMinimumSpanningTree(g1, static_cast<double>(6199.467744));
     test_boruvkaMinimumSpanningTree(g1, static_cast<double>(6199.467744));
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
@@ -641,9 +634,8 @@ void test_int_int_undirected_unweighted() {
     test_findArticulationPoints(g1, 0);
     test_findBridges(g1, 0);
     // topsort makes no sense for undirected graphs and is not tested here
-    test_mcstPrim(g1, 7);
-    test_mcstPrimTotalCostOnly(g1, 7);
-    test_mcstKruskal(g1, 7);
+    test_primMinimumSpanningTree(g1, 7);
+    test_kruskalMinimumSpanningTree(g1, 7);
     test_boruvkaMinimumSpanningTree(g1, 7);
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
@@ -844,8 +836,9 @@ void string_double() {
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     // std::string startNode = "node1";
 
-    // auto ret1 = GraphAlgorithms::mcstPrim(g);
-    auto ret2 = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::primMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret2 = GraphAlgorithms::kruskalMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret3 = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void int_int() {
@@ -858,8 +851,9 @@ void int_int() {
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
     // int startNode = 1;
 
-    // auto ret1 = GraphAlgorithms::mcstPrim(g);
-    auto ret2 = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::primMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret2 = GraphAlgorithms::kruskalMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret3 = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void custom_float() {
