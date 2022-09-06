@@ -232,6 +232,10 @@ namespace GraphAlgorithms {
 	std::vector<std::tuple<NodeType, NodeType, WeightType>> mcstKruskal(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> boruvkaMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
 	// ----- connected components algorithms -----
 
 	template<typename NodeType, typename WeightType>
@@ -2319,6 +2323,106 @@ namespace GraphAlgorithms {
 		}
 
 		return mcst;
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> boruvkaMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out ) {
+		if (!g.isConfigured()) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+			exit(EXIT_FAILURE);
+		}
+
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Minimum cost spanning tree for directed graphs currently not supported");
+			exit(EXIT_FAILURE);
+		}
+
+		auto spanningTreeType = g.getGraphType();
+		auto spanningTreeWeights = g.getGraphWeights();
+
+		GraphClasses::Graph<NodeType, WeightType> spanningTree;
+		spanningTree.configureDirections(spanningTreeType);
+		spanningTree.configureWeights(spanningTreeWeights);
+
+		WeightType totalCost = static_cast<WeightType>(0);
+
+		internal::DisjointSet ds{g};
+
+		auto neighborList = g.getNeighborList();
+
+		size_t numberOfTrees = g.getNodeCount();;
+
+		// <rootOfComponent/tree, <startNode, endNode, edgeWeight>>
+		std::unordered_map<NodeType, std::optional<std::tuple<NodeType, NodeType, WeightType>>> cheapestEdges;
+
+		while (internal::greaterThan(numberOfTrees, static_cast<size_t>(1))) {
+			for (auto& [node, neighbors] : neighborList) {
+				for (auto& [neighbor, weight] : neighbors) {
+					NodeType root1 = ds.findInDisjointSet(node);
+					NodeType root2 = ds.findInDisjointSet(neighbor);
+
+					if (internal::equals(root1, root2)) {
+						continue;
+					}
+
+					WeightType w = weight.value_or(static_cast<WeightType>(1));
+
+					auto& root1CheapestEdge = cheapestEdges[root1];
+					auto& root2CheapestEdge = cheapestEdges[root2];
+
+					if (!root1CheapestEdge.has_value() || internal::lessThan(w, std::get<2>(root1CheapestEdge.value()))) {
+						root1CheapestEdge = std::make_tuple(node, neighbor, w);
+					}
+
+					if (!root2CheapestEdge.has_value() || internal::lessThan(w, std::get<2>(root2CheapestEdge.value()))) {
+						root2CheapestEdge = std::make_tuple(node, neighbor, w);
+					}
+				}
+			}
+
+			for (auto& [node, neighbors] : neighborList) {
+				NodeType root1 = ds.findInDisjointSet(node);
+
+				if (!cheapestEdges[root1].has_value()) {
+					continue;
+				}
+
+				auto [cheapEdgeStart, cheapEdgeEnd, cheapEdgeWeight] = cheapestEdges[root1].value();
+
+				NodeType root2 = ds.findInDisjointSet(cheapEdgeEnd);
+
+				if (internal::equals(root1, root2)) {
+					continue;
+				}
+				
+				ds.unionDisjointSets(root1, root2);
+
+				totalCost += cheapEdgeWeight;
+
+				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+					spanningTree.addEdge(cheapEdgeStart, cheapEdgeEnd);
+					spanningTree.addEdge(cheapEdgeEnd, cheapEdgeStart);
+				}
+				else {
+					spanningTree.addEdge(cheapEdgeStart, cheapEdgeEnd, cheapEdgeWeight);
+					spanningTree.addEdge(cheapEdgeEnd, cheapEdgeStart, cheapEdgeWeight);
+				}
+
+				--numberOfTrees;
+			}
+
+			cheapestEdges.clear();
+		}
+
+		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
+			out << "Minimum cost spanning tree:\n";
+
+			out << spanningTree;
+
+			out << "Total cost of spanning tree is: " << totalCost << '\n' << std::endl;
+		}
+
+		return std::make_pair(totalCost, spanningTree);
 	}
 
 	template<typename NodeType, typename WeightType>

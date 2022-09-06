@@ -212,6 +212,12 @@ void test_mcstKruskal(GraphClasses::Graph<NodeType, WeightType> &g, unsigned edg
 }
 
 template<typename NodeType, typename WeightType>
+void test_boruvkaMinimumSpanningTree(GraphClasses::Graph<NodeType, WeightType> &g, WeightType expectedTotalCost) {
+    auto [totalCost, spanningTree] = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(internal::equals(totalCost, expectedTotalCost));
+}
+
+template<typename NodeType, typename WeightType>
 void test_findStronglyConnectedComponentsTarjan(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
     auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfComponents);
@@ -562,6 +568,7 @@ void test_string_double_undirected_weighted() {
     test_mcstPrimTotalCostOnly(g1, static_cast<double>(6199.467744));
     test_mcstPrim(g1, g1.getNodeCount() - 1);
     test_mcstKruskal(g1, g1.getNodeCount() - 1);
+    test_boruvkaMinimumSpanningTree(g1, static_cast<double>(6199.467744));
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
@@ -637,6 +644,7 @@ void test_int_int_undirected_unweighted() {
     test_mcstPrim(g1, 7);
     test_mcstPrimTotalCostOnly(g1, 7);
     test_mcstKruskal(g1, 7);
+    test_boruvkaMinimumSpanningTree(g1, 7);
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     test_findIsolatedNodes(g1, 0);
@@ -834,10 +842,10 @@ void string_double() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    std::string startNode = "node1";
+    // std::string startNode = "node1";
 
-    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret3 = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode,  GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret1 = GraphAlgorithms::mcstPrim(g);
+    auto ret2 = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void int_int() {
@@ -848,10 +856,10 @@ void int_int() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
-    int startNode = 1;
+    // int startNode = 1;
 
-    // auto ret2 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret3 = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode,  GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret1 = GraphAlgorithms::mcstPrim(g);
+    auto ret2 = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void custom_float() {
