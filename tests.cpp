@@ -206,6 +206,12 @@ void test_kruskalMinimumSpanningTree(GraphClasses::Graph<NodeType, WeightType> &
 }
 
 template<typename NodeType, typename WeightType>
+void test_commonMinimumCostSpannigTree(GraphClasses::Graph<NodeType, WeightType> &g1, GraphClasses::Graph<NodeType, WeightType> &g2, WeightType expectedTotalCost) {
+    auto [totalCost, spanningTree] = GraphAlgorithms::commonMinimumCostSpannigTree(g1, g2, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(internal::equals(totalCost, expectedTotalCost));
+}
+
+template<typename NodeType, typename WeightType>
 void test_boruvkaMinimumSpanningTree(GraphClasses::Graph<NodeType, WeightType> &g, WeightType expectedTotalCost) {
     auto [totalCost, spanningTree] = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(internal::equals(totalCost, expectedTotalCost));
@@ -580,6 +586,7 @@ void test_string_double_undirected_weighted() {
     // topsort makes no sense for undirected graphs and is not tested here
     test_primMinimumSpanningTree(g1, static_cast<double>(6199.467744));
     test_kruskalMinimumSpanningTree(g1, static_cast<double>(6199.467744));
+    test_commonMinimumCostSpannigTree(g1, g1, static_cast<double>(6199.467744));
     test_boruvkaMinimumSpanningTree(g1, static_cast<double>(6199.467744));
     test_reverseDeleteMinimumSpanningTree(g1, static_cast<double>(6199.467744));
     test_all_mcst_algs_equivalence(g1);
@@ -657,6 +664,7 @@ void test_int_int_undirected_unweighted() {
     // topsort makes no sense for undirected graphs and is not tested here
     test_primMinimumSpanningTree(g1, 7);
     test_kruskalMinimumSpanningTree(g1, 7);
+    test_commonMinimumCostSpannigTree(g1, g1, 7);
     test_boruvkaMinimumSpanningTree(g1, 7);
     test_reverseDeleteMinimumSpanningTree(g1, 7);
     test_all_mcst_algs_equivalence(g1);
@@ -862,7 +870,8 @@ void string_double() {
     // auto ret1 = GraphAlgorithms::primMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
     // auto ret2 = GraphAlgorithms::kruskalMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
     // auto ret3 = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret4 = GraphAlgorithms::reverseDeleteMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret4 = GraphAlgorithms::reverseDeleteMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret5 = GraphAlgorithms::commonMinimumCostSpannigTree(g, g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void int_int() {
@@ -878,7 +887,8 @@ void int_int() {
     // auto ret1 = GraphAlgorithms::primMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
     // auto ret2 = GraphAlgorithms::kruskalMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
     // auto ret3 = GraphAlgorithms::boruvkaMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret4 = GraphAlgorithms::reverseDeleteMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret4 = GraphAlgorithms::reverseDeleteMinimumSpanningTree(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret5 = GraphAlgorithms::commonMinimumCostSpannigTree(g, g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void custom_float() {

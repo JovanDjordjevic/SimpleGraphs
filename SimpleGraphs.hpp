@@ -231,6 +231,10 @@ namespace GraphAlgorithms {
 	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> kruskalMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> commonMinimumCostSpannigTree(const GraphClasses::Graph<NodeType, WeightType>& g1, const GraphClasses::Graph<NodeType, WeightType>& g2,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
 	// NOTE: only works for connected graphs
 	template<typename NodeType, typename WeightType>
 	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> boruvkaMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g,
@@ -2371,6 +2375,23 @@ namespace GraphAlgorithms {
 
 		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
 			out << "Minimum cost spanning tree:\n";
+
+			out << spanningTree;
+
+			out << "Total cost of spanning tree is: " << totalCost << '\n' << std::endl;
+		}
+
+		return std::make_pair(totalCost, spanningTree);
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> commonMinimumCostSpannigTree(const GraphClasses::Graph<NodeType, WeightType>& g1, const GraphClasses::Graph<NodeType, WeightType>& g2, const AlgorithmBehavior behavior, std::ostream& out) {
+		GraphClasses::Graph<NodeType, WeightType> intersection = GraphUtility::intersectGraphs(g1, g2);
+		
+		auto [totalCost, spanningTree] = kruskalMinimumSpanningTree(intersection, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
+			out << "Minimum common cost spanning tree for both graphs:\n";
 
 			out << spanningTree;
 
