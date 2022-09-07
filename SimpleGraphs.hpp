@@ -74,8 +74,10 @@ namespace GraphClasses {
 			// only for weighted graphs, in case of parallel edges, all their weights will be set to newWeight
 			// in case of undirected graphs, both directions will be reweighed
 			void reweighEdge(const NodeType startNode, const NodeType neighborNode, const WeightType newWeight);
-			// deletes all edges from startNode to endNode in case of a multigraph
+			// deletes all edges connecting startNode and endNode
 			void deleteEdge(const NodeType startNode, const NodeType endNode);	
+			// deletes all edges connecting startNode and endNode with specific weight
+			void deleteEdgeWithWeight(const NodeType startNode, const NodeType endNode, const WeightType weight);	
 			// removes a node and all edges to/from said node
 			void deleteNode(const NodeType nodeToDelete);
 			size_t getNodeCount() const;
@@ -220,16 +222,27 @@ namespace GraphAlgorithms {
 
 	// ----- minimum cost spanning tree algorithms -----
 
+	// NOTE: only works for connected graphs
 	template<typename NodeType, typename WeightType>
-	WeightType mcstPrimTotalCostOnly(const GraphClasses::Graph<NodeType, WeightType>& g, 
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> primMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename NodeType, typename WeightType>
-	std::vector<std::tuple<NodeType, NodeType, WeightType>> mcstPrim(const GraphClasses::Graph<NodeType, WeightType>& g,
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> kruskalMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	template<typename NodeType, typename WeightType>
-	std::vector<std::tuple<NodeType, NodeType, WeightType>> mcstKruskal(const GraphClasses::Graph<NodeType, WeightType>& g,
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> commonMinimumCostSpannigTree(const GraphClasses::Graph<NodeType, WeightType>& g1, const GraphClasses::Graph<NodeType, WeightType>& g2,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+	// NOTE: only works for connected graphs
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> boruvkaMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g,
+		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
+
+	// NOTE: only works for connected graphs
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> reverseDeleteMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = AlgorithmBehavior::PrintAndReturn, std::ostream& out = std::cout);
 
 	// ----- connected components algorithms -----
@@ -606,6 +619,7 @@ namespace GraphClasses {
 
 		auto itStartNode = m_neighborList.find(startNode);
 		auto itEndNode = m_neighborList.find(endNode);
+
 		if (internal::equals(itStartNode, std::end(m_neighborList)) || internal::equals(itEndNode, std::end(m_neighborList))) {
 			// std::cout << "Edge does not exist" << std::endl;
 			return;
@@ -613,13 +627,52 @@ namespace GraphClasses {
 
 		auto it = std::begin((*itStartNode).second);
 		auto end = std::end((*itStartNode).second);
-		auto itRemoved = std::remove_if(it, end, [&](const auto& neighborNode){ return internal::equals(neighborNode.neighbor, endNode); });
+
+		auto itRemoved = std::remove_if(it, end, [&](const auto& edge){ return internal::equals(edge.neighbor, endNode); });
 		(*itStartNode).second.erase(itRemoved, end);
 
 		if (internal::equals(m_graphType, GraphType::Undirected)) {
 			it = std::begin((*itEndNode).second);
 			end = std::end((*itEndNode).second);
-			itRemoved = std::remove_if(it, end, [&](const auto& neighborNode){ return internal::equals(neighborNode.neighbor, startNode); });
+
+			itRemoved = std::remove_if(it, end, [&](const auto& edge){ return internal::equals(edge.neighbor, startNode); });
+			(*itEndNode).second.erase(itRemoved, end);
+		}
+
+		return;
+	}
+
+	template<typename NodeType, typename WeightType>
+	void Graph<NodeType, WeightType>::deleteEdgeWithWeight(const NodeType startNode, const NodeType endNode, const WeightType weight) {
+		if (!isConfigured()) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+			exit(EXIT_FAILURE);
+		}
+
+		if (internal::equals(m_graphWeights, GraphWeights::Unweighted)) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Function cannot be used for unweighted graphs");
+			exit(EXIT_FAILURE);
+		}
+
+		auto itStartNode = m_neighborList.find(startNode);
+		auto itEndNode = m_neighborList.find(endNode);
+
+		if (internal::equals(itStartNode, std::end(m_neighborList)) || internal::equals(itEndNode, std::end(m_neighborList))) {
+			// std::cout << "Edge does not exist" << std::endl;
+			return;
+		}
+
+		auto it = std::begin((*itStartNode).second);
+		auto end = std::end((*itStartNode).second);
+
+		auto itRemoved = std::remove_if(it, end, [&](const auto& edge){ return internal::equals(edge.neighbor, endNode) && internal::equals(edge.weight.value(), weight); });
+		(*itStartNode).second.erase(itRemoved, end);
+
+		if (internal::equals(m_graphType, GraphType::Undirected)) {
+			it = std::begin((*itEndNode).second);
+			end = std::end((*itEndNode).second);
+
+			itRemoved = std::remove_if(it, end, [&](const auto& edge){ return internal::equals(edge.neighbor, startNode) && internal::equals(edge.weight.value(), weight); });
 			(*itEndNode).second.erase(itRemoved, end);
 		}
 
@@ -2176,28 +2229,7 @@ namespace GraphAlgorithms {
 	}
 
 	template<typename NodeType, typename WeightType>
-	WeightType mcstPrimTotalCostOnly(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		if (!g.isConfigured()) {
-			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
-			exit(EXIT_FAILURE);
-		}
-
-		auto ret = mcstPrim(g, AlgorithmBehavior::ReturnOnly, out);
-
-		WeightType totalCost = static_cast<WeightType>(0);
-		for (auto& [node1, node2, weight] : ret) {
-			totalCost += weight;
-		}
-
-		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
-			out << "Total cost of minimum cost spanning tree is: " << totalCost << '\n' << std::endl;
-		}
-
-		return totalCost;
-	}
-
-	template<typename NodeType, typename WeightType>
-	std::vector<std::tuple<NodeType, NodeType, WeightType>> mcstPrim(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> primMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
 		if (!g.isConfigured()) {
 			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
 			exit(EXIT_FAILURE);
@@ -2222,30 +2254,31 @@ namespace GraphAlgorithms {
 			visited[node] = false;
 		}
 
-		NodeType startNode = (*std::begin(neighborList)).first;
+		NodeType spanningTreeRoot = (*std::begin(neighborList)).first;
 
-		distances[startNode] = static_cast<WeightType>(0);
-		parents[startNode]; // only startNode will have the empty optional
-		pq.emplace(startNode, static_cast<WeightType>(0));
+		distances[spanningTreeRoot] = static_cast<WeightType>(0);
+		parents[spanningTreeRoot]; // only spanningTreeRoot will have the empty optional
+		pq.emplace(spanningTreeRoot, static_cast<WeightType>(0));
 
-		for (auto& [neighbor, weight] : neighborList[startNode]) {
+		for (auto& [neighbor, weight] : neighborList[spanningTreeRoot]) {
 			pq.emplace(neighbor, GraphClasses::MAX_WEIGHT<WeightType>);
 		}
 
 		size_t nodeCount = g.getNodeCount();
+
 		for (size_t i = static_cast<size_t>(0); internal::lessThan(i, nodeCount); ++i) {
 			auto [currentNode, distToCurrentNode] = pq.top();
 			pq.pop();
-
-			// distances[currentNode] = distToCurrentNode.value_or(1);    not needed?
 
 			if (!visited[currentNode]) {
 				visited[currentNode] = true;
 
 				for (auto& [neighbor, weight] : neighborList[currentNode]) {
 					if (!visited[neighbor]) {
-						if (internal::lessThan(weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
-							distances[neighbor] = weight.value_or(static_cast<WeightType>(1));
+						WeightType w = weight.value_or(static_cast<WeightType>(1));
+
+						if (internal::lessThan(w, distances[neighbor])) {
+							distances[neighbor] = w;
 							parents[neighbor] = currentNode;
 							pq.emplace(neighbor, distances[neighbor]);
 						}
@@ -2254,31 +2287,47 @@ namespace GraphAlgorithms {
 			}
 		}
 
-		std::vector<std::tuple<NodeType, NodeType, WeightType>> mcst;
+		auto spanningTreeType = g.getGraphType();
+		auto spanningTreeWeights = g.getGraphWeights();
+
+		GraphClasses::Graph<NodeType, WeightType> spanningTree;
+		spanningTree.configureDirections(spanningTreeType);
+		spanningTree.configureWeights(spanningTreeWeights);
+
+		WeightType totalCost = static_cast<WeightType>(0);
+
 		for (auto& [node, neighbors] : neighborList) {
 			if (parents[node].has_value()) {
-				mcst.emplace_back(parents[node].value(), node, distances[node]);
+				auto& dist = distances[node];
+
+				totalCost += dist;
+
+				auto& parentValue = parents[node].value();
+
+				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+					spanningTree.addEdge(parentValue, node);
+					spanningTree.addEdge(node, parentValue);
+				}
+				else {
+					spanningTree.addEdge(parentValue, node, dist);
+					spanningTree.addEdge(node, parentValue, dist);
+				}
 			}
 		}
 
 		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
-			WeightType totalCost = static_cast<WeightType>(0);
+			out << "Minimum cost spanning tree:\n";
 
-			out << "Minimum cost spanning tree consists of the following edges:\n";
+			out << spanningTree;
 
-			for (auto& [node1, node2, weight] : mcst) {
-				out << "\t{[" << node1 << "], [" << node2 << "]}, edge weight: " << weight << '\n';
-				totalCost += weight;
-			}
-
-			out << "\nTotal cost of minimum cost spanning tree is: " << totalCost << '\n' << std::endl;
+			out << "Total cost of spanning tree is: " << totalCost << '\n' << std::endl;
 		}
 
-		return mcst;
+		return std::make_pair(totalCost, spanningTree);
 	}
 
 	template<typename NodeType, typename WeightType>
-	std::vector<std::tuple<NodeType, NodeType, WeightType>> mcstKruskal(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> kruskalMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
 		if (!g.isConfigured()) {
 			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
 			exit(EXIT_FAILURE);
@@ -2301,12 +2350,20 @@ namespace GraphAlgorithms {
 			}
 		}
 
-		std::vector<std::tuple<NodeType, NodeType, WeightType>> mcst;
+		auto spanningTreeType = g.getGraphType();
+		auto spanningTreeWeights = g.getGraphWeights();
+
+		GraphClasses::Graph<NodeType, WeightType> spanningTree;
+		spanningTree.configureDirections(spanningTreeType);
+		spanningTree.configureWeights(spanningTreeWeights);
+
+		WeightType totalCost = static_cast<WeightType>(0);
+
 		size_t mcstSize = g.getNodeCount() - static_cast<size_t>(1);
 		size_t addedEdges = static_cast<size_t>(0);
 
 		for (auto& [node1, node2, edgeWeight] : allEdges) {
-			if (internal::greaterThan(addedEdges, mcstSize) || internal::equals(addedEdges, mcstSize)) {
+			if (!internal::lessThan(addedEdges, mcstSize)) {
 				break;
 			}
 
@@ -2314,26 +2371,234 @@ namespace GraphAlgorithms {
 			NodeType root2 = ds.findInDisjointSet(node2);
 
 			if (!internal::equals(root1, root2)) {
-				mcst.emplace_back(node1, node2, edgeWeight);
+				totalCost += edgeWeight;
+
+				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+					spanningTree.addEdge(node1, node2);
+					spanningTree.addEdge(node2, node1);
+				}
+				else {
+					spanningTree.addEdge(node1, node2, edgeWeight);
+					spanningTree.addEdge(node2, node1, edgeWeight);
+				}
+
 				ds.unionDisjointSets(root1, root2);
+
 				++addedEdges;
 			}
 		}
 
 		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
-			WeightType totalCost = static_cast<WeightType>(0);
+			out << "Minimum cost spanning tree:\n";
 
-			out << "Minimum cost spanning tree consists of the following edges:\n";
+			out << spanningTree;
 
-			for (auto& [node1, node2, weight] : mcst) {
-				out << "\t([" << node1 << "], [" << node2 << "]) weight " << weight << '\n';
-				totalCost += weight;
-			}
-
-			out << "\nTotal cost of minimum cost spanning tree is: " << totalCost << '\n' << std::endl;
+			out << "Total cost of spanning tree is: " << totalCost << '\n' << std::endl;
 		}
 
-		return mcst;
+		return std::make_pair(totalCost, spanningTree);
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> commonMinimumCostSpannigTree(const GraphClasses::Graph<NodeType, WeightType>& g1, const GraphClasses::Graph<NodeType, WeightType>& g2, const AlgorithmBehavior behavior, std::ostream& out) {
+		GraphClasses::Graph<NodeType, WeightType> intersection = GraphUtility::intersectGraphs(g1, g2);
+		
+		auto [totalCost, spanningTree] = kruskalMinimumSpanningTree(intersection, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
+			out << "Minimum common cost spanning tree for both graphs:\n";
+
+			out << spanningTree;
+
+			out << "Total cost of spanning tree is: " << totalCost << '\n' << std::endl;
+		}
+
+		return std::make_pair(totalCost, spanningTree);
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> boruvkaMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out ) {
+		if (!g.isConfigured()) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+			exit(EXIT_FAILURE);
+		}
+
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Minimum cost spanning tree for directed graphs currently not supported");
+			exit(EXIT_FAILURE);
+		}
+
+		auto spanningTreeType = g.getGraphType();
+		auto spanningTreeWeights = g.getGraphWeights();
+
+		GraphClasses::Graph<NodeType, WeightType> spanningTree;
+		spanningTree.configureDirections(spanningTreeType);
+		spanningTree.configureWeights(spanningTreeWeights);
+
+		WeightType totalCost = static_cast<WeightType>(0);
+
+		internal::DisjointSet ds{g};
+
+		auto neighborList = g.getNeighborList();
+
+		size_t numberOfTrees = g.getNodeCount();;
+
+		// <rootOfComponent/tree, <startNode, endNode, edgeWeight>>
+		std::unordered_map<NodeType, std::optional<std::tuple<NodeType, NodeType, WeightType>>> cheapestEdges;
+
+		while (internal::greaterThan(numberOfTrees, static_cast<size_t>(1))) {
+			for (auto& [node, neighbors] : neighborList) {
+				for (auto& [neighbor, weight] : neighbors) {
+					NodeType root1 = ds.findInDisjointSet(node);
+					NodeType root2 = ds.findInDisjointSet(neighbor);
+
+					if (internal::equals(root1, root2)) {
+						continue;
+					}
+
+					WeightType w = weight.value_or(static_cast<WeightType>(1));
+
+					auto& root1CheapestEdge = cheapestEdges[root1];
+					auto& root2CheapestEdge = cheapestEdges[root2];
+
+					if (!root1CheapestEdge.has_value() || internal::lessThan(w, std::get<2>(root1CheapestEdge.value()))) {
+						root1CheapestEdge = std::make_tuple(node, neighbor, w);
+					}
+
+					if (!root2CheapestEdge.has_value() || internal::lessThan(w, std::get<2>(root2CheapestEdge.value()))) {
+						root2CheapestEdge = std::make_tuple(node, neighbor, w);
+					}
+				}
+			}
+
+			for (auto& [node, neighbors] : neighborList) {
+				NodeType root1 = ds.findInDisjointSet(node);
+
+				if (!cheapestEdges[root1].has_value()) {
+					continue;
+				}
+
+				auto [cheapEdgeStart, cheapEdgeEnd, cheapEdgeWeight] = cheapestEdges[root1].value();
+
+				NodeType root2 = ds.findInDisjointSet(cheapEdgeEnd);
+
+				if (internal::equals(root1, root2)) {
+					continue;
+				}
+				
+				ds.unionDisjointSets(root1, root2);
+
+				totalCost += cheapEdgeWeight;
+
+				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+					spanningTree.addEdge(cheapEdgeStart, cheapEdgeEnd);
+					spanningTree.addEdge(cheapEdgeEnd, cheapEdgeStart);
+				}
+				else {
+					spanningTree.addEdge(cheapEdgeStart, cheapEdgeEnd, cheapEdgeWeight);
+					spanningTree.addEdge(cheapEdgeEnd, cheapEdgeStart, cheapEdgeWeight);
+				}
+
+				--numberOfTrees;
+			}
+
+			cheapestEdges.clear();
+		}
+
+		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
+			out << "Minimum cost spanning tree:\n";
+
+			out << spanningTree;
+
+			out << "Total cost of spanning tree is: " << totalCost << '\n' << std::endl;
+		}
+
+		return std::make_pair(totalCost, spanningTree);
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> reverseDeleteMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		if (!g.isConfigured()) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+			exit(EXIT_FAILURE);
+		}
+
+		if (internal::equals(g.getGraphType(), GraphClasses::GraphType::Directed)) {
+			GRAPH_ERROR(__FILE__, __LINE__, "Minimum cost spanning tree for directed graphs currently not supported");
+			exit(EXIT_FAILURE);
+		}
+
+		GraphClasses::Graph<NodeType, WeightType> spanningTree = g;
+		auto spanningTreeWeights = spanningTree.getGraphWeights();
+
+		auto neighborList = spanningTree.getNeighborList();
+		auto nodeCount = spanningTree.getNodeCount();
+
+		auto cmp = [](const auto& t1, const auto& t2) { return internal::lessThan(std::get<2>(t1), std::get<2>(t2)); };
+		std::multiset<std::tuple<NodeType, NodeType, WeightType>, decltype(cmp)> allEdges(cmp);
+
+		// only one direction of each edge is needed for the main part of the algorithm
+		// otherwise, number of edges checked will be doubled and totalCost must be divided by 2
+		std::unordered_map<NodeType, std::unordered_map<NodeType, std::vector<WeightType>>> alreadyAdded;
+
+		for (auto& [node, neighbors] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors) {
+				auto& reverseDirectionAddedValues = alreadyAdded[neighbor][node];
+
+				WeightType w = weight.value_or(static_cast<WeightType>(1));
+
+				size_t count = std::count_if(std::begin(reverseDirectionAddedValues), std::end(reverseDirectionAddedValues), [&](const auto& val) { return internal::equals(val, w); });
+		
+				if (internal::equals(count, static_cast<size_t>(0))) {
+					allEdges.emplace(node, neighbor, w);
+
+					alreadyAdded[node][neighbor].emplace_back(w);
+				}
+			}
+		}
+
+		WeightType totalCost = static_cast<WeightType>(0);
+
+		auto itRBegin = std::crbegin(allEdges);
+		auto itREnd = std::crend(allEdges);
+
+		while (!internal::equals(itRBegin, itREnd)) {
+			auto& [node, neighbor, weight] = *itRBegin;
+
+			if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+				spanningTree.deleteEdge(node, neighbor);
+			}
+			else {
+				spanningTree.deleteEdgeWithWeight(node, neighbor, weight);
+			}
+
+			auto traversalOrder = depthFirstTraverse(spanningTree, node, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+			if (internal::lessThan(traversalOrder.size(), nodeCount)) {
+				totalCost += weight;
+
+				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+					spanningTree.addEdge(node, neighbor);
+					spanningTree.addEdge(neighbor, node);
+				}
+				else {
+					spanningTree.addEdge(node, neighbor, weight);
+					spanningTree.addEdge(neighbor, node, weight);
+				}
+			}
+
+			++itRBegin;
+		}
+		
+		if (internal::equals(behavior, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn)) {
+			out << "Minimum cost spanning tree:\n";
+
+			out << spanningTree;
+
+			out << "Total cost of spanning tree is: " << totalCost << '\n' << std::endl;
+		}
+
+		return std::make_pair(totalCost, spanningTree);
 	}
 
 	template<typename NodeType, typename WeightType>
