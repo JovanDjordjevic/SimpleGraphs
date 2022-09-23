@@ -144,6 +144,8 @@ namespace GraphClasses {
 
 			std::pair<WeightType, WeightType> getCircumferenceAndGirth() const;
 
+			bool isBiconnected() const;
+
 			std::unordered_map<NodeType, std::vector<Edge<NodeType, WeightType>>> getNeighborList() const;
 
 		private:
@@ -1030,10 +1032,34 @@ namespace GraphClasses {
 	}
 
 	template<typename NodeType, typename WeightType>
+	bool Graph<NodeType, WeightType>::isBiconnected() const
+	{	
+		#ifdef CHECK_FOR_ERRORS
+			if (!isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		auto traversal = GraphAlgorithms::depthFirstTraverse(*this, (*std::begin(m_neighborList)).first, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+		if (!internal::equals(getNodeCount(), traversal.size())) {
+			return false;
+		}
+
+		auto articulationPoints = GraphAlgorithms::findArticulationPoints(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+		if (!internal::equals(articulationPoints.size(), static_cast<size_t>(0))) {
+			return false;
+		}
+
+		return true;
+	}
+
+	template<typename NodeType, typename WeightType>
 	std::unordered_map<NodeType, std::vector<Edge<NodeType, WeightType>>> Graph<NodeType, WeightType>::getNeighborList() const {
 		return m_neighborList;
 	}
-
 } // namespace GraphClasses
 
 namespace GraphUtility {

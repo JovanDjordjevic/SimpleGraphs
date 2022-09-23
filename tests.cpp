@@ -1030,9 +1030,11 @@ void string_double() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    std::string startNode = "node1";
+    // std::string startNode = "node1";
 
-    auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = g.isBiconnected();
+    std::cout << ret << std::endl;
 }
 
 void int_int() {
@@ -1043,9 +1045,11 @@ void int_int() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
-    int startNode = 1;
+    // int startNode = 1;
 
-    auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = g.isBiconnected();
+    std::cout << ret << std::endl;
 }
 
 void custom_float() {
@@ -1055,10 +1059,12 @@ void custom_float() {
     const char* fileName = "testInputs/custom_float.txt";
     g.readFromTxt(fileName);
 
-    CustomClass startNode = CustomClass(1, 2, 3);
+    // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
 
-    auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = g.isBiconnected();
+    std::cout << ret << std::endl;
 }
 
 void char_ull() {
@@ -1068,10 +1074,12 @@ void char_ull() {
     const char* fileName = "testInputs/char_ull_d_u.txt";
     g.readFromTxt(fileName);
 
-    char startNode = 'a';
+    // char startNode = 'a';
     // char endNode = 'd';
 
-    auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = g.isBiconnected();
+    std::cout << ret << std::endl;
 }
 
 int main() {
