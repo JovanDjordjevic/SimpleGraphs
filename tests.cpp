@@ -195,9 +195,18 @@ void test_findBridges(GraphClasses::Graph<NodeType, WeightType> &g, unsigned num
 
 // ----- topological sorting algorithms -----
 
+// REWORK THESE TESTS, THERE CAN EXIST MULTIPLE TOPOLOGICAL ORDERINGS
+
 template<typename NodeType, typename WeightType>
 void test_topsortKhan(GraphClasses::Graph<NodeType, WeightType> &g, NodeType firstNode, NodeType lastNode) {
     auto ret = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret[0] == firstNode);
+    assert(ret[g.getNodeCount() - 1] == lastNode);
+}
+
+template<typename NodeType, typename WeightType>
+void test_topsortDFS(GraphClasses::Graph<NodeType, WeightType> &g, NodeType firstNode, NodeType lastNode) {
+    auto ret = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret[0] == firstNode);
     assert(ret[g.getNodeCount() - 1] == lastNode);
 }
@@ -858,6 +867,7 @@ void test_custom_float_directed_weighted() {
     // removing edge before topsort testing because this example graph is not acyclic
         g1.deleteEdge(CustomClass(5, 2, 6), startNode);
     test_topsortKhan(g1, startNode, endNode);
+    test_topsortDFS(g1, startNode, endNode);
         g1.addEdge(CustomClass(5, 2, 6), startNode, 124.5f);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
     
@@ -965,6 +975,7 @@ void test_char_ull_directed_unweighted() {
         g1.deleteEdge('j', 'i');
         g1.deleteEdge('l', 'h');
     test_topsortKhan(g1, 'a', 'o');
+    test_topsortDFS(g1, 'a', 'm');
         g1.addEdge('p', 'a');
         g1.addEdge('o', 'p');
         g1.addEdge('h', 'b');
@@ -1062,9 +1073,10 @@ void custom_float() {
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
 
-    // auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret = g.isBiconnected();
-    std::cout << ret << std::endl;
+    g.deleteEdge(CustomClass(5, 2, 6), CustomClass(1, 2, 3));
+
+    // auto ret1 = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);   
+    auto ret2 = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void char_ull() {
@@ -1077,9 +1089,28 @@ void char_ull() {
     // char startNode = 'a';
     // char endNode = 'd';
 
-    // auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret = g.isBiconnected();
-    std::cout << ret << std::endl;
+        g.deleteEdge('p', 'a');
+        g.deleteEdge('o', 'p');
+        g.deleteEdge('h', 'b');
+        g.deleteEdge('m', 'h');
+        g.deleteEdge('j', 'i');
+        g.deleteEdge('l', 'h');
+
+    // g.addEdge('a', 'b');
+    // g.addEdge('b', 'c');
+    // g.addEdge('c', 'b');
+
+    // g.addEdge('a', 'b');
+    // g.addEdge('a', 'c');
+    // g.addEdge('a', 'd');
+    // g.addEdge('b', 'c');
+    // g.addEdge('b', 'e');
+    // g.addEdge('c', 'd');
+    // g.addEdge('c', 'e');
+    // g.addEdge('x', 'y');
+
+    // auto ret1 = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);   
+    auto ret2 = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 int main() {

@@ -247,6 +247,10 @@ namespace GraphAlgorithms {
 	// ----- topological sorting algorithms -----
 
 	template<typename NodeType, typename WeightType>
+	std::vector<NodeType> topsortDFS(const GraphClasses::Graph<NodeType, WeightType>& g, 
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
+
+	template<typename NodeType, typename WeightType>
 	std::vector<NodeType> topsortKhan(const GraphClasses::Graph<NodeType, WeightType>& g, 
 		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
 
@@ -377,6 +381,12 @@ namespace internal {
 
 	template<typename NodeType, typename WeightType>
 	void articulation__internal(const NodeType startNode, ArticulationHelper<NodeType, WeightType>& internalData);
+
+	template<typename NodeType, typename WeightType>
+	struct DFSTopsortHelper;
+
+	template<typename NodeType, typename WeightType>
+	bool topsortDFS__internal (const NodeType node, DFSTopsortHelper<NodeType, WeightType>& internalData);
 
 	template<typename NodeType, typename WeightType>
 	class DisjointSet;
@@ -2245,6 +2255,75 @@ namespace GraphAlgorithms {
 	// ----- topological sorting algorithms -----
 
 	template<typename NodeType, typename WeightType>
+	std::vector<NodeType> topsortDFS(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		#ifdef CHECK_FOR_ERRORS
+			if (!g.isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+
+			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected)) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Topological sorting makes no sense for undirected graphs!");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		internal::DFSTopsortHelper<NodeType, WeightType> internalData;
+		
+		auto& neighborList = internalData.neighborList;
+		auto& visited = internalData.visited;
+		auto& inStack = internalData.inStack;
+		auto& topologicalOrdering = internalData.topologicalOrdering;
+
+		neighborList = g.getNeighborList();
+
+		for (auto& [node, neighbors] : neighborList) {
+			visited[node] = false;
+			inStack[node] = false;
+		}
+
+		auto nodeCount = g.getNodeCount();
+
+		topologicalOrdering.reserve(nodeCount);
+
+		for (auto& [node, neighbors] : neighborList) {
+			if (!visited[node]) {
+				inStack[node] = true;
+
+				// if false is returned, a cycle was found in the current dfs traversal
+				if (!topsortDFS__internal(node, internalData)) {
+					break;
+				}
+
+				inStack[node] = false;
+			}
+		}
+
+		// we signal that graph is not acyclic with an empty vector
+		if (!internal::equals(topologicalOrdering.size(), nodeCount)) {
+			topologicalOrdering.clear();
+		}
+
+		std::reverse(std::begin(topologicalOrdering), std::end(topologicalOrdering));
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			if (internal::equals(topologicalOrdering.size(), static_cast<size_t>(0))) {
+				out << "Graph is not acyclic\n" << std::endl;
+			} else {
+				out << "Topological ordering: ";
+
+				for (auto& val : topologicalOrdering) {
+					out << "[" << val << "] ";
+				}
+
+				out << '\n' << std::endl;
+			}
+		}
+
+		return topologicalOrdering;
+	}
+
+	template<typename NodeType, typename WeightType>
 	std::vector<NodeType> topsortKhan(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
 		#ifdef CHECK_FOR_ERRORS
 			if (!g.isConfigured()) {
@@ -3446,6 +3525,43 @@ namespace internal {
 		}
 
 		return;
+	}
+
+	template<typename NodeType, typename WeightType>
+	struct DFSTopsortHelper {
+		std::unordered_map<NodeType, std::vector<GraphClasses::Edge<NodeType, WeightType>>> neighborList;
+		std::unordered_map<NodeType, bool> visited;
+		std::unordered_map<NodeType, bool> inStack;
+		std::vector<NodeType> topologicalOrdering;
+	};
+
+	template<typename NodeType, typename WeightType>
+	bool topsortDFS__internal (const NodeType node, DFSTopsortHelper<NodeType, WeightType>& internalData) {
+		auto& neighborList = internalData.neighborList;
+		auto& visited = internalData.visited;
+		auto& inStack = internalData.inStack;
+		auto& topologicalOrdering = internalData.topologicalOrdering;
+
+		visited[node] = true;
+		inStack[node] = true;
+
+		for (auto& [neighbor, weight] : neighborList[node]) {
+			if (inStack[neighbor]) {
+				return false;
+			}
+
+			if (!visited[neighbor]) {
+				if (!topsortDFS__internal(neighbor, internalData)) {
+					return false;
+				}
+			}
+		}
+
+		topologicalOrdering.emplace_back(node);
+
+		inStack[node] = false;
+
+		return true;
 	}
 
 	template<typename NodeType, typename WeightType>
