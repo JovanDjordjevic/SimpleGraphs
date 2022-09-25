@@ -246,6 +246,11 @@ namespace GraphAlgorithms {
 
 	// ----- topological sorting algorithms -----
 
+	// Recursive backtracking algorithm, very expensive
+	template<typename NodeType, typename WeightType>
+	std::vector<std::vector<NodeType>> allTopsorts(const GraphClasses::Graph<NodeType, WeightType>& g, 
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
+
 	template<typename NodeType, typename WeightType>
 	std::vector<NodeType> topsortDFS(const GraphClasses::Graph<NodeType, WeightType>& g, 
 		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
@@ -381,6 +386,12 @@ namespace internal {
 
 	template<typename NodeType, typename WeightType>
 	void articulation__internal(const NodeType startNode, ArticulationHelper<NodeType, WeightType>& internalData);
+
+	template<typename NodeType, typename WeightType>
+	struct AllTopsortsHelper;
+
+	template<typename NodeType, typename WeightType>
+	void allTopsorts__internal(AllTopsortsHelper<NodeType, WeightType>& internalData);
 
 	template<typename NodeType, typename WeightType>
 	struct DFSTopsortHelper;
@@ -2255,6 +2266,65 @@ namespace GraphAlgorithms {
 	// ----- topological sorting algorithms -----
 
 	template<typename NodeType, typename WeightType>
+	std::vector<std::vector<NodeType>> allTopsorts(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		#ifdef CHECK_FOR_ERRORS
+			if (!g.isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+
+			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected)) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Topological sorting makes no sense for undirected graphs!");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		internal::AllTopsortsHelper<NodeType, WeightType> internalData;
+		
+		auto& neighborList = internalData.neighborList;
+		auto& inDegrees = internalData.inDegrees;
+		auto& visited = internalData.visited;
+		auto& allTopsorts = internalData.allTopsorts;
+		auto& currentTopsort = internalData.currentTopsort;
+
+		neighborList = g.getNeighborList();
+		inDegrees = g.getInDegreesOfNodes();
+
+		for (auto& [node, neighbors] : neighborList) {
+			visited[node] = false;
+		}
+
+		currentTopsort.reserve(g.getNodeCount());
+
+		allTopsorts__internal(internalData);
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			if (internal::equals(allTopsorts.size(), static_cast<size_t>(0))) {
+				out << "Graph is not acyclic\n" << std::endl;
+			} else {
+				out << "Number of possible topological orderings: " << allTopsorts.size() << "\n\n";
+
+				size_t count = static_cast<size_t>(1);
+
+				for (auto& topsort : allTopsorts) {
+					out << "Topological ordering " << count << ":\n";
+
+					for (auto& val : topsort) {
+						out << "[" << val << "] ";
+					}
+					std::cout << "\n";
+
+					++count;
+				}
+
+				out << std::endl;
+			}
+		}
+
+		return allTopsorts;
+	}
+
+	template<typename NodeType, typename WeightType>
 	std::vector<NodeType> topsortDFS(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
 		#ifdef CHECK_FOR_ERRORS
 			if (!g.isConfigured()) {
@@ -3525,6 +3595,50 @@ namespace internal {
 		}
 
 		return;
+	}
+	
+	template<typename NodeType, typename WeightType>
+	struct AllTopsortsHelper {
+		std::unordered_map<NodeType, std::vector<GraphClasses::Edge<NodeType, WeightType>>> neighborList;
+		std::unordered_map<NodeType, size_t> inDegrees;
+		std::unordered_map<NodeType, bool> visited;
+		std::vector<std::vector<NodeType>> allTopsorts;
+		std::vector<NodeType> currentTopsort;
+	};
+
+	template<typename NodeType, typename WeightType>
+	void allTopsorts__internal(AllTopsortsHelper<NodeType, WeightType>& internalData) {
+		auto& neighborList = internalData.neighborList;
+		auto& inDegrees = internalData.inDegrees;
+		auto& visited = internalData.visited;
+		auto& allTopsorts = internalData.allTopsorts;
+		auto& currentTopsort = internalData.currentTopsort;
+
+		for (auto& [node, inDegree] : inDegrees) {
+			if (internal::equals(inDegree, static_cast<size_t>(0)) && !visited[node]) {
+				for (auto& [neighbor, weight] : neighborList[node]) {
+					--inDegrees[neighbor];
+				}
+
+				currentTopsort.emplace_back(node);
+				visited[node] = true;
+
+				allTopsorts__internal(internalData);
+
+				// backtrack
+				for (auto& [neighbor, weight] : neighborList[node]) {
+					++inDegrees[neighbor];
+				}
+
+				currentTopsort.pop_back();
+				visited[node] = false;
+			}
+		}
+
+		if (internal::equals(currentTopsort.size(), neighborList.size())) {
+			// TODO: see if there exists a more efficient way
+			allTopsorts.push_back(currentTopsort);
+		}
 	}
 
 	template<typename NodeType, typename WeightType>

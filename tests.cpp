@@ -195,20 +195,45 @@ void test_findBridges(GraphClasses::Graph<NodeType, WeightType> &g, unsigned num
 
 // ----- topological sorting algorithms -----
 
-// REWORK THESE TESTS, THERE CAN EXIST MULTIPLE TOPOLOGICAL ORDERINGS
-
+// expensive
 template<typename NodeType, typename WeightType>
-void test_topsortKhan(GraphClasses::Graph<NodeType, WeightType> &g, NodeType firstNode, NodeType lastNode) {
-    auto ret = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret[0] == firstNode);
-    assert(ret[g.getNodeCount() - 1] == lastNode);
+void test_allTopsorts(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfTopsorts) {
+    auto ret = GraphAlgorithms::allTopsorts(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfTopsorts);
 }
 
+// expensive
 template<typename NodeType, typename WeightType>
-void test_topsortDFS(GraphClasses::Graph<NodeType, WeightType> &g, NodeType firstNode, NodeType lastNode) {
-    auto ret = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret[0] == firstNode);
-    assert(ret[g.getNodeCount() - 1] == lastNode);
+void test_dfs_and_khan_topsort(GraphClasses::Graph<NodeType, WeightType> &g) {
+    auto retDFS = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto retKhan = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+    auto retAll = GraphAlgorithms::allTopsorts(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+    if (retDFS.size() == 0 && retKhan.size() == 0 && retAll.size() == 0) {
+        // cycle found, no topsort exists
+        return;
+    } 
+
+    bool khanValid = false;
+    bool dfsValid = false;
+
+    for (auto& topsort : retAll) {
+        if (!khanValid) {
+            khanValid = (retKhan == topsort);
+        }
+
+        if (!dfsValid) {
+            dfsValid = (retDFS == topsort);
+        }
+
+        if (khanValid && dfsValid) {
+            break;
+        }
+    }
+
+    assert(khanValid);
+    assert(dfsValid);
 }
 
 // ----- spanning tree algorithms -----
@@ -866,8 +891,8 @@ void test_custom_float_directed_weighted() {
     std::cout << '\t' <<std::left << std::setw(50) << "Testing topological sort algorithms";
     // removing edge before topsort testing because this example graph is not acyclic
         g1.deleteEdge(CustomClass(5, 2, 6), startNode);
-    test_topsortKhan(g1, startNode, endNode);
-    test_topsortDFS(g1, startNode, endNode);
+    test_allTopsorts(g1, 3);
+    test_dfs_and_khan_topsort(g1);
         g1.addEdge(CustomClass(5, 2, 6), startNode, 124.5f);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
     
@@ -974,8 +999,8 @@ void test_char_ull_directed_unweighted() {
         g1.deleteEdge('m', 'h');
         g1.deleteEdge('j', 'i');
         g1.deleteEdge('l', 'h');
-    test_topsortKhan(g1, 'a', 'o');
-    test_topsortDFS(g1, 'a', 'm');
+    test_allTopsorts(g1, 256995);
+    test_dfs_and_khan_topsort(g1);
         g1.addEdge('p', 'a');
         g1.addEdge('o', 'p');
         g1.addEdge('h', 'b');
@@ -1075,8 +1100,7 @@ void custom_float() {
 
     g.deleteEdge(CustomClass(5, 2, 6), CustomClass(1, 2, 3));
 
-    // auto ret1 = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);   
-    auto ret2 = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::allTopsorts(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void char_ull() {
@@ -1109,8 +1133,7 @@ void char_ull() {
     // g.addEdge('c', 'e');
     // g.addEdge('x', 'y');
 
-    // auto ret1 = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);   
-    auto ret2 = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::allTopsorts(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {
