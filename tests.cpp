@@ -1100,7 +1100,8 @@ void custom_float() {
 
     g.deleteEdge(CustomClass(5, 2, 6), CustomClass(1, 2, 3));
 
-    auto ret1 = GraphAlgorithms::allTopsorts(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret1 = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void char_ull() {
@@ -1133,7 +1134,8 @@ void char_ull() {
     // g.addEdge('c', 'e');
     // g.addEdge('x', 'y');
 
-    auto ret1 = GraphAlgorithms::allTopsorts(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret1 = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {

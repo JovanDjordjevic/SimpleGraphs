@@ -2344,6 +2344,7 @@ namespace GraphAlgorithms {
 		auto& visited = internalData.visited;
 		auto& inStack = internalData.inStack;
 		auto& topologicalOrdering = internalData.topologicalOrdering;
+		auto& nextPos = internalData.nextPos;
 
 		neighborList = g.getNeighborList();
 
@@ -2354,7 +2355,8 @@ namespace GraphAlgorithms {
 
 		auto nodeCount = g.getNodeCount();
 
-		topologicalOrdering.reserve(nodeCount);
+		topologicalOrdering.resize(nodeCount);
+		nextPos = nodeCount - static_cast<size_t>(1);
 
 		for (auto& [node, neighbors] : neighborList) {
 			if (!visited[node]) {
@@ -2373,8 +2375,6 @@ namespace GraphAlgorithms {
 		if (!internal::equals(topologicalOrdering.size(), nodeCount)) {
 			topologicalOrdering.clear();
 		}
-
-		std::reverse(std::begin(topologicalOrdering), std::end(topologicalOrdering));
 
 		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 			if (internal::equals(topologicalOrdering.size(), static_cast<size_t>(0))) {
@@ -2409,11 +2409,13 @@ namespace GraphAlgorithms {
 
 		auto neighborList = g.getNeighborList();
 		auto inDegrees = g.getInDegreesOfNodes();
+		auto nodeCount = g.getNodeCount();
 
 		std::vector<NodeType> topologicalOrdering;
-		size_t numVisited = static_cast<size_t>(0);
+		topologicalOrdering.reserve(nodeCount);
 
 		std::queue<NodeType> topsortQueue;
+
 		for (auto& [node, degree] : inDegrees) {
 			if (internal::equals(inDegrees[node], static_cast<size_t>(0))) {
 				topsortQueue.emplace(node);
@@ -2421,12 +2423,12 @@ namespace GraphAlgorithms {
 		}
 
 		NodeType current;
+
 		while (!topsortQueue.empty()) {
 			current = topsortQueue.front();
 			topsortQueue.pop();
 
 			topologicalOrdering.emplace_back(current);
-			++numVisited;
 
 			for (auto& [neighbor, weight] : neighborList[current]) {
 				--inDegrees[neighbor];
@@ -2438,7 +2440,7 @@ namespace GraphAlgorithms {
 		}
 
 		// we signal that graph is not acyclic with an empty vector
-		if (!internal::equals(numVisited, g.getNodeCount())) {
+		if (!internal::equals(topologicalOrdering.size(), nodeCount)) {
 			topologicalOrdering.clear();
 		}
 
@@ -3647,6 +3649,7 @@ namespace internal {
 		std::unordered_map<NodeType, bool> visited;
 		std::unordered_map<NodeType, bool> inStack;
 		std::vector<NodeType> topologicalOrdering;
+		size_t nextPos;
 	};
 
 	template<typename NodeType, typename WeightType>
@@ -3655,6 +3658,7 @@ namespace internal {
 		auto& visited = internalData.visited;
 		auto& inStack = internalData.inStack;
 		auto& topologicalOrdering = internalData.topologicalOrdering;
+		auto& nextPos = internalData.nextPos;
 
 		visited[node] = true;
 		inStack[node] = true;
@@ -3671,7 +3675,8 @@ namespace internal {
 			}
 		}
 
-		topologicalOrdering.emplace_back(node);
+		topologicalOrdering[nextPos] = node;
+		--nextPos;
 
 		inStack[node] = false;
 
