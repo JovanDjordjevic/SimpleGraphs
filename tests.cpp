@@ -284,6 +284,12 @@ void test_all_mcst_algs_equivalence(GraphClasses::Graph<NodeType, WeightType> &g
 // ----- connected components algorithms tests -----
 
 template<typename NodeType, typename WeightType>
+void test_findStronglyConnectedComponentsKosaraju(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
+    auto ret = GraphAlgorithms::findStronglyConnectedComponentsKosaraju(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfComponents);
+}
+
+template<typename NodeType, typename WeightType>
 void test_findStronglyConnectedComponentsTarjan(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
     auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfComponents);
@@ -692,6 +698,7 @@ void test_string_double_undirected_weighted() {
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' << std::left << std::setw(50) << "Testing connected components algorithms";
+    // kosaraju only supported for directed graphs
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
@@ -797,6 +804,7 @@ void test_int_int_undirected_unweighted() {
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' << std::left << std::setw(50) << "Testing connected components algorithms";
+    // kosaraju only supported for directed graphs
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
@@ -901,6 +909,7 @@ void test_custom_float_directed_weighted() {
     // std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
     
     std::cout << '\t' << std::left << std::setw(50) << "Testing connected components algorithms";
+    test_findStronglyConnectedComponentsKosaraju(g1, 3);
     test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
@@ -1014,6 +1023,7 @@ void test_char_ull_directed_unweighted() {
     // std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' << std::left << std::setw(50) << "Testing connected components algorithms";
+    test_findStronglyConnectedComponentsKosaraju(g1, 3);
     test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
@@ -1098,10 +1108,8 @@ void custom_float() {
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
 
-    g.deleteEdge(CustomClass(5, 2, 6), CustomClass(1, 2, 3));
-
-    // auto ret1 = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    auto ret1 = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret2 = GraphAlgorithms::findStronglyConnectedComponentsKosaraju(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void char_ull() {
@@ -1114,28 +1122,8 @@ void char_ull() {
     // char startNode = 'a';
     // char endNode = 'd';
 
-        g.deleteEdge('p', 'a');
-        g.deleteEdge('o', 'p');
-        g.deleteEdge('h', 'b');
-        g.deleteEdge('m', 'h');
-        g.deleteEdge('j', 'i');
-        g.deleteEdge('l', 'h');
-
-    // g.addEdge('a', 'b');
-    // g.addEdge('b', 'c');
-    // g.addEdge('c', 'b');
-
-    // g.addEdge('a', 'b');
-    // g.addEdge('a', 'c');
-    // g.addEdge('a', 'd');
-    // g.addEdge('b', 'c');
-    // g.addEdge('b', 'e');
-    // g.addEdge('c', 'd');
-    // g.addEdge('c', 'e');
-    // g.addEdge('x', 'y');
-
-    // auto ret1 = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    auto ret1 = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret2 = GraphAlgorithms::findStronglyConnectedComponentsKosaraju(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {

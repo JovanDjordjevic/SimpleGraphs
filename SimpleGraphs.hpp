@@ -287,6 +287,10 @@ namespace GraphAlgorithms {
 	// ----- connected components algorithms -----
 
 	template<typename NodeType, typename WeightType>
+	std::vector<std::unordered_set<NodeType>> findStronglyConnectedComponentsKosaraju(const GraphClasses::Graph<NodeType, WeightType>& g,
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
+
+	template<typename NodeType, typename WeightType>
 	std::vector<std::unordered_set<NodeType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
 
@@ -1375,7 +1379,10 @@ namespace GraphUtility {
 			}
 		#endif
 
-		GraphClasses::Graph<NodeType, WeightType> newGraph(g.getGraphDirections(), g.getGraphWeights());
+		auto newGraphDirections = g.getGraphDirections();
+		auto newGraphWeights = g.getGraphWeights();
+
+		GraphClasses::Graph<NodeType, WeightType> newGraph(newGraphDirections, newGraphWeights);
 
 		auto neighborList = g.getNeighborList();
 
@@ -1387,17 +1394,17 @@ namespace GraphUtility {
 			}
 
 			for (auto& [neighbor, weight] : neighbors) {
-				if (internal::equals(newGraph.getGraphWeights(), GraphClasses::GraphWeights::Weighted)) {
+				if (internal::equals(newGraphWeights, GraphClasses::GraphWeights::Weighted)) {
 					newGraph.addEdge(neighbor, node, weight.value());
 
-					if (internal::equals(newGraph.getGraphDirections(), GraphClasses::GraphDirections::Undirected)) {
+					if (internal::equals(newGraphDirections, GraphClasses::GraphDirections::Undirected)) {
 						newGraph.addEdge(node, neighbor, weight.value());
 					} 
 				}
 				else { // unweighted
 					newGraph.addEdge(neighbor, node);
 
-					if (internal::equals(newGraph.getGraphDirections(), GraphClasses::GraphDirections::Undirected)) {
+					if (internal::equals(newGraphDirections, GraphClasses::GraphDirections::Undirected)) {
 						newGraph.addEdge(node, neighbor);
 					} 
 				}
@@ -2839,6 +2846,130 @@ namespace GraphAlgorithms {
 	}
 
 	// ----- connected components algorithms -----
+
+	template<typename NodeType, typename WeightType>
+	std::vector<std::unordered_set<NodeType>> findStronglyConnectedComponentsKosaraju(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		#ifdef CHECK_FOR_ERRORS
+			if (!g.isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+
+			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected)) {
+				GRAPH_ERROR(__FILE__, __LINE__, "This algorithm is only supported for directed graphs");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		auto neighborList = g.getNeighborList();
+		auto nodeCount = g.getNodeCount();
+
+		// dfs finishing times in decreasing order
+		std::vector<NodeType> dfsFinishTimeOrdering(nodeCount);
+		size_t nextIndex = static_cast<size_t>(0);
+
+		std::unordered_map<NodeType, bool> visited;
+		std::unordered_map<NodeType, bool> inStack;		
+
+		for (auto& [node, neighbors] : neighborList) {
+			visited[node] = false;
+			inStack[node] = false;
+		}
+
+		std::unordered_map<NodeType, size_t> numUnvisitedChildren = g.getOutDegreesOfNodes();
+
+		std::stack<NodeType> stack;
+		NodeType current;
+
+		for (auto& [node, neighbors] : neighborList) {
+			if (!visited[node]) {
+				stack.emplace(node);
+				inStack[node] = true;
+
+				while (!stack.empty()) {
+					current = stack.top();
+
+					if (internal::equals(numUnvisitedChildren[current], static_cast<size_t>(0))) {
+						visited[current] = true;
+						inStack[current] = false;
+
+						dfsFinishTimeOrdering[nextIndex] = current;
+						++nextIndex;
+
+						stack.pop();
+						continue;
+					}
+
+					auto& currentNeighbors = neighborList[current];
+
+					numUnvisitedChildren[current] = currentNeighbors.size();
+
+					for (auto& [neighbor, weight] : currentNeighbors) {
+						if (!inStack[neighbor] && !visited[neighbor]) {
+							stack.emplace(neighbor);
+							inStack[neighbor] = true;
+						}	
+						else {
+							--numUnvisitedChildren[current];
+						}
+					}
+				}
+			}
+		}
+
+		for (auto& [node, neighbors] : neighborList) {
+			visited[node] = false;
+		}
+
+		GraphClasses::Graph<NodeType, WeightType> transposedGraph = GraphUtility::transposeOfGraph(g);
+		neighborList = transposedGraph.getNeighborList();
+
+		std::vector<std::unordered_set<NodeType>> components;
+
+		auto it = std::crbegin(dfsFinishTimeOrdering);
+		const auto itEnd = std::crend(dfsFinishTimeOrdering);
+
+		while (!internal::equals(it, itEnd)) {
+			if (!visited[*it]) {
+				stack.emplace(*it);
+
+				auto& component = components.emplace_back(std::unordered_set<NodeType>{});
+
+				while (!stack.empty()) {
+					current = stack.top();
+					stack.pop();
+
+					visited[current] = true;
+					component.emplace(current);
+
+					for (auto& [neighbor, weight] : neighborList[current]) {
+						if (!visited[neighbor]) {
+							stack.emplace(neighbor);
+						}
+					}
+				}
+			}
+
+			++it;
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			size_t i = static_cast<size_t>(1);
+
+			for (auto& component : components) {
+				out << "Component " << i << " consists of " << component.size() << " nodes:\n\t";
+
+				for (auto& node : component) {
+					out << "[" << node << "] ";
+				}
+
+				out << '\n' << std::endl;
+				++i;
+			}
+		}
+
+		return components;
+	}
 
 	template<typename NodeType, typename WeightType>
 	std::vector<std::unordered_set<NodeType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
