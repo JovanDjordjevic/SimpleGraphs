@@ -1064,6 +1064,11 @@ namespace GraphClasses {
 				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
 				exit(EXIT_FAILURE);
 			}
+
+			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Directed)) {
+				GRAPH_ERROR(__FILE__, __LINE__, "This funcion can only be called for undirected graphs");
+				exit(EXIT_FAILURE);
+			}
 		#endif
 
 		auto traversal = GraphAlgorithms::depthFirstTraverse(*this, (*std::begin(m_neighborList)).first, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
