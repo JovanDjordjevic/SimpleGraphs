@@ -1057,15 +1057,14 @@ namespace GraphClasses {
 	}
 
 	template<typename NodeType, typename WeightType>
-	bool Graph<NodeType, WeightType>::isBiconnected() const
-	{	
+	bool Graph<NodeType, WeightType>::isBiconnected() const{	
 		#ifdef CHECK_FOR_ERRORS
 			if (!isConfigured()) {
 				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
 				exit(EXIT_FAILURE);
 			}
 
-			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Directed)) {
+			if (internal::equals(getGraphDirections(), GraphClasses::GraphDirections::Directed)) {
 				GRAPH_ERROR(__FILE__, __LINE__, "This funcion can only be called for undirected graphs");
 				exit(EXIT_FAILURE);
 			}
