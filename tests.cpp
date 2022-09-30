@@ -281,7 +281,13 @@ void test_all_mcst_algs_equivalence(GraphClasses::Graph<NodeType, WeightType> &g
     assert(internal::equals(reverseDeleteRet.first, primRet.first));
 }
 
-// ----- connected components algorithms tests -----
+// ----- component algorithms tests -----
+
+template<typename NodeType, typename WeightType>
+void test_findBiconnectedComponentsTarjan(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
+    auto ret = GraphAlgorithms::findBiconnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfComponents);
+}
 
 template<typename NodeType, typename WeightType>
 void test_findStronglyConnectedComponentsKosaraju(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
@@ -697,7 +703,8 @@ void test_string_double_undirected_weighted() {
     test_all_mcst_algs_equivalence(g1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
-    std::cout << '\t' << std::left << std::setw(50) << "Testing connected components algorithms";
+    std::cout << '\t' << std::left << std::setw(50) << "Testing component algorithms";
+    test_findBiconnectedComponentsTarjan(g1, 3);
     // kosaraju only supported for directed graphs
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
@@ -803,7 +810,8 @@ void test_int_int_undirected_unweighted() {
     test_all_mcst_algs_equivalence(g1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
-    std::cout << '\t' << std::left << std::setw(50) << "Testing connected components algorithms";
+    std::cout << '\t' << std::left << std::setw(50) << "Testing component algorithms";
+    test_findBiconnectedComponentsTarjan(g1, 1);
     // kosaraju only supported for directed graphs
     test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
@@ -908,7 +916,8 @@ void test_custom_float_directed_weighted() {
     // MCST algorithms not supported for directed graphs
     // std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
     
-    std::cout << '\t' << std::left << std::setw(50) << "Testing connected components algorithms";
+    std::cout << '\t' << std::left << std::setw(50) << "Testing component algorithms";
+    // tarjan biconnected only supported for undirected graphs
     test_findStronglyConnectedComponentsKosaraju(g1, 3);
     test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
@@ -1022,7 +1031,8 @@ void test_char_ull_directed_unweighted() {
     // MCST algorithms not supported for directed graphs
     // std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
-    std::cout << '\t' << std::left << std::setw(50) << "Testing connected components algorithms";
+    std::cout << '\t' << std::left << std::setw(50) << "Testing component algorithms";
+    // tarjan biconnected only supported for undirected graphs
     test_findStronglyConnectedComponentsKosaraju(g1, 3);
     test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
@@ -1078,9 +1088,7 @@ void string_double() {
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     // std::string startNode = "node1";
 
-    // auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret = g.isBiconnected();
-    std::cout << ret << std::endl;
+    auto ret1 = GraphAlgorithms::findBiconnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void int_int() {
@@ -1093,9 +1101,7 @@ void int_int() {
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
     // int startNode = 1;
 
-    // auto ret1 = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret = g.isBiconnected();
-    std::cout << ret << std::endl;
+    auto ret1 = GraphAlgorithms::findBiconnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void custom_float() {

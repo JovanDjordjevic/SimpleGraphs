@@ -284,7 +284,12 @@ namespace GraphAlgorithms {
 	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> reverseDeleteMinimumSpanningTree(const GraphClasses::Graph<NodeType, WeightType>& g,
 		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
 
-	// ----- connected components algorithms -----
+	// ----- component algorithms -----
+
+	// NOTE: only for undirected graphs
+	template<typename NodeType, typename WeightType>
+	std::vector<std::unordered_set<NodeType>> findBiconnectedComponentsTarjan(const GraphClasses::Graph<NodeType, WeightType>& g,
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
 
 	template<typename NodeType, typename WeightType>
 	std::vector<std::unordered_set<NodeType>> findStronglyConnectedComponentsKosaraju(const GraphClasses::Graph<NodeType, WeightType>& g,
@@ -407,10 +412,16 @@ namespace internal {
 	class DisjointSet;
 
 	template<typename NodeType, typename WeightType>
-	struct TarjanHelper;
+	struct TarjanBCHelper;
 
 	template<typename NodeType, typename WeightType>
-	void tarjan__internal(const NodeType startNode, TarjanHelper<NodeType, WeightType>& internalData);
+	void tarjanBC__internal(const NodeType currentNode, TarjanBCHelper<NodeType, WeightType>& internalData);
+
+	template<typename NodeType, typename WeightType>
+	struct TarjanSCCHelper;
+
+	template<typename NodeType, typename WeightType>
+	void tarjanSCC__internal(const NodeType startNode, TarjanSCCHelper<NodeType, WeightType>& internalData);
 
 	template<typename NodeType, typename WeightType>
 	struct CycleHelper;
@@ -2849,7 +2860,77 @@ namespace GraphAlgorithms {
 		return std::make_pair(totalCost, spanningTree);
 	}
 
-	// ----- connected components algorithms -----
+	// ----- component algorithms -----
+
+	template<typename NodeType, typename WeightType>
+	std::vector<std::unordered_set<NodeType>> findBiconnectedComponentsTarjan(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		#ifdef CHECK_FOR_ERRORS
+			if (!g.isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+
+			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Directed)) {
+				GRAPH_ERROR(__FILE__, __LINE__, "This algorithm is only supported for undirected graphs");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+		
+		internal::TarjanBCHelper<NodeType, WeightType> internalData;
+
+		auto& neighborList = internalData.neighborList;
+		neighborList = g.getNeighborList();
+
+		for (auto& [node, neighbors] : neighborList) {
+			internalData.discoveryTimes[node] = static_cast<size_t>(0);
+			internalData.lowerTimes[node] = static_cast<size_t>(0);
+		}
+
+		auto& stack = internalData.stack;
+		auto& biconnectedComponents = internalData.biconnectedComponents;
+
+		for (auto& [node, neighbors] : neighborList) {
+			if (internal::equals(internalData.discoveryTimes[node], static_cast<size_t>(0))) {
+				// start node will have empty optional as parent
+				internalData.parents[node];
+
+				// discovery time in each component will start from 1
+				internalData.discoveryTime = static_cast<size_t>(1);
+
+				internal::tarjanBC__internal(node, internalData);
+
+				if (!stack.empty()) {
+					auto& component = biconnectedComponents.emplace_back(std::unordered_set<NodeType>{});
+
+					while (!stack.empty()) {
+						auto [node1, node2] = stack.top();
+
+						component.emplace(node1);
+						component.emplace(node2);
+
+						stack.pop();
+					}
+				}
+			}
+		}		
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			size_t i = static_cast<size_t>(1);
+
+			for (auto& component : biconnectedComponents) {
+				out << "Biconnected omponent " << i << " consists of " << component.size() << " nodes:\n\t";
+
+				for (auto& node : component) {
+					out << "[" << node << "] ";
+				}
+
+				out << '\n' << std::endl;
+				++i;
+			}
+		}
+
+		return biconnectedComponents;
+	}
 
 	template<typename NodeType, typename WeightType>
 	std::vector<std::unordered_set<NodeType>> findStronglyConnectedComponentsKosaraju(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
@@ -2977,7 +3058,7 @@ namespace GraphAlgorithms {
 
 	template<typename NodeType, typename WeightType>
 	std::vector<std::unordered_set<NodeType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
-		internal::TarjanHelper<NodeType, WeightType> internalData;
+		internal::TarjanSCCHelper<NodeType, WeightType> internalData;
 		internalData.time = static_cast<size_t>(1);
 		internalData.neighborList = g.getNeighborList();
 
@@ -2989,7 +3070,7 @@ namespace GraphAlgorithms {
 
 		for (auto& [node, neighbors] : internalData.neighborList) {
 			if (internal::equals(internalData.times[node], static_cast<size_t>(0))) {
-				internal::tarjan__internal(node, internalData);
+				internal::tarjanSCC__internal(node, internalData);
 			}
 		}		
 
@@ -3864,7 +3945,91 @@ namespace internal {
 	};
 
 	template<typename NodeType, typename WeightType>
-	struct TarjanHelper {
+	struct TarjanBCHelper {
+		public:
+			size_t discoveryTime;
+			std::unordered_map<NodeType, size_t> discoveryTimes;
+			std::unordered_map<NodeType, size_t> lowerTimes;
+			std::unordered_map<NodeType, std::optional<NodeType>> parents;
+			std::stack<std::pair<NodeType, NodeType>> stack;
+			std::unordered_map<NodeType, std::vector<GraphClasses::Edge<NodeType, WeightType>>> neighborList;
+			std::vector<std::unordered_set<NodeType>> biconnectedComponents;
+	};
+
+	template<typename NodeType, typename WeightType>
+	void tarjanBC__internal(const NodeType currentNode, TarjanBCHelper<NodeType, WeightType>& internalData) {
+		auto& discoveryTime = internalData.discoveryTime;
+		auto& discoveryTimes = internalData.discoveryTimes;
+		auto& lowerTimes = internalData.lowerTimes;
+		auto& parents = internalData.parents;
+		auto& stack = internalData.stack;
+		auto& neighborList = internalData.neighborList;
+
+		discoveryTimes[currentNode] = discoveryTime;
+		lowerTimes[currentNode] = discoveryTime;
+		++discoveryTime;
+
+		size_t numChildren = static_cast<size_t>(0);
+
+		auto& currentNodeDiscoveryTime = discoveryTimes[currentNode];
+		auto& currentNodeLowerTime = lowerTimes[currentNode];
+
+		for (auto& [neighbor, weight] : neighborList[currentNode]) {
+			auto& neighborDiscoveryTime = discoveryTimes[neighbor];
+
+			if (internal::equals(neighborDiscoveryTime, static_cast<size_t>(0))) {
+				++numChildren;
+
+				parents[neighbor] = currentNode;
+
+				stack.emplace(currentNode, neighbor);
+				internal::tarjanBC__internal(neighbor, internalData);
+
+				auto& neighborLowerTime = lowerTimes[neighbor];
+				
+				if (internal::lessThan(neighborLowerTime, currentNodeLowerTime)) {
+					currentNodeLowerTime = neighborLowerTime;
+				}
+				
+				// if found articulation point
+				if ((internal::equals(currentNodeDiscoveryTime, static_cast<size_t>(1)) && internal::greaterThan(numChildren, static_cast<size_t>(1))) ||
+					(internal::greaterThan(currentNodeDiscoveryTime, static_cast<size_t>(1)) && !internal::lessThan(neighborLowerTime, currentNodeDiscoveryTime))
+				   ) {
+					auto& component = internalData.biconnectedComponents.emplace_back(std::unordered_set<NodeType>{});
+
+					while (!internal::equals(stack.top().first, currentNode) || !internal::equals(stack.top().second, neighbor)) {
+						component.emplace(stack.top().first);
+						component.emplace(stack.top().second);
+						
+						stack.pop();
+					}
+
+					component.emplace(stack.top().first);
+					component.emplace(stack.top().second);
+
+					stack.pop();
+				}
+			}
+			else {
+				auto& currentNodeParent = parents[currentNode];
+
+				if (currentNodeParent.has_value() && !internal::equals(currentNodeParent.value(), neighbor)) {
+					if (internal::lessThan(neighborDiscoveryTime, currentNodeLowerTime)) {
+						currentNodeLowerTime = neighborDiscoveryTime;
+
+						if (internal::lessThan(neighborDiscoveryTime, currentNodeDiscoveryTime)) {
+							stack.emplace(currentNode, neighbor);
+						}
+					}
+				}
+			} 
+		}
+
+		return;
+	}
+
+	template<typename NodeType, typename WeightType>
+	struct TarjanSCCHelper {
 		public:
 			size_t time;
 			std::unordered_map<NodeType, size_t> times;
@@ -3876,7 +4041,7 @@ namespace internal {
 	};
 
 	template<typename NodeType, typename WeightType>
-	void tarjan__internal(const NodeType startNode, TarjanHelper<NodeType, WeightType>& internalData) {
+	void tarjanSCC__internal(const NodeType startNode, TarjanSCCHelper<NodeType, WeightType>& internalData) {
 		internalData.times[startNode] = internalData.time;
 		internalData.lowerTimes[startNode] = internalData.time;
 		++internalData.time;
@@ -3891,7 +4056,7 @@ namespace internal {
 			auto& neighborLowerTime = internalData.lowerTimes[neighbor];
 
 			if (internal::equals(neighborTime, static_cast<size_t>(0))) {
-				tarjan__internal(neighbor, internalData);
+				tarjanSCC__internal(neighbor, internalData);
 
 				if (internal::lessThan(neighborLowerTime, startNodeLowerTime)) {
 					startNodeLowerTime = neighborLowerTime;
