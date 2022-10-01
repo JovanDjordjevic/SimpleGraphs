@@ -421,7 +421,7 @@ namespace internal {
 	struct TarjanSCCHelper;
 
 	template<typename NodeType, typename WeightType>
-	void tarjanSCC__internal(const NodeType startNode, TarjanSCCHelper<NodeType, WeightType>& internalData);
+	void tarjanSCC__internal(const NodeType currentNode, TarjanSCCHelper<NodeType, WeightType>& internalData);
 
 	template<typename NodeType, typename WeightType>
 	struct CycleHelper;
@@ -3059,17 +3059,19 @@ namespace GraphAlgorithms {
 	template<typename NodeType, typename WeightType>
 	std::vector<std::unordered_set<NodeType>> findStronglyConnectedComponentsTarjan(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
 		internal::TarjanSCCHelper<NodeType, WeightType> internalData;
-		internalData.time = static_cast<size_t>(1);
+
 		internalData.neighborList = g.getNeighborList();
 
 		for (auto& [node, neighbors] : internalData.neighborList) {
 			internalData.inStack[node] = false;
-			// unvisited nodes will have their time set to 0
-			internalData.times[node] = static_cast<size_t>(0);
+			// unvisited nodes will have their discovery time set to 0
+			internalData.discoveryTimes[node] = static_cast<size_t>(0);
 		}
 
+		internalData.discoveryTime = static_cast<size_t>(1);
+
 		for (auto& [node, neighbors] : internalData.neighborList) {
-			if (internal::equals(internalData.times[node], static_cast<size_t>(0))) {
+			if (internal::equals(internalData.discoveryTimes[node], static_cast<size_t>(0))) {
 				internal::tarjanSCC__internal(node, internalData);
 			}
 		}		
@@ -4031,8 +4033,8 @@ namespace internal {
 	template<typename NodeType, typename WeightType>
 	struct TarjanSCCHelper {
 		public:
-			size_t time;
-			std::unordered_map<NodeType, size_t> times;
+			size_t discoveryTime;
+			std::unordered_map<NodeType, size_t> discoveryTimes;
 			std::unordered_map<NodeType, size_t> lowerTimes;
 			std::stack<NodeType> traversalOrder;
 			std::unordered_map<NodeType, bool> inStack;
@@ -4041,45 +4043,51 @@ namespace internal {
 	};
 
 	template<typename NodeType, typename WeightType>
-	void tarjanSCC__internal(const NodeType startNode, TarjanSCCHelper<NodeType, WeightType>& internalData) {
-		internalData.times[startNode] = internalData.time;
-		internalData.lowerTimes[startNode] = internalData.time;
-		++internalData.time;
-		internalData.traversalOrder.emplace(startNode);
-		internalData.inStack[startNode] = true;
-
+	void tarjanSCC__internal(const NodeType currentNode, TarjanSCCHelper<NodeType, WeightType>& internalData) {
+		auto& discoveryTime = internalData.discoveryTime;
+		auto& discoveryTimes = internalData.discoveryTimes;
+		auto& lowerTimes = internalData.lowerTimes;
+		auto& inStack = internalData.inStack;
 		auto& neighborList = internalData.neighborList;
+		
+		discoveryTimes[currentNode] = discoveryTime;
+		lowerTimes[currentNode] = discoveryTime;
+		++discoveryTime;
 
-		for (auto& [neighbor, weight] : neighborList[startNode]) {
-			auto& startNodeLowerTime = internalData.lowerTimes[startNode];
-			auto& neighborTime = internalData.times[neighbor];
-			auto& neighborLowerTime = internalData.lowerTimes[neighbor];
+		internalData.traversalOrder.emplace(currentNode);
+		inStack[currentNode] = true;
 
-			if (internal::equals(neighborTime, static_cast<size_t>(0))) {
+		for (auto& [neighbor, weight] : neighborList[currentNode]) {
+			auto& currentNodeLowerTime = lowerTimes[currentNode];
+			auto& neighborDiscoveryTime = discoveryTimes[neighbor];
+			auto& neighborLowerTime = lowerTimes[neighbor];
+
+			if (internal::equals(neighborDiscoveryTime, static_cast<size_t>(0))) {
 				tarjanSCC__internal(neighbor, internalData);
 
-				if (internal::lessThan(neighborLowerTime, startNodeLowerTime)) {
-					startNodeLowerTime = neighborLowerTime;
+				if (internal::lessThan(neighborLowerTime, currentNodeLowerTime)) {
+					currentNodeLowerTime = neighborLowerTime;
 				}
-			} else if (internalData.inStack[neighbor] && internal::lessThan(neighborTime, startNodeLowerTime)) {
-				startNodeLowerTime = neighborTime;
+			} else if (inStack[neighbor] && internal::lessThan(neighborDiscoveryTime, currentNodeLowerTime)) {
+				currentNodeLowerTime = neighborDiscoveryTime;
 			}
 		}
 
 		// component found
-		if (internal::equals(internalData.times[startNode], internalData.lowerTimes[startNode])) {
+		if (internal::equals(discoveryTimes[currentNode], lowerTimes[currentNode])) {
+			auto& component = internalData.components.emplace_back(std::unordered_set<NodeType>{});
+			auto& traversalOrder = internalData.traversalOrder;
+
 			NodeType componentNode;
-			std::unordered_set<NodeType> component;
 
 			while (true) {
-				componentNode = internalData.traversalOrder.top();
-				internalData.traversalOrder.pop();
+				componentNode = traversalOrder.top();
+				traversalOrder.pop();
 
 				component.emplace(componentNode);
-				internalData.inStack[componentNode] = false;
+				inStack[componentNode] = false;
 
-				if (internal::equals(componentNode, startNode)) {
-					internalData.components.emplace_back(component);
+				if (internal::equals(componentNode, currentNode)) {
 					break;
 				}
 			}

@@ -1088,7 +1088,7 @@ void string_double() {
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     // std::string startNode = "node1";
 
-    auto ret1 = GraphAlgorithms::findBiconnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void int_int() {
@@ -1100,8 +1100,8 @@ void int_int() {
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
     // int startNode = 1;
-
-    auto ret1 = GraphAlgorithms::findBiconnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    
+    auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void custom_float() {
@@ -1114,8 +1114,7 @@ void custom_float() {
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
 
-    // auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret2 = GraphAlgorithms::findStronglyConnectedComponentsKosaraju(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void char_ull() {
@@ -1128,8 +1127,7 @@ void char_ull() {
     // char startNode = 'a';
     // char endNode = 'd';
 
-    // auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-    auto ret2 = GraphAlgorithms::findStronglyConnectedComponentsKosaraju(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 int main() {
