@@ -21,7 +21,7 @@ void test_breadthFirstSearch(GraphClasses::Graph<NodeType, WeightType> &g, NodeT
 }
 
 template<typename NodeType, typename WeightType>
-void test_breadthFirstTraverse(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, unsigned bfsTreeSize) {
+void test_breadthFirstTraverse(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, size_t bfsTreeSize) {
     auto ret = GraphAlgorithms::breadthFirstTraverse(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == bfsTreeSize);
 }
@@ -33,7 +33,7 @@ void test_depthFirstSearch(GraphClasses::Graph<NodeType, WeightType> &g, NodeTyp
 }
 
 template<typename NodeType, typename WeightType>
-void test_depthFirstTraverse(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, unsigned dfsTreeSize) {
+void test_depthFirstTraverse(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, size_t dfsTreeSize) {
     auto ret = GraphAlgorithms::depthFirstTraverse(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == dfsTreeSize);
 }
@@ -41,21 +41,21 @@ void test_depthFirstTraverse(GraphClasses::Graph<NodeType, WeightType> &g, NodeT
 // ----- path finding algorithms tests -----
 
 template<typename NodeType, typename WeightType>
-void test_bellmanFordShortestPaths(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType someEndNode, unsigned edgesOnPathToEndNode, WeightType pathDistance) {
+void test_bellmanFordShortestPaths(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType someEndNode, size_t edgesOnPathToEndNode, WeightType pathDistance) {
     auto ret = GraphAlgorithms::bellmanFordShortestPaths(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert((ret[someEndNode].first.size() - 1) == edgesOnPathToEndNode);
     assert(internal::equals(ret[someEndNode].second, pathDistance));
 }
 
 template<typename NodeType, typename WeightType>
-void test_dijkstraAllShortestPathsFromStart(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType someEndNode, unsigned edgesOnPathToEndNode, WeightType pathDistance) {
+void test_dijkstraAllShortestPathsFromStart(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType someEndNode, size_t edgesOnPathToEndNode, WeightType pathDistance) {
     auto ret = GraphAlgorithms::dijkstraAllShortestPathsFromStart(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert((ret[someEndNode].first.size() - 1) == edgesOnPathToEndNode);
     assert(internal::equals(ret[someEndNode].second, pathDistance));
 }
 
 template<typename NodeType, typename WeightType>
-void test_dijkstraShortestPath(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType endNode, unsigned edgesOnPath, WeightType pathDistance) {
+void test_dijkstraShortestPath(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType endNode, size_t edgesOnPath, WeightType pathDistance) {
     auto [path, dist] = GraphAlgorithms::dijkstraShortestPath(g, startNode, endNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert((path.size() - 1) == edgesOnPath);
     assert(internal::equals(pathDistance, dist));
@@ -68,14 +68,14 @@ void test_floydWarshallAllShortestPaths(GraphClasses::Graph<NodeType, WeightType
 }
 
 template<typename NodeType, typename WeightType>
-void test_johnsonAllShortestsPaths(GraphClasses::Graph<NodeType, WeightType> &g, NodeType someStartNode, NodeType someEndNode,  unsigned edgesOnPathToEndNode, WeightType pathDistance) {
+void test_johnsonAllShortestsPaths(GraphClasses::Graph<NodeType, WeightType> &g, NodeType someStartNode, NodeType someEndNode,  size_t edgesOnPathToEndNode, WeightType pathDistance) {
     auto ret = GraphAlgorithms::johnsonAllShortestsPaths(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert((ret[someStartNode][someEndNode].first.size() - 1) == edgesOnPathToEndNode);
     assert(internal::equals(ret[someStartNode][someEndNode].second, pathDistance));
 }
 
 template<typename NodeType, typename WeightType>
-void test_shortestPathFasterAlgorithm(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType someEndNode, unsigned edgesOnPathToEndNode, WeightType pathDistance) {
+void test_shortestPathFasterAlgorithm(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType someEndNode, size_t edgesOnPathToEndNode, WeightType pathDistance) {
     auto ret = GraphAlgorithms::shortestPathFasterAlgorithm(g, startNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert((ret[someEndNode].first.size() - 1) == edgesOnPathToEndNode);
     assert(internal::equals(ret[someEndNode].second, pathDistance));
@@ -182,13 +182,13 @@ void test_all_path_algs_equivalence(GraphClasses::Graph<NodeType, WeightType> &g
 // ----- articulation point and bridge algorithms tests -----
 
 template<typename NodeType, typename WeightType>
-void test_findArticulationPoints(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfArticulationPoints) {
+void test_findArticulationPoints(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfArticulationPoints) {
     auto ret = GraphAlgorithms::findArticulationPoints(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfArticulationPoints);
 }
 
 template<typename NodeType, typename WeightType>
-void test_findBridges(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfBridges) {
+void test_findBridges(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfBridges) {
     auto ret = GraphAlgorithms::findBridges(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfBridges);
 }
@@ -205,8 +205,8 @@ void test_allTopsorts(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOf
 // expensive
 template<typename NodeType, typename WeightType>
 void test_dfs_and_khan_topsort(GraphClasses::Graph<NodeType, WeightType> &g) {
-    auto retDFS = GraphAlgorithms::topsortDFS(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    auto retKhan = GraphAlgorithms::topsortKhan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto retDFS = GraphAlgorithms::dfsTopsort(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto retKhan = GraphAlgorithms::khanTopsort(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 
     auto retAll = GraphAlgorithms::allTopsorts(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 
@@ -284,45 +284,44 @@ void test_all_mcst_algs_equivalence(GraphClasses::Graph<NodeType, WeightType> &g
 // ----- component algorithms tests -----
 
 template<typename NodeType, typename WeightType>
-void test_findBiconnectedComponentsTarjan(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
-    auto ret = GraphAlgorithms::findBiconnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfComponents);
-}
-
-template<typename NodeType, typename WeightType>
-void test_findStronglyConnectedComponentsKosaraju(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
-    auto ret = GraphAlgorithms::findStronglyConnectedComponentsKosaraju(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfComponents);
-}
-
-template<typename NodeType, typename WeightType>
-void test_findStronglyConnectedComponentsTarjan(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
-    auto ret = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    assert(ret.size() == numOfComponents);
-}
-
-template<typename NodeType, typename WeightType>
-void test_findWeaklyConnectedComponents(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfComponents) {
+void test_findWeaklyConnectedComponents(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfComponents) {
     auto ret = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfComponents);
+}
+
+template<typename NodeType, typename WeightType>
+void test_kosarajuFindStronglyConnectedComponents(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfComponents) {
+    auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfComponents);
+}
+
+template<typename NodeType, typename WeightType>
+void test_tarjanFindBiconnectedComponents(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfComponents) {
+    auto ret = GraphAlgorithms::tarjanFindBiconnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numOfComponents);
+}
+
+template<typename NodeType, typename WeightType>
+void test_tarjanFindStronglyConnectedComponents(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfComponents) {
+    auto ret = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfComponents);
 }
 
 // ----- cycle algorithms tests -----
 
 template<typename NodeType, typename WeightType>
-void test_findAllCycles(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfCycles) {
+void test_findAllCycles(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfCycles) {
     auto ret = GraphAlgorithms::findAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfCycles);
 }
 
 template<typename NodeType, typename WeightType>
-void test_johnsonAllCycles(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfCycles) {
+void test_johnsonAllCycles(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfCycles) {
     auto ret = GraphAlgorithms::johnsonAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfCycles);
 }
 
 // ----- flow algorithms tests -----
-
 
 template<typename NodeType, typename WeightType>
 void test_edmondsKarpMaximumFlow(GraphClasses::Graph<NodeType, WeightType> &g, NodeType source, NodeType sink, WeightType expectedMaxFlow) {
@@ -363,7 +362,7 @@ void test_all_maxFlow_algs_equivalence(GraphClasses::Graph<NodeType, WeightType>
 // ----- other algorithms tests -----
 
 template<typename NodeType, typename WeightType>
-void test_findIsolatedNodes(GraphClasses::Graph<NodeType, WeightType> &g, unsigned numOfIsolatedNodes) {
+void test_findIsolatedNodes(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfIsolatedNodes) {
     auto ret = GraphAlgorithms::findIsolatedNodes(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfIsolatedNodes);
 }
@@ -400,7 +399,7 @@ void test_constructCompleteGraphFromNodes_with_default_weight(std::unordered_set
 }
 
 template<typename NodeType, typename WeightType>
-void test_getSubgraphFromNodes(GraphClasses::Graph<NodeType, WeightType> &g, std::unordered_set<NodeType>& nodes, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges) {
+void test_getSubgraphFromNodes(GraphClasses::Graph<NodeType, WeightType> &g, std::unordered_set<NodeType>& nodes, size_t expectedNumOfNodes, size_t expectedNumOfEdges) {
     GraphClasses::Graph<NodeType, WeightType> ret = GraphUtility::getSubgraphFromNodes(g, nodes);
     // testing that intersection of 2 same graphs is the exact same starting graph
     assert(ret.getNodeCount() == expectedNumOfNodes);
@@ -432,7 +431,7 @@ void test_mergeGraphs(GraphClasses::Graph<NodeType, WeightType> &g1, GraphClasse
 }
 
 template<typename NodeType, typename WeightType>
-void test_transitiveClosureOfGraph(GraphClasses::Graph<NodeType, WeightType> &g, unsigned expectedNumOfNodes, unsigned expectedNumOfEdges ) {
+void test_transitiveClosureOfGraph(GraphClasses::Graph<NodeType, WeightType> &g, size_t expectedNumOfNodes, size_t expectedNumOfEdges ) {
     GraphClasses::Graph<NodeType, WeightType> closure = GraphUtility::transitiveClosureOfGraph(g);
     assert(closure.getNodeCount() == expectedNumOfNodes);
     assert(closure.getEdgeCount() == expectedNumOfEdges);
@@ -704,10 +703,10 @@ void test_string_double_undirected_weighted() {
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' << std::left << std::setw(50) << "Testing component algorithms";
-    test_findBiconnectedComponentsTarjan(g1, 3);
-    // kosaraju only supported for directed graphs
-    test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
+    // kosaraju only supported for directed graphs
+    test_tarjanFindBiconnectedComponents(g1, 3);
+    test_tarjanFindStronglyConnectedComponents(g1, 1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing cycle algorithms";
@@ -811,10 +810,10 @@ void test_int_int_undirected_unweighted() {
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' << std::left << std::setw(50) << "Testing component algorithms";
-    test_findBiconnectedComponentsTarjan(g1, 1);
-    // kosaraju only supported for directed graphs
-    test_findStronglyConnectedComponentsTarjan(g1, 1);
     test_findWeaklyConnectedComponents(g1, 1);
+    // kosaraju only supported for directed graphs
+    test_tarjanFindBiconnectedComponents(g1, 1);
+    test_tarjanFindStronglyConnectedComponents(g1, 1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing cycle algorithms";
@@ -917,10 +916,10 @@ void test_custom_float_directed_weighted() {
     // std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
     
     std::cout << '\t' << std::left << std::setw(50) << "Testing component algorithms";
-    // tarjan biconnected only supported for undirected graphs
-    test_findStronglyConnectedComponentsKosaraju(g1, 3);
-    test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
+    test_kosarajuFindStronglyConnectedComponents(g1, 3);
+    // tarjan biconnected only supported for undirected graphs
+    test_tarjanFindStronglyConnectedComponents(g1, 3);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing cycle algorithms";
@@ -1032,10 +1031,10 @@ void test_char_ull_directed_unweighted() {
     // std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' << std::left << std::setw(50) << "Testing component algorithms";
-    // tarjan biconnected only supported for undirected graphs
-    test_findStronglyConnectedComponentsKosaraju(g1, 3);
-    test_findStronglyConnectedComponentsTarjan(g1, 3);
     test_findWeaklyConnectedComponents(g1, 1);
+    test_kosarajuFindStronglyConnectedComponents(g1, 3);
+    // tarjan biconnected only supported for undirected graphs
+    test_tarjanFindStronglyConnectedComponents(g1, 3);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
     
     std::cout << '\t' <<std::left << std::setw(50) << "Testing cycle algorithms";
@@ -1087,8 +1086,9 @@ void string_double() {
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     // std::string startNode = "node1";
-
-    auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // std::string endNode = "node6";
+    
+    auto ret1 = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void int_int() {
@@ -1100,8 +1100,9 @@ void int_int() {
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
     // int startNode = 1;
+    // int endNode = 8;
     
-    auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void custom_float() {
@@ -1114,7 +1115,7 @@ void custom_float() {
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
 
-    auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void char_ull() {
@@ -1127,7 +1128,7 @@ void char_ull() {
     // char startNode = 'a';
     // char endNode = 'd';
 
-    auto ret1 = GraphAlgorithms::findStronglyConnectedComponentsTarjan(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret1 = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 int main() {
