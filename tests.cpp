@@ -527,7 +527,6 @@ void test_graph_class_member_functions() {
 
     assert(g1.getNodeCount() == 8);
     assert(g1.getEdgeCount() == 26);
-    assert(internal::equals(g1.getDensity(), 0.928571));
 
     assert(g1.getNodeSet().size() == g1.getNodeCount());
 
@@ -1087,8 +1086,8 @@ void string_double() {
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     // std::string startNode = "node1";
     // std::string endNode = "node6";
-    
-    auto ret1 = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
+    auto ret = GraphAlgorithms::findAllCycles(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void int_int() {
@@ -1102,7 +1101,7 @@ void int_int() {
     // int startNode = 1;
     // int endNode = 8;
     
-    auto ret1 = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = GraphAlgorithms::findAllCycles(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
 }
 
 void custom_float() {
@@ -1115,7 +1114,7 @@ void custom_float() {
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
 
-    auto ret1 = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    auto ret = GraphAlgorithms::johnsonAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void char_ull() {
@@ -1127,8 +1126,8 @@ void char_ull() {
 
     // char startNode = 'a';
     // char endNode = 'd';
-
-    auto ret1 = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    
+    auto ret = GraphAlgorithms::johnsonAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {
@@ -1149,7 +1148,7 @@ int main() {
     // string_double();
     // int_int();
     // custom_float();
-    // char_ull();
+    // char_ull();              
 
     return 0;
 }

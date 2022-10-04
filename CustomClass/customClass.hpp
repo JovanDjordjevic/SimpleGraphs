@@ -7,6 +7,9 @@
 // In order for a custom class to be used a node in SimpleGraphs, it must have the following implemented:
 //      - default constructor
 //      - copy constructor
+//      - move constructor          (works without this, but this will improve performance)
+//      - copy assignment operator
+//      - move asignment operator   (works without this, but this will improve performance)
 //      - operator==
 //      - operator<
 //      - operator<< (only needed if printing of a node to an output stream/file is needed by user)
@@ -16,12 +19,12 @@
 
 class CustomClass{
     public:
-        CustomClass(int a=0, int b=0, int c=0);
+        CustomClass(int a = 0, int b = 0, int c = 0);
         CustomClass(const CustomClass& other);
-        //CustomClass(CustomClass&& other);
+        CustomClass(CustomClass&& other);
 
         CustomClass& operator=(const CustomClass& other);
-        //CustomClass& operator=(CustomClass&& other);
+        CustomClass& operator=(CustomClass&& other);
 
         ~CustomClass();
 
@@ -36,8 +39,6 @@ class CustomClass{
         std::vector<int> m_data;
 };
 
-
-// i don't know why yet, but std::hash overload must either be here or in main.cpp or compilation fails
 namespace std{
     template<>
     struct hash<CustomClass>{
@@ -47,6 +48,5 @@ namespace std{
         }
     };
 } // namespace std
-
 
 #endif //__CUSTOM_CLASS__
