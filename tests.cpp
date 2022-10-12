@@ -659,6 +659,8 @@ void test_string_double_undirected_weighted() {
     assert(internal::equals(radius, static_cast<double>(5991.55124)) && internal::equals(diameter, static_cast<double>(6125.78774)) && center.size() == 1);
     auto [circumference, girth] = g1.getCircumferenceAndGirth();
     assert(internal::equals(circumference, static_cast<double>(430.886504)) && internal::equals(girth, static_cast<double>(430.886504)));
+    auto [hasEulerianCycle, hasEulerianPath] = g1.hasEulerianCycleOrPath();
+    assert(!hasEulerianCycle && !hasEulerianPath);
 
     // ---- alg testing ----
     std::cout << '\t' <<std::left << std::setw(50) << "Testing traversal algorithms";
@@ -766,6 +768,8 @@ void test_int_int_undirected_unweighted() {
     assert(internal::equals(radius, 2) && internal::equals(diameter, 3) && center.size() == 4);
     auto [circumference, girth] = g1.getCircumferenceAndGirth();
     assert(internal::equals(circumference, 8) && internal::equals(girth, 3));
+    auto [hasEulerianCycle, hasEulerianPath] = g1.hasEulerianCycleOrPath();
+    assert(!hasEulerianCycle && hasEulerianPath);
 
     // ---- alg testing ----
     std::cout << '\t' <<std::left << std::setw(50) << "Testing traversal algorithms";
@@ -873,6 +877,8 @@ void test_custom_float_directed_weighted() {
     assert(internal::equals(radius, 13.69999981f) && internal::equals(diameter, GraphClasses::MAX_WEIGHT<float>) && center.size() == 1);
     auto [circumference, girth] = g1.getCircumferenceAndGirth();
     assert(internal::equals(circumference, static_cast<float>(137.1999969)) && internal::equals(girth, static_cast<float>(137.1999969)));
+    auto [hasEulerianCycle, hasEulerianPath] = g1.hasEulerianCycleOrPath();
+    assert(!hasEulerianCycle && !hasEulerianPath);
 
     // ---- alg testing ----
     std::cout << '\t' <<std::left << std::setw(50) << "Testing traversal algorithms";
@@ -978,6 +984,8 @@ void test_char_ull_directed_unweighted() {
     assert(internal::equals(radius, static_cast<unsigned long long>(5)) && internal::equals(diameter, GraphClasses::MAX_WEIGHT<unsigned long long>) && center.size() == 3);
     auto [circumference, girth] = g1.getCircumferenceAndGirth();
     assert(internal::equals(circumference, static_cast<unsigned long long>(9)) && internal::equals(girth, static_cast<unsigned long long>(2)));
+    auto [hasEulerianCycle, hasEulerianPath] = g1.hasEulerianCycleOrPath();
+    assert(!hasEulerianCycle && !hasEulerianPath);
 
     // ---- alg testing ----
     std::cout << '\t' <<std::left << std::setw(50) << "Testing traversal algorithms";
@@ -1087,7 +1095,8 @@ void string_double() {
     // std::string startNode = "node1";
     // std::string endNode = "node6";
 
-    auto ret = GraphAlgorithms::findAllCycles(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+    // auto ret = g.hasEulerianCycleOrPath();
+    // std::cout << ret.first << " " << ret.second << std::endl;
 }
 
 void int_int() {
@@ -1100,8 +1109,9 @@ void int_int() {
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
     // int startNode = 1;
     // int endNode = 8;
-    
-    auto ret = GraphAlgorithms::findAllCycles(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
+    // auto ret = g.hasEulerianCycleOrPath();
+    // std::cout << ret.first << " " << ret.second << std::endl;
 }
 
 void custom_float() {
@@ -1113,8 +1123,9 @@ void custom_float() {
 
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
-
-    auto ret = GraphAlgorithms::johnsonAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    
+    // auto ret = g.hasEulerianCycleOrPath();
+    // std::cout << ret.first << " " << ret.second << std::endl;
 }
 
 void char_ull() {
@@ -1126,8 +1137,17 @@ void char_ull() {
 
     // char startNode = 'a';
     // char endNode = 'd';
+
+    g.deleteEdge('l', 'h');
+    g.deleteEdge('c', 'd');
+    g.deleteEdge('i', 'd');
+    g.deleteNode('k');
+    g.deleteEdge('j', 'i');
+    g.addEdge('n', 'a');
     
-    auto ret = GraphAlgorithms::johnsonAllCycles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    
+    // auto ret = g.hasEulerianCycleOrPath();
+    // std::cout << ret.first << " " << ret.second << std::endl;
 }
 
 int main() {
