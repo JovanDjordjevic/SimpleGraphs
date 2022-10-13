@@ -102,6 +102,7 @@ namespace GraphClasses {
 
 			// removes a node and all edges to/from said node
 			void deleteNode(const NodeType nodeToDelete);
+			void deleteNodes(const std::unordered_set<NodeType> nodesToDelete);
 
 			// NOTE: only available for unweighted graphs
 			void addEdge(const NodeType startNode, const NodeType neighborNode);    
@@ -663,6 +664,15 @@ namespace GraphClasses {
 				auto itRemoved = std::remove_if(itBegin, itEnd, [&](const auto& neighborNode) { return internal::equals(neighborNode.neighbor, nodeToDelete); });
 				neighbors.erase(itRemoved, itEnd);
 			}
+		}
+
+		return;
+	}
+
+	template<typename NodeType, typename WeightType>
+	void Graph<NodeType, WeightType>::deleteNodes(const std::unordered_set<NodeType> nodesToDelete) {
+		for (auto& node : nodesToDelete) {
+			deleteNode(node);
 		}
 
 		return;
