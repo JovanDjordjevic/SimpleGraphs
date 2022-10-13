@@ -1095,8 +1095,10 @@ void string_double() {
     // std::string startNode = "node1";
     // std::string endNode = "node6";
 
-    // auto ret = g.hasEulerianCycleOrPath();
-    // std::cout << ret.first << " " << ret.second << std::endl;
+    auto ret = g.hasEulerianCycleOrPath();
+    std::cout << ret.first << " " << ret.second << std::endl;
+
+    // auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g);
 }
 
 void int_int() {
@@ -1110,8 +1112,8 @@ void int_int() {
     // int startNode = 1;
     // int endNode = 8;
 
-    // auto ret = g.hasEulerianCycleOrPath();
-    // std::cout << ret.first << " " << ret.second << std::endl;
+    auto ret = g.hasEulerianCycleOrPath();
+    std::cout << ret.first << " " << ret.second << std::endl;
 }
 
 void custom_float() {
@@ -1124,8 +1126,8 @@ void custom_float() {
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
     
-    // auto ret = g.hasEulerianCycleOrPath();
-    // std::cout << ret.first << " " << ret.second << std::endl;
+    auto ret = g.hasEulerianCycleOrPath();
+    std::cout << ret.first << " " << ret.second << std::endl;
 }
 
 void char_ull() {
@@ -1145,9 +1147,10 @@ void char_ull() {
     g.deleteEdge('j', 'i');
     g.addEdge('n', 'a');
     
-    
     // auto ret = g.hasEulerianCycleOrPath();
     // std::cout << ret.first << " " << ret.second << std::endl;
+
+    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g);
 }
 
 int main() {
