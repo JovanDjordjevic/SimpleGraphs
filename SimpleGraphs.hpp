@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <optional>
 #include <queue>
@@ -127,6 +128,8 @@ namespace GraphClasses {
 			size_t getEdgeCount() const;
 
 			std::unordered_set<NodeType> getNodeSet() const;
+			// returns set of nodes where predicate(node) == true
+			std::unordered_set<NodeType> getFilteredNodeSet(const std::function<bool(NodeType)> predicate) const;
 
 			// NOTE: degree functions only available for undirected graphs
 			size_t getDegreeOfNode(const NodeType node) const;
@@ -869,6 +872,19 @@ namespace GraphClasses {
 
 		for (auto& [node, _] : m_neighborList) {
 			nodeSet.emplace(node);
+		}
+
+		return nodeSet;
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::unordered_set<NodeType> Graph<NodeType, WeightType>::getFilteredNodeSet(const std::function<bool(NodeType)> predicate) const {
+		std::unordered_set<NodeType> nodeSet;
+
+		for (auto& [node, _] : m_neighborList) {
+			if (predicate(node)) {
+				nodeSet.emplace(node);
+			}
 		}
 
 		return nodeSet;
