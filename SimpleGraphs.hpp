@@ -100,6 +100,7 @@ namespace GraphClasses {
 			void exportToTxt(const char* filePath) const;
 
 			void addNode(const NodeType node);
+			void addNodes(const std::unordered_set<NodeType> nodesToAdd);
 
 			// removes a node and all edges to/from said node
 			void deleteNode(const NodeType nodeToDelete);
@@ -635,6 +636,15 @@ namespace GraphClasses {
 	template<typename NodeType, typename WeightType>
 	void Graph<NodeType, WeightType>::addNode(const NodeType node) {
 		m_neighborList[node];
+
+		return;
+	}
+
+	template<typename NodeType, typename WeightType>
+	void Graph<NodeType, WeightType>::addNodes(const std::unordered_set<NodeType> nodesToAdd) {
+		for (auto& node : nodesToAdd) {
+			addNode(node);
+		}
 
 		return;
 	}
