@@ -363,7 +363,7 @@ namespace GraphAlgorithms {
 
 	// ----- eulerian path and cycle algorithms -----
 	
-	// NOTE: only available for directed graphs
+	// NOTE: time complexity for undirected graphs is worse than for directed
 	// NOTE: algorithm assumes a eulerian cycle can be found. If graph has isolated nodes, but a cycle/path can be found, pass a starting node as optional argument
 	// If only an eulerian path can be found, first add an edge between the paths start and end node
 	// and pass the start node as an optional argument. After the algorithm finishes, you may remove the added edge from the returned vector
@@ -3799,28 +3799,27 @@ namespace GraphAlgorithms {
 				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
 				exit(EXIT_FAILURE);
 			}
-
-			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected)) {
-				GRAPH_ERROR(__FILE__, __LINE__, "This algorithm is only supported for directed graphs");
-				exit(EXIT_FAILURE);
-			}
 		#endif
 
-		if (internal::equals(g.getNodeCount(), static_cast<size_t>(0))) {
+		auto edgeCount = g.getEdgeCount();
+
+		if (internal::equals(edgeCount, static_cast<size_t>(0))) {
 			if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
-			out << "Eulerian cycle cannot exist in graph with no nodes\n" << std::endl;
-		}
+				out << "Eulerian cycle cannot exist in graph with no edges\n" << std::endl;
+			}
 
 			return {};
 		}
 
+		bool isUndirected = internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected);
+
 		std::vector<NodeType> eulerianCycle;
-		eulerianCycle.reserve(g.getEdgeCount() + static_cast<size_t>(1));
+		eulerianCycle.reserve(edgeCount + static_cast<size_t>(1));
 
 		auto neighborList = g.getNeighborList();
 		
 		NodeType currentNode = startNode.value_or((*std::begin(neighborList)).first);
-
+		
 		std::stack<NodeType> currentPath;
 		currentPath.emplace(currentNode);
 
@@ -3830,9 +3829,25 @@ namespace GraphAlgorithms {
 			if (!internal::equals(currentNodeNeighbors.size(), static_cast<size_t>(0))) {
 				currentPath.emplace(currentNode);
 				
-				currentNode = currentNodeNeighbors.back().neighbor;
+				NodeType nextNode = currentNodeNeighbors.back().neighbor;
 				
+				// additional linear complexity for undirected graphs
+				if (isUndirected) {
+					auto& nextNodeNeighbors = neighborList[nextNode];
+
+					auto itEnd = std::end(nextNodeNeighbors);
+
+					auto cmp = [&](const auto& edge){ return internal::equals(edge.neighbor, currentNode); };
+					auto it = std::find_if(std::begin(nextNodeNeighbors), itEnd, cmp);
+
+					if (!internal::equals(it, itEnd)) {
+						std::swap(*it, *std::prev(itEnd));
+						nextNodeNeighbors.pop_back();
+					}
+				}
+
 				currentNodeNeighbors.pop_back();
+				currentNode = nextNode;
 			}
 			else {
 				eulerianCycle.emplace_back(currentNode);

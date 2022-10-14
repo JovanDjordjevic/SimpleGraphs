@@ -359,6 +359,20 @@ void test_all_maxFlow_algs_equivalence(GraphClasses::Graph<NodeType, WeightType>
     assert(wrongFlowCounter == 0);
 }
 
+// ----- eulerian path and cycle algorithms tests -----
+
+template<typename NodeType, typename WeightType>
+void test_hierholzerFindEulerianCycle(GraphClasses::Graph<NodeType, WeightType> &g, size_t numNodesInCycle) {
+    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret.size() == numNodesInCycle);
+    if (g.getGraphDirections() == GraphClasses::GraphDirections::Directed) {
+        assert(ret.size() == g.getEdgeCount() + 1);
+    }
+    else {
+        assert(ret.size() == ((g.getEdgeCount() / 2) + 1));
+    }
+}
+
 // ----- other algorithms tests -----
 
 template<typename NodeType, typename WeightType>
@@ -721,6 +735,17 @@ void test_string_double_undirected_weighted() {
     test_all_maxFlow_algs_equivalence(g1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
+    std::cout << '\t' <<std::left << std::setw(50) << "Testing eulerian path and cycle algorithms";
+    // changing the graph a bit so eulerian cycles/paths can exist
+        g1.deleteNode("node9");
+        g1.deleteNode("node7");
+        g1.addEdge("node1", "node4", 0); g1.addEdge("node4", "node1", 0);
+    test_hierholzerFindEulerianCycle(g1, 10);
+        g1.deleteEdge("node1", "node4");
+        g1.addEdge("node3", "node9", static_cast<double>(22.13)); g1.addEdge("node9", "node3", static_cast<double>(22.13));
+        g1.addEdge("node5", "node7", static_cast<double>(5991.55124)); g1.addEdge("node7", "node5", static_cast<double>(5991.55124));
+    std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
+
     std::cout << '\t' <<std::left << std::setw(50) << "Testing other algorithms";
     test_findIsolatedNodes(g1, 0);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
@@ -830,6 +855,13 @@ void test_int_int_undirected_unweighted() {
     test_all_maxFlow_algs_equivalence(g1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
+    std::cout << '\t' <<std::left << std::setw(50) << "Testing eulerian path and cycle algorithms";
+    // changing the graph a bit so eulerian cycles/paths can exist
+        g1.addEdge(1, 8); g1.addEdge(8, 1);
+    test_hierholzerFindEulerianCycle(g1, 15);
+        g1.deleteEdge(1, 8);
+    std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
+
     std::cout << '\t' <<std::left << std::setw(50) << "Testing other algorithms";
     test_findIsolatedNodes(g1, 0);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
@@ -936,6 +968,15 @@ void test_custom_float_directed_weighted() {
     test_edmondsKarpMaximumFlow(g1, startNode, endNode, static_cast<float>(0.3000000119));
     test_pushRelabelMaximumFlow(g1, startNode, endNode, static_cast<float>(0.3000000119));
     test_all_maxFlow_algs_equivalence(g1);
+    std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
+
+    std::cout << '\t' <<std::left << std::setw(50) << "Testing eulerian path and cycle algorithms";
+    // changing the graph a bit so eulerian cycles/paths can exist
+        g1.deleteNode(CustomClass(1, 7, 3));
+        g1.deleteNode(CustomClass(2, 2, 2));
+    test_hierholzerFindEulerianCycle(g1, 4);
+        g1.addEdge(CustomClass(4, 5, 6), CustomClass(1, 7, 3), 0.992f);
+        g1.addEdge(CustomClass(5, 2, 6), CustomClass(2, 2, 2), 1.f);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing other algorithms";
@@ -1055,6 +1096,23 @@ void test_char_ull_directed_unweighted() {
     test_all_maxFlow_algs_equivalence(g1);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
+    std::cout << '\t' <<std::left << std::setw(50) << "Testing eulerian path and cycle algorithms";
+    // changing the graph a bit so eulerian cycles/paths can exist
+        g1.deleteEdge('l', 'h');
+        g1.deleteEdge('c', 'd');
+        g1.deleteEdge('i', 'd');
+        g1.deleteEdge('j', 'i');
+        g1.deleteNode('k');
+        g1.addEdge('n', 'a');
+    test_hierholzerFindEulerianCycle(g1, 21);
+        g1.deleteEdge('n', 'a');
+        g1.addEdge('l', 'h');
+        g1.addEdge('c', 'd');
+        g1.addEdge('i', 'd');
+        g1.addEdge('j', 'i');
+        g1.addEdge('i', 'k');
+    std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
+
     std::cout << '\t' <<std::left << std::setw(50) << "Testing other algorithms";
     test_findIsolatedNodes(g1, 0);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
@@ -1095,10 +1153,14 @@ void string_double() {
     // std::string startNode = "node1";
     // std::string endNode = "node6";
 
-    auto ret = g.hasEulerianCycleOrPath();
-    std::cout << ret.first << " " << ret.second << std::endl;
+    g.deleteEdge("node3", "node9");
+    g.deleteNode("node7");
+    g.addEdge("node1", "node4", 0); g.addEdge("node4", "node1", 0);
 
-    // auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g);
+    // auto ret = g.hasEulerianCycleOrPath();
+    // std::cout << ret.first << " " << ret.second << std::endl;
+
+    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void int_int() {
@@ -1112,8 +1174,12 @@ void int_int() {
     // int startNode = 1;
     // int endNode = 8;
 
-    auto ret = g.hasEulerianCycleOrPath();
-    std::cout << ret.first << " " << ret.second << std::endl;
+    g.addEdge(1, 8); g.addEdge(8, 1);
+
+    // auto ret = g.hasEulerianCycleOrPath();
+    // std::cout << ret.first << " " << ret.second << std::endl;
+
+    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void custom_float() {
@@ -1126,8 +1192,13 @@ void custom_float() {
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
     
-    auto ret = g.hasEulerianCycleOrPath();
-    std::cout << ret.first << " " << ret.second << std::endl;
+    g.deleteNode(CustomClass(1, 7, 3));
+    g.deleteNode(CustomClass(2, 2, 2));
+
+    // auto ret = g.hasEulerianCycleOrPath();
+    // std::cout << ret.first << " " << ret.second << std::endl;
+
+    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void char_ull() {
@@ -1150,28 +1221,28 @@ void char_ull() {
     // auto ret = g.hasEulerianCycleOrPath();
     // std::cout << ret.first << " " << ret.second << std::endl;
 
-    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g);
+    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {
-    test_internal_operators();
+    // test_internal_operators();
 
-    test_graph_class_member_functions();
+    // test_graph_class_member_functions();
 
-    test_string_double_undirected_weighted();
+    // test_string_double_undirected_weighted();
 
-    test_int_int_undirected_unweighted();
+    // test_int_int_undirected_unweighted();
 
-    test_custom_float_directed_weighted();
+    // test_custom_float_directed_weighted();
 
-    test_char_ull_directed_unweighted();
+    // test_char_ull_directed_unweighted();
 
     // for quicker callgrind testing
 
-    // string_double();
-    // int_int();
-    // custom_float();
-    // char_ull();              
+    string_double();
+    int_int();
+    custom_float();
+    char_ull();              
 
     return 0;
 }
