@@ -363,13 +363,17 @@ namespace GraphAlgorithms {
 
 	// ----- eulerian path and cycle algorithms -----
 	
+	// NOTE: algorithm assumes the conditions for eulerian cycle existance are met
 	// NOTE: time complexity for undirected graphs is worse than for directed
-	// NOTE: algorithm assumes a eulerian cycle can be found. If graph has isolated nodes, but a cycle/path can be found, pass a starting node as optional argument
-	// If only an eulerian path can be found, first add an edge between the paths start and end node
-	// and pass the start node as an optional argument. After the algorithm finishes, you may remove the added edge from the returned vector
 	template<typename NodeType, typename WeightType>
 	std::vector<NodeType> hierholzerFindEulerianCycle(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType>& startNode = {},
-		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream); 
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
+	
+	// NOTE: algorithm assumes the conditions for eulerian path existance are met
+	// NOTE: time complexity for undirected graphs is worse than for directed
+	template<typename NodeType, typename WeightType>
+	std::vector<NodeType> hierholzerFindEulerianPath(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType>& startNode = {},
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
 
 	// ----- other algorithms -----
 
@@ -3801,24 +3805,31 @@ namespace GraphAlgorithms {
 			}
 		#endif
 
-		auto edgeCount = g.getEdgeCount();
-
-		if (internal::equals(edgeCount, static_cast<size_t>(0))) {
-			if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
-				out << "Eulerian cycle cannot exist in graph with no edges\n" << std::endl;
-			}
-
-			return {};
-		}
-
 		bool isUndirected = internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected);
 
 		std::vector<NodeType> eulerianCycle;
-		eulerianCycle.reserve(edgeCount + static_cast<size_t>(1));
+		if (isUndirected) {
+			eulerianCycle.reserve((g.getEdgeCount() / static_cast<size_t>(2)) + static_cast<size_t>(1));
+		}
+		else {
+			eulerianCycle.reserve(g.getEdgeCount() + static_cast<size_t>(1));
+		}
 
 		auto neighborList = g.getNeighborList();
-		
-		NodeType currentNode = startNode.value_or((*std::begin(neighborList)).first);
+
+		NodeType currentNode;
+
+		if (startNode.has_value()) {
+			currentNode = startNode.value();
+		}
+		else {
+			for (auto& [node, neighbors] : neighborList) {
+				if (!internal::equals(neighbors.size(), static_cast<size_t>(0))) {
+					currentNode = node;
+					break;
+				}
+			}
+		}
 		
 		std::stack<NodeType> currentPath;
 		currentPath.emplace(currentNode);
@@ -3869,6 +3880,61 @@ namespace GraphAlgorithms {
 		}
 
 		return eulerianCycle;
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::vector<NodeType> hierholzerFindEulerianPath(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType>& startNode, const AlgorithmBehavior behavior, std::ostream& out) {
+		#ifdef CHECK_FOR_ERRORS
+			if (!g.isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		NodeType pathStartNode;
+
+		if (startNode.has_value()) {
+			pathStartNode = startNode.value();
+		}
+		else {
+			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Directed)) {
+				auto inDegrees = g.getInDegreesOfNodes();
+				auto outDegrees = g.getOutDegreesOfNodes();
+
+				for (auto& [node, inDegree] : inDegrees) {
+					if (internal::equals(outDegrees[node], inDegree + static_cast<size_t>(1))) {
+						pathStartNode = node;
+						break;
+					}
+				}
+			}
+			else {	// undirected
+				auto degrees = g.getDegreesOfNodes();
+
+				for (auto& [node, degree] : degrees) {
+					if (internal::equals(degree % static_cast<size_t>(2), static_cast<size_t>(1))) {
+						pathStartNode = node;
+						break;
+					}
+				}
+			}
+		}
+
+		// hierholzerFindEulerianCycle can be reused since both functions assume that a correct path/cycle can be found. 
+		// If that is the case, it will return the same output as when finding a cycle without the repeated startEdge at the end
+		std::vector<NodeType> eulerianPath = GraphAlgorithms::hierholzerFindEulerianCycle(g, {pathStartNode}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			out << "Found Eulerian path:\n\t";
+
+			for (auto& node : eulerianPath) {
+				out << "[" << node << "] ";
+			}
+
+			out << '\n' << std::endl;
+		}
+
+		return eulerianPath;
 	}
 
 	// ----- other algorithms -----

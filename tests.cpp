@@ -373,6 +373,13 @@ void test_hierholzerFindEulerianCycle(GraphClasses::Graph<NodeType, WeightType> 
     }
 }
 
+template<typename NodeType, typename WeightType>
+void test_hierholzerFindEulerianPath(GraphClasses::Graph<NodeType, WeightType> &g, NodeType startNode, NodeType endNode) {
+    auto ret = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(internal::equals(*std::begin(ret), startNode));
+    assert(internal::equals(ret.back(), endNode));   
+}
+
 // ----- other algorithms tests -----
 
 template<typename NodeType, typename WeightType>
@@ -739,6 +746,7 @@ void test_string_double_undirected_weighted() {
     // changing the graph a bit so eulerian cycles/paths can exist
         g1.deleteNode("node9");
         g1.deleteNode("node7");
+    test_hierholzerFindEulerianPath(g1, std::string("node1"), std::string("node4"));
         g1.addEdge("node1", "node4", 0); g1.addEdge("node4", "node1", 0);
     test_hierholzerFindEulerianCycle(g1, 10);
         g1.deleteEdge("node1", "node4");
@@ -857,6 +865,7 @@ void test_int_int_undirected_unweighted() {
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing eulerian path and cycle algorithms";
     // changing the graph a bit so eulerian cycles/paths can exist
+    test_hierholzerFindEulerianPath(g1, 1, 8);
         g1.addEdge(1, 8); g1.addEdge(8, 1);
     test_hierholzerFindEulerianCycle(g1, 15);
         g1.deleteEdge(1, 8);
@@ -973,6 +982,7 @@ void test_custom_float_directed_weighted() {
     std::cout << '\t' <<std::left << std::setw(50) << "Testing eulerian path and cycle algorithms";
     // changing the graph a bit so eulerian cycles/paths can exist
         g1.deleteNode(CustomClass(1, 7, 3));
+    test_hierholzerFindEulerianPath(g1, CustomClass(5, 2, 6), CustomClass(2, 2, 2));
         g1.deleteNode(CustomClass(2, 2, 2));
     test_hierholzerFindEulerianCycle(g1, 4);
         g1.addEdge(CustomClass(4, 5, 6), CustomClass(1, 7, 3), 0.992f);
@@ -1103,6 +1113,7 @@ void test_char_ull_directed_unweighted() {
         g1.deleteEdge('i', 'd');
         g1.deleteEdge('j', 'i');
         g1.deleteNode('k');
+    test_hierholzerFindEulerianPath(g1, 'a', 'n');
         g1.addEdge('n', 'a');
     test_hierholzerFindEulerianCycle(g1, 21);
         g1.deleteEdge('n', 'a');
@@ -1155,12 +1166,16 @@ void string_double() {
 
     g.deleteEdge("node3", "node9");
     g.deleteNode("node7");
+
+    auto ret1 = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret2 = GraphAlgorithms::hierholzerFindEulerianPath(g, {"node1"}, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
     g.addEdge("node1", "node4", 0); g.addEdge("node4", "node1", 0);
 
     // auto ret = g.hasEulerianCycleOrPath();
     // std::cout << ret.first << " " << ret.second << std::endl;
 
-    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret3 = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void int_int() {
@@ -1174,12 +1189,15 @@ void int_int() {
     // int startNode = 1;
     // int endNode = 8;
 
+    auto ret1 = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret2 = GraphAlgorithms::hierholzerFindEulerianPath(g, {1}, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
     g.addEdge(1, 8); g.addEdge(8, 1);
 
     // auto ret = g.hasEulerianCycleOrPath();
     // std::cout << ret.first << " " << ret.second << std::endl;
 
-    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret3 = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void custom_float() {
@@ -1193,12 +1211,16 @@ void custom_float() {
     // CustomClass endNode = CustomClass(2, 2, 2);
     
     g.deleteNode(CustomClass(1, 7, 3));
+
+    auto ret1 = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret2 = GraphAlgorithms::hierholzerFindEulerianPath(g, {CustomClass(5, 2, 6)}, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
     g.deleteNode(CustomClass(2, 2, 2));
 
     // auto ret = g.hasEulerianCycleOrPath();
     // std::cout << ret.first << " " << ret.second << std::endl;
 
-    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret3 = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 void char_ull() {
@@ -1216,33 +1238,37 @@ void char_ull() {
     g.deleteEdge('i', 'd');
     g.deleteNode('k');
     g.deleteEdge('j', 'i');
+
+    auto ret1 = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret2 = GraphAlgorithms::hierholzerFindEulerianPath(g, {'a'}, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
     g.addEdge('n', 'a');
     
     // auto ret = g.hasEulerianCycleOrPath();
     // std::cout << ret.first << " " << ret.second << std::endl;
 
-    auto ret = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto ret3 = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
 }
 
 int main() {
-    // test_internal_operators();
+    test_internal_operators();
 
-    // test_graph_class_member_functions();
+    test_graph_class_member_functions();
 
-    // test_string_double_undirected_weighted();
+    test_string_double_undirected_weighted();
 
-    // test_int_int_undirected_unweighted();
+    test_int_int_undirected_unweighted();
 
-    // test_custom_float_directed_weighted();
+    test_custom_float_directed_weighted();
 
-    // test_char_ull_directed_unweighted();
+    test_char_ull_directed_unweighted();
 
     // for quicker callgrind testing
 
-    string_double();
-    int_int();
-    custom_float();
-    char_ull();              
+    // string_double();
+    // int_int();
+    // custom_float();
+    // char_ull();              
 
     return 0;
 }
