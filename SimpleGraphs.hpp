@@ -122,6 +122,7 @@ namespace GraphClasses {
 			// deletes all edges connecting startNode and endNode
 			void deleteEdge(const NodeType startNode, const NodeType endNode);	
 
+			// NOTE: only available for weighted graphs
 			// deletes all edges connecting startNode and endNode with specific weight
 			void deleteEdgeWithWeight(const NodeType startNode, const NodeType endNode, const WeightType weight);	
 			
@@ -153,6 +154,9 @@ namespace GraphClasses {
 			std::pair<WeightType, WeightType> getCircumferenceAndGirth() const;
 
 			bool isBiconnected() const;
+
+			// NOTE: return value is {hasEulerianCycle, hasEulerianPath}
+			std::pair<bool, bool> hasEulerianCycleOrPath() const;
 
 			std::unordered_map<NodeType, std::vector<Edge<NodeType, WeightType>>> getNeighborList() const;
 
@@ -361,6 +365,20 @@ namespace GraphAlgorithms {
 	template<typename NodeType, typename WeightType>
 	std::pair<WeightType, GraphClasses::Graph<NodeType, WeightType>> pushRelabelMaximumFlow(const GraphClasses::Graph<NodeType, WeightType>& g, NodeType source, NodeType sink,
 		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream); 
+
+	// ----- eulerian path and cycle algorithms -----
+	
+	// NOTE: algorithm assumes the conditions for eulerian cycle existance are met
+	// NOTE: time complexity for undirected graphs is worse than for directed
+	template<typename NodeType, typename WeightType>
+	std::vector<NodeType> hierholzerFindEulerianCycle(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType>& startNode = {},
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
+	
+	// NOTE: algorithm assumes the conditions for eulerian path existance are met
+	// NOTE: time complexity for undirected graphs is worse than for directed
+	template<typename NodeType, typename WeightType>
+	std::vector<NodeType> hierholzerFindEulerianPath(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType>& startNode = {},
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
 
 	// ----- other algorithms -----
 
@@ -1173,6 +1191,139 @@ namespace GraphClasses {
 		}
 
 		return true;
+	}	
+
+	template<typename NodeType, typename WeightType>
+	std::pair<bool, bool>  Graph<NodeType, WeightType>::hasEulerianCycleOrPath() const {	
+		#ifdef CHECK_FOR_ERRORS
+			if (!isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		bool hasEulerianCycle = false;
+		bool hasEulerianPath = false;
+
+		if (internal::equals(getEdgeCount(), static_cast<size_t>(0))) {
+			return std::make_pair(hasEulerianCycle, hasEulerianPath); 
+		}
+
+		if (internal::equals(m_graphDirections, GraphDirections::Undirected)) {
+			auto degrees = getDegreesOfNodes();
+
+			size_t numNonZeroDegreeNodes = static_cast<size_t>(0);
+			size_t numEvenDegreeNodes = static_cast<size_t>(0);
+			size_t numOddDegreeNodes = static_cast<size_t>(0);
+
+			NodeType traversalStartNode;
+
+			for (auto& [node, degree] : degrees) {
+				if (!internal::equals(degree, static_cast<size_t>(0))) {
+					traversalStartNode = node;
+					++numNonZeroDegreeNodes;
+				}
+
+				if (internal::equals(degree % static_cast<size_t>(2), static_cast<size_t>(0))) {
+					++numEvenDegreeNodes;
+				}
+				else {
+					++numOddDegreeNodes;
+				}
+			}
+
+			auto traversedNodes = GraphAlgorithms::depthFirstTraverse(*this, traversalStartNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+			if (internal::equals(traversedNodes.size(), numNonZeroDegreeNodes)) {
+				if (internal::equals(numEvenDegreeNodes, degrees.size())) {
+					hasEulerianCycle = true;
+					hasEulerianPath = true;
+				}
+				else if (internal::equals(numOddDegreeNodes, static_cast<size_t>(2))) {
+					hasEulerianPath = true;
+				}
+			}
+
+			return std::make_pair(hasEulerianCycle, hasEulerianPath);
+		}
+		else {	// directed
+			auto inDegrees = getInDegreesOfNodes();
+			auto outDegrees = getOutDegreesOfNodes();
+
+			auto stronglyConnectedComponents = GraphAlgorithms::tarjanFindStronglyConnectedComponents(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+			size_t numIsolatedNodes = static_cast<size_t>(0);
+
+			bool eulerianCycleCanExist = true;
+
+			for (auto& component : stronglyConnectedComponents) {
+				for (auto& node : component) {
+					if (!internal::equals(inDegrees[node], outDegrees[node])) {
+						eulerianCycleCanExist = false;
+					}
+					else {
+						if (internal::equals(inDegrees[node], static_cast<size_t>(0))) {
+							++numIsolatedNodes;
+						}
+					}
+				}
+			}
+
+			if (eulerianCycleCanExist && internal::equals(stronglyConnectedComponents.size(), numIsolatedNodes + static_cast<size_t>(1))) {
+				hasEulerianCycle = true;
+				hasEulerianPath = true;
+
+				return std::make_pair(hasEulerianCycle, hasEulerianPath);
+			}
+			else {
+				hasEulerianCycle = false;
+
+				auto weaklyConnectedComponents = GraphAlgorithms::findWeaklyConnectedComponents(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+				numIsolatedNodes = static_cast<size_t>(0);
+
+				bool pathStartNodeFound = false;
+				bool pathEndNodeFound = false;
+				bool eulerianPathCanExist = true;
+
+				for (auto& component : weaklyConnectedComponents) {
+					if (internal::equals(component.size(), static_cast<size_t>(1))) {
+						++numIsolatedNodes;
+						continue;
+					}
+
+					for (auto& node : component) {
+						if (!internal::equals(inDegrees[node], outDegrees[node])) {
+							if (internal::equals(inDegrees[node], outDegrees[node] + static_cast<size_t>(1))) {
+								if (pathEndNodeFound) {
+									eulerianPathCanExist = false;
+									break;
+								}
+
+								pathEndNodeFound = true;
+							}
+							else if (internal::equals(outDegrees[node], inDegrees[node] + static_cast<size_t>(1))) {
+								if (pathStartNodeFound) {
+									eulerianPathCanExist = false;
+									break;
+								}
+
+								pathStartNodeFound = true;
+							}
+							else {
+								eulerianPathCanExist = false;
+								break;
+							}
+						}
+					}
+				}
+
+				if (eulerianPathCanExist && internal::equals(weaklyConnectedComponents.size(), numIsolatedNodes + static_cast<size_t>(1)) && internal::equals(pathStartNodeFound, pathEndNodeFound)) {
+					hasEulerianPath = true;
+				}
+			}
+
+			return std::make_pair(hasEulerianCycle, hasEulerianPath);
+		}
 	}
 
 	template<typename NodeType, typename WeightType>
@@ -2971,6 +3122,7 @@ namespace GraphAlgorithms {
 		GraphClasses::Graph<NodeType, WeightType> gCopy;
 		std::unordered_map<NodeType, std::vector<GraphClasses::Edge<NodeType, WeightType>>> neighborList;
 
+		// TODO: can be optimized to not use gCopy at all, but insert edges directly into the neighborList
 		if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Directed)) {
 			gCopy = g;
 
@@ -2978,9 +3130,11 @@ namespace GraphAlgorithms {
 
 			for (auto& [node, neighbors] : neighborList) {
 				for (auto& [neighbor, weight] : neighbors) {
-						gCopy.addEdge(neighbor, GraphClasses::Edge(node, weight));
+					gCopy.addEdge(neighbor, GraphClasses::Edge(node, weight));
 				}
 			}
+
+			neighborList = gCopy.getNeighborList();
 		}
 		else {
 			neighborList = g.getNeighborList();
@@ -3674,6 +3828,149 @@ namespace GraphAlgorithms {
 		}
 
 		return std::make_pair(maxFlow, flowGraph);
+	}
+
+	// ----- eulerian path and cycle algorithms -----
+
+	template<typename NodeType, typename WeightType>
+	std::vector<NodeType> hierholzerFindEulerianCycle(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType>& startNode, const AlgorithmBehavior behavior, std::ostream& out) {
+		#ifdef CHECK_FOR_ERRORS
+			if (!g.isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		bool isUndirected = internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected);
+
+		std::vector<NodeType> eulerianCycle;
+		if (isUndirected) {
+			eulerianCycle.reserve((g.getEdgeCount() / static_cast<size_t>(2)) + static_cast<size_t>(1));
+		}
+		else {
+			eulerianCycle.reserve(g.getEdgeCount() + static_cast<size_t>(1));
+		}
+
+		auto neighborList = g.getNeighborList();
+
+		NodeType currentNode;
+
+		if (startNode.has_value()) {
+			currentNode = startNode.value();
+		}
+		else {
+			for (auto& [node, neighbors] : neighborList) {
+				if (!internal::equals(neighbors.size(), static_cast<size_t>(0))) {
+					currentNode = node;
+					break;
+				}
+			}
+		}
+		
+		std::stack<NodeType> currentPath;
+		currentPath.emplace(currentNode);
+
+		while (!currentPath.empty()) {
+			auto& currentNodeNeighbors = neighborList[currentNode];
+
+			if (!internal::equals(currentNodeNeighbors.size(), static_cast<size_t>(0))) {
+				currentPath.emplace(currentNode);
+				
+				NodeType nextNode = currentNodeNeighbors.back().neighbor;
+				
+				// additional linear complexity for undirected graphs
+				if (isUndirected) {
+					auto& nextNodeNeighbors = neighborList[nextNode];
+
+					auto itEnd = std::end(nextNodeNeighbors);
+
+					auto cmp = [&](const auto& edge){ return internal::equals(edge.neighbor, currentNode); };
+					auto it = std::find_if(std::begin(nextNodeNeighbors), itEnd, cmp);
+
+					if (!internal::equals(it, itEnd)) {
+						std::swap(*it, *std::prev(itEnd));
+						nextNodeNeighbors.pop_back();
+					}
+				}
+
+				currentNodeNeighbors.pop_back();
+				currentNode = nextNode;
+			}
+			else {
+				eulerianCycle.emplace_back(currentNode);
+				currentNode = currentPath.top();
+				currentPath.pop();
+			}
+		}
+		
+		std::reverse(std::begin(eulerianCycle), std::end(eulerianCycle));
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			out << "Found Eulerian cycle:\n\t";
+
+			for (auto& node : eulerianCycle) {
+				out << "[" << node << "] ";
+			}
+
+			out << '\n' << std::endl;
+		}
+
+		return eulerianCycle;
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::vector<NodeType> hierholzerFindEulerianPath(const GraphClasses::Graph<NodeType, WeightType>& g, const std::optional<NodeType>& startNode, const AlgorithmBehavior behavior, std::ostream& out) {
+		#ifdef CHECK_FOR_ERRORS
+			if (!g.isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		NodeType pathStartNode;
+
+		if (startNode.has_value()) {
+			pathStartNode = startNode.value();
+		}
+		else {
+			if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Directed)) {
+				auto inDegrees = g.getInDegreesOfNodes();
+				auto outDegrees = g.getOutDegreesOfNodes();
+
+				for (auto& [node, inDegree] : inDegrees) {
+					if (internal::equals(outDegrees[node], inDegree + static_cast<size_t>(1))) {
+						pathStartNode = node;
+						break;
+					}
+				}
+			}
+			else {	// undirected
+				auto degrees = g.getDegreesOfNodes();
+
+				for (auto& [node, degree] : degrees) {
+					if (internal::equals(degree % static_cast<size_t>(2), static_cast<size_t>(1))) {
+						pathStartNode = node;
+						break;
+					}
+				}
+			}
+		}
+
+		// hierholzerFindEulerianCycle can be reused since both functions assume that a correct path/cycle can be found. 
+		// If that is the case, it will return the same output as when finding a cycle without the repeated startEdge at the end
+		std::vector<NodeType> eulerianPath = GraphAlgorithms::hierholzerFindEulerianCycle(g, {pathStartNode}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			out << "Found Eulerian path:\n\t";
+
+			for (auto& node : eulerianPath) {
+				out << "[" << node << "] ";
+			}
+
+			out << '\n' << std::endl;
+		}
+
+		return eulerianPath;
 	}
 
 	// ----- other algorithms -----
