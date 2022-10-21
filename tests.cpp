@@ -1161,21 +1161,10 @@ void string_double() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    // std::string startNode = "node1";
-    // std::string endNode = "node6";
+    std::string startNode = "node1";
+    std::string endNode = "node6";
 
-    g.deleteEdge("node3", "node9");
-    g.deleteNode("node7");
-
-    auto ret1 = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // auto ret2 = GraphAlgorithms::hierholzerFindEulerianPath(g, {"node1"}, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-
-    g.addEdge("node1", "node4", 0); g.addEdge("node4", "node1", 0);
-
-    // auto ret = g.hasEulerianCycleOrPath();
-    // std::cout << ret.first << " " << ret.second << std::endl;
-
-    // auto ret3 = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g);
 }
 
 void int_int() {
@@ -1186,18 +1175,10 @@ void int_int() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
-    // int startNode = 1;
-    // int endNode = 8;
-
-    auto ret1 = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // auto ret2 = GraphAlgorithms::hierholzerFindEulerianPath(g, {1}, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-
-    g.addEdge(1, 8); g.addEdge(8, 1);
-
-    // auto ret = g.hasEulerianCycleOrPath();
-    // std::cout << ret.first << " " << ret.second << std::endl;
-
-    // auto ret3 = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    int startNode = 1;
+    int endNode = 8;
+    
+    auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g);
 }
 
 void custom_float() {
@@ -1207,20 +1188,10 @@ void custom_float() {
     const char* fileName = "testInputs/custom_float.txt";
     g.readFromTxt(fileName);
 
-    // CustomClass startNode = CustomClass(1, 2, 3);
-    // CustomClass endNode = CustomClass(2, 2, 2);
+    CustomClass startNode = CustomClass(1, 2, 3);
+    CustomClass endNode = CustomClass(2, 2, 2);
     
-    g.deleteNode(CustomClass(1, 7, 3));
-
-    auto ret1 = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // auto ret2 = GraphAlgorithms::hierholzerFindEulerianPath(g, {CustomClass(5, 2, 6)}, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-
-    g.deleteNode(CustomClass(2, 2, 2));
-
-    // auto ret = g.hasEulerianCycleOrPath();
-    // std::cout << ret.first << " " << ret.second << std::endl;
-
-    // auto ret3 = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g);
 }
 
 void char_ull() {
@@ -1230,24 +1201,10 @@ void char_ull() {
     const char* fileName = "testInputs/char_ull_d_u.txt";
     g.readFromTxt(fileName);
 
-    // char startNode = 'a';
-    // char endNode = 'd';
+    char startNode = 'a';
+    char endNode = 'd';
 
-    g.deleteEdge('l', 'h');
-    g.deleteEdge('c', 'd');
-    g.deleteEdge('i', 'd');
-    g.deleteNode('k');
-    g.deleteEdge('j', 'i');
-
-    auto ret1 = GraphAlgorithms::hierholzerFindEulerianPath(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-    // auto ret2 = GraphAlgorithms::hierholzerFindEulerianPath(g, {'a'}, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
-
-    g.addEdge('n', 'a');
-    
-    // auto ret = g.hasEulerianCycleOrPath();
-    // std::cout << ret.first << " " << ret.second << std::endl;
-
-    // auto ret3 = GraphAlgorithms::hierholzerFindEulerianCycle(g, {}, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g);
 }
 
 int main() {

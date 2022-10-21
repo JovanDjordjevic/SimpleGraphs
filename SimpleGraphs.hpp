@@ -37,7 +37,7 @@ using DefaultWeightType = int;
 GraphAlgorithms::AlgorithmBehavior defaultBehavior = GraphAlgorithms::AlgorithmBehavior::PrintAndReturn;
 std::ostream& defaultOutputStream = std::cout;
 
-// comment this define to save on a small amount of runtime performance only if you are certain that you are using functions correctly
+// comment this define to save on a small amount of runtime performance in some functions only if you are certain that you are using functions correctly
 #define CHECK_FOR_ERRORS
 
 //------------------------------------- API -------------------------------------
@@ -100,11 +100,11 @@ namespace GraphClasses {
 			void exportToTxt(const char* filePath) const;
 
 			void addNode(const NodeType node);
-			void addNodes(const std::unordered_set<NodeType> nodesToAdd);
+			void addNodes(const std::unordered_set<NodeType>& nodesToAdd);
 
 			// removes a node and all edges to/from said node
 			void deleteNode(const NodeType nodeToDelete);
-			void deleteNodes(const std::unordered_set<NodeType> nodesToDelete);
+			void deleteNodes(const std::unordered_set<NodeType>& nodesToDelete);
 
 			// NOTE: only available for unweighted graphs
 			void addEdge(const NodeType startNode, const NodeType neighborNode);    
@@ -150,11 +150,15 @@ namespace GraphClasses {
 
 			std::tuple<WeightType, WeightType, std::unordered_set<NodeType>> getRadiusDiameterAndCenter() const;
 
+			// NOTE: uses recursion
 			// NOTE: circumference and girth for weighted graphs are calculated in terms of edge weights and not number of edges in a cycle
 			std::pair<WeightType, WeightType> getCircumferenceAndGirth() const;
 
+			// NOTE: uses recursion
+			// NOTE: only available for undirected graphs
 			bool isBiconnected() const;
 
+			// NOTE: uses recursion
 			// NOTE: return value is {hasEulerianCycle, hasEulerianPath}
 			std::pair<bool, bool> hasEulerianCycleOrPath() const;
 
@@ -165,7 +169,6 @@ namespace GraphClasses {
 			GraphWeights m_graphWeights;
 			std::unordered_map<NodeType, std::vector<Edge<NodeType, WeightType>>> m_neighborList;
 	};
-
 } // namespace GraphClasses
 
 namespace GraphUtility {
@@ -396,38 +399,29 @@ namespace GraphAlgorithms {
 
 // internal namespace for helper funcitons, not inteded for end user
 namespace internal {
-	template<typename WeightType>
-	static constexpr WeightType FLOATING_POINT_EPSIOLON = WeightType{0.000001};
+	template<typename T>
+	static constexpr T FLOATING_POINT_EPSIOLON = T{0.000001};
 
-	template<typename WeightType>
-	std::enable_if_t<std::is_floating_point_v<WeightType>, bool>
-	equals(const WeightType lhs, const WeightType rhs);
+	template<typename T>
+	bool equals(const T lhs, const T rhs);
 
-	template<typename WeightType>
-	std::enable_if_t<!std::is_floating_point_v<WeightType>, bool>
-	equals(const WeightType lhs, const WeightType rhs);
+	template<typename T>
+	bool lessThan(const T lhs, const T rhs);
 
-	template<typename WeightType>
-	std::enable_if_t<std::is_floating_point_v<WeightType>, bool>
-	lessThan(const WeightType lhs, const WeightType rhs);
-
-	template<typename WeightType>
-	std::enable_if_t<!std::is_floating_point_v<WeightType>, bool>
-	lessThan(const WeightType lhs, const WeightType rhs);
-
-	template<typename WeightType>
-	std::enable_if_t<std::is_floating_point_v<WeightType>, bool>
-	greaterThan(const WeightType lhs, const WeightType rhs);
-
-	template<typename WeightType>
-	std::enable_if_t<!std::is_floating_point_v<WeightType>, bool>
-	greaterThan(const WeightType lhs, const WeightType rhs);
+	template<typename T>
+	bool greaterThan(const T lhs, const T rhs);
 
 	template<typename NodeType, typename WeightType>
-	void exportDirectedGraph(const GraphClasses::Graph<NodeType, WeightType>& g, const char* filePath);
+	void exportDirectedGraph__internal(const GraphClasses::Graph<NodeType, WeightType>& g, const char* filePath);
 
 	template<typename NodeType, typename WeightType>
-	void exportUndirectedGraph(const GraphClasses::Graph<NodeType, WeightType>& g, const char* filePath);
+	void exportUndirectedGraph__internal(const GraphClasses::Graph<NodeType, WeightType>& g, const char* filePath);
+
+	template<typename NodeType, typename WeightType>
+	std::pair<bool, bool> hasEulerianCycleOrPathUndirected__internal(const GraphClasses::Graph<NodeType, WeightType>& g);
+
+	template<typename NodeType, typename WeightType>
+	std::pair<bool, bool> hasEulerianCycleOrPathDirected__internal(const GraphClasses::Graph<NodeType, WeightType>& g);
 
 	template<typename NodeType, typename WeightType>
 	struct EdgeComparator;
@@ -509,10 +503,12 @@ namespace GraphClasses {
 			}
 		#endif
 
+		const bool isWeighted = internal::equals(g.m_graphWeights, GraphWeights::Weighted);
+
 		for (auto& [node, neighbors] : g.m_neighborList) {
 			out << "Node [" << node << "] has neighbors:\n";
 
-			if (internal::equals(g.m_graphWeights, GraphWeights::Weighted)) {
+			if (isWeighted) {
 				for (auto& val : neighbors) {
 					out << "|\t [" << val.neighbor << "], edge weight: " << val.weight.value() << '\n';
 				}
@@ -598,14 +594,17 @@ namespace GraphClasses {
 
 		std::string line;
 
+		const bool isDirected = internal::equals(m_graphDirections, GraphDirections::Directed);
+		const bool isWeighted = internal::equals(m_graphWeights, GraphWeights::Weighted);
+
 		while (getline(file, line)) {
 			std::istringstream lineStream(line);
 			lineStream >> node;
 			addNode(node); // this line is neccessary becasue of isolated nodes
 
-			if (internal::equals(m_graphWeights, GraphWeights::Weighted)) {
+			if (isWeighted) {
 				while (lineStream >> neighbor >> weight) {
-					if (internal::equals(m_graphDirections, GraphDirections::Directed)) {
+					if (isDirected) {
 						addEdge(node, neighbor, weight);
 					} 
 					else { // undirected
@@ -616,7 +615,7 @@ namespace GraphClasses {
 			} 
 			else { // unweighted
 				while (lineStream >> neighbor) {
-					if (internal::equals(m_graphDirections, GraphDirections::Directed)) {
+					if (isDirected) {
 						addEdge(node, neighbor);
 					} 
 					else { // undirected
@@ -642,10 +641,10 @@ namespace GraphClasses {
 		#endif
 
 		if (internal::equals(m_graphDirections, GraphDirections::Directed)) {
-			internal::exportDirectedGraph(*this, filePath);
+			internal::exportDirectedGraph__internal(*this, filePath);
 		}
 		else {
-			internal::exportUndirectedGraph(*this, filePath);
+			internal::exportUndirectedGraph__internal(*this, filePath);
 		}
 
 		return;
@@ -659,7 +658,7 @@ namespace GraphClasses {
 	}
 
 	template<typename NodeType, typename WeightType>
-	void Graph<NodeType, WeightType>::addNodes(const std::unordered_set<NodeType> nodesToAdd) {
+	void Graph<NodeType, WeightType>::addNodes(const std::unordered_set<NodeType>& nodesToAdd) {
 		for (auto& node : nodesToAdd) {
 			addNode(node);
 		}
@@ -701,7 +700,7 @@ namespace GraphClasses {
 	}
 
 	template<typename NodeType, typename WeightType>
-	void Graph<NodeType, WeightType>::deleteNodes(const std::unordered_set<NodeType> nodesToDelete) {
+	void Graph<NodeType, WeightType>::deleteNodes(const std::unordered_set<NodeType>& nodesToDelete) {
 		for (auto& node : nodesToDelete) {
 			deleteNode(node);
 		}
@@ -1194,7 +1193,7 @@ namespace GraphClasses {
 	}	
 
 	template<typename NodeType, typename WeightType>
-	std::pair<bool, bool>  Graph<NodeType, WeightType>::hasEulerianCycleOrPath() const {	
+	std::pair<bool, bool> Graph<NodeType, WeightType>::hasEulerianCycleOrPath() const {	
 		#ifdef CHECK_FOR_ERRORS
 			if (!isConfigured()) {
 				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
@@ -1202,127 +1201,15 @@ namespace GraphClasses {
 			}
 		#endif
 
-		bool hasEulerianCycle = false;
-		bool hasEulerianPath = false;
-
 		if (internal::equals(getEdgeCount(), static_cast<size_t>(0))) {
-			return std::make_pair(hasEulerianCycle, hasEulerianPath); 
+			return std::make_pair(false, false); 
 		}
 
 		if (internal::equals(m_graphDirections, GraphDirections::Undirected)) {
-			auto degrees = getDegreesOfNodes();
-
-			size_t numNonZeroDegreeNodes = static_cast<size_t>(0);
-			size_t numEvenDegreeNodes = static_cast<size_t>(0);
-			size_t numOddDegreeNodes = static_cast<size_t>(0);
-
-			NodeType traversalStartNode;
-
-			for (auto& [node, degree] : degrees) {
-				if (!internal::equals(degree, static_cast<size_t>(0))) {
-					traversalStartNode = node;
-					++numNonZeroDegreeNodes;
-				}
-
-				if (internal::equals(degree % static_cast<size_t>(2), static_cast<size_t>(0))) {
-					++numEvenDegreeNodes;
-				}
-				else {
-					++numOddDegreeNodes;
-				}
-			}
-
-			auto traversedNodes = GraphAlgorithms::depthFirstTraverse(*this, traversalStartNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
-			if (internal::equals(traversedNodes.size(), numNonZeroDegreeNodes)) {
-				if (internal::equals(numEvenDegreeNodes, degrees.size())) {
-					hasEulerianCycle = true;
-					hasEulerianPath = true;
-				}
-				else if (internal::equals(numOddDegreeNodes, static_cast<size_t>(2))) {
-					hasEulerianPath = true;
-				}
-			}
-
-			return std::make_pair(hasEulerianCycle, hasEulerianPath);
-		}
+			return internal::hasEulerianCycleOrPathUndirected__internal(*this);
+		} 
 		else {	// directed
-			auto inDegrees = getInDegreesOfNodes();
-			auto outDegrees = getOutDegreesOfNodes();
-
-			auto stronglyConnectedComponents = GraphAlgorithms::tarjanFindStronglyConnectedComponents(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-			size_t numIsolatedNodes = static_cast<size_t>(0);
-
-			bool eulerianCycleCanExist = true;
-
-			for (auto& component : stronglyConnectedComponents) {
-				for (auto& node : component) {
-					if (!internal::equals(inDegrees[node], outDegrees[node])) {
-						eulerianCycleCanExist = false;
-					}
-					else {
-						if (internal::equals(inDegrees[node], static_cast<size_t>(0))) {
-							++numIsolatedNodes;
-						}
-					}
-				}
-			}
-
-			if (eulerianCycleCanExist && internal::equals(stronglyConnectedComponents.size(), numIsolatedNodes + static_cast<size_t>(1))) {
-				hasEulerianCycle = true;
-				hasEulerianPath = true;
-
-				return std::make_pair(hasEulerianCycle, hasEulerianPath);
-			}
-			else {
-				hasEulerianCycle = false;
-
-				auto weaklyConnectedComponents = GraphAlgorithms::findWeaklyConnectedComponents(*this, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
-
-				numIsolatedNodes = static_cast<size_t>(0);
-
-				bool pathStartNodeFound = false;
-				bool pathEndNodeFound = false;
-				bool eulerianPathCanExist = true;
-
-				for (auto& component : weaklyConnectedComponents) {
-					if (internal::equals(component.size(), static_cast<size_t>(1))) {
-						++numIsolatedNodes;
-						continue;
-					}
-
-					for (auto& node : component) {
-						if (!internal::equals(inDegrees[node], outDegrees[node])) {
-							if (internal::equals(inDegrees[node], outDegrees[node] + static_cast<size_t>(1))) {
-								if (pathEndNodeFound) {
-									eulerianPathCanExist = false;
-									break;
-								}
-
-								pathEndNodeFound = true;
-							}
-							else if (internal::equals(outDegrees[node], inDegrees[node] + static_cast<size_t>(1))) {
-								if (pathStartNodeFound) {
-									eulerianPathCanExist = false;
-									break;
-								}
-
-								pathStartNodeFound = true;
-							}
-							else {
-								eulerianPathCanExist = false;
-								break;
-							}
-						}
-					}
-				}
-
-				if (eulerianPathCanExist && internal::equals(weaklyConnectedComponents.size(), numIsolatedNodes + static_cast<size_t>(1)) && internal::equals(pathStartNodeFound, pathEndNodeFound)) {
-					hasEulerianPath = true;
-				}
-			}
-
-			return std::make_pair(hasEulerianCycle, hasEulerianPath);
+			return internal::hasEulerianCycleOrPathDirected__internal(*this);
 		}
 	}
 
@@ -1631,6 +1518,9 @@ namespace GraphUtility {
 
 		auto neighborList = g.getNeighborList();
 
+		const bool isWeighted = internal::equals(newGraphWeights, GraphClasses::GraphWeights::Weighted);
+		const bool isUndirected = internal::equals(newGraphDirections, GraphClasses::GraphDirections::Undirected);
+
 		for (auto& [node, neighbors] : neighborList) {
 			// needed so that isolated nodes will remain in the transposed graph
 			if (internal::equals(neighbors.size(), static_cast<size_t>(0))) {
@@ -1639,17 +1529,17 @@ namespace GraphUtility {
 			}
 
 			for (auto& [neighbor, weight] : neighbors) {
-				if (internal::equals(newGraphWeights, GraphClasses::GraphWeights::Weighted)) {
+				if (isWeighted) {
 					newGraph.addEdge(neighbor, node, weight.value());
 
-					if (internal::equals(newGraphDirections, GraphClasses::GraphDirections::Undirected)) {
+					if (isUndirected) {
 						newGraph.addEdge(node, neighbor, weight.value());
 					} 
 				}
 				else { // unweighted
 					newGraph.addEdge(neighbor, node);
 
-					if (internal::equals(newGraphDirections, GraphClasses::GraphDirections::Undirected)) {
+					if (isUndirected) {
 						newGraph.addEdge(node, neighbor);
 					} 
 				}
@@ -2366,7 +2256,11 @@ namespace GraphAlgorithms {
 					distances[neighbor] = newDistance;
 					parents[neighbor] = currentNode;
 
-					if (internal::equals(std::find(std::begin(queue), std::end(queue), neighbor), std::end(queue))) {
+					// in c++ lambda can't caputre values of structured binding
+					auto cmp = [neighbor = neighbor](const auto& node){ return internal::equals(node, neighbor); };
+					auto it = std::find_if(std::begin(queue), std::end(queue), cmp);
+
+					if (internal::equals(it, std::end(queue))) {
 						queue.emplace_back(neighbor);
 					}
 				}
@@ -2378,8 +2272,7 @@ namespace GraphAlgorithms {
 			for (auto& [neighbor, weight] : neighbors) {
 				auto& nodeDist = distances[node];
 
-				if (!internal::equals(nodeDist, GraphClasses::MAX_WEIGHT<WeightType>) &&
-					internal::lessThan(nodeDist + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
+				if (!internal::equals(nodeDist, GraphClasses::MAX_WEIGHT<WeightType>) && internal::lessThan(nodeDist + weight.value_or(static_cast<WeightType>(1)), distances[neighbor])) {
 					if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
 						out << "Graph contains one or more negative cycles\n" << std::endl;
 					}
@@ -2750,6 +2643,8 @@ namespace GraphAlgorithms {
 		auto spanningTreeDirections = g.getGraphDirections();
 		auto spanningTreeWeights = g.getGraphWeights();
 
+		const bool isUnweighted = internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted);
+
 		GraphClasses::Graph<NodeType, WeightType> spanningTree(spanningTreeDirections, spanningTreeWeights);
 
 		WeightType totalCost = static_cast<WeightType>(0);
@@ -2765,8 +2660,10 @@ namespace GraphAlgorithms {
 
 		while (internal::greaterThan(numberOfTrees, static_cast<size_t>(1))) {
 			for (auto& [node, neighbors] : neighborList) {
+				NodeType root1 = ds.findInDisjointSet(node);
+				auto& root1CheapestEdge = cheapestEdges[root1];
+
 				for (auto& [neighbor, weight] : neighbors) {
-					NodeType root1 = ds.findInDisjointSet(node);
 					NodeType root2 = ds.findInDisjointSet(neighbor);
 
 					if (internal::equals(root1, root2)) {
@@ -2775,7 +2672,6 @@ namespace GraphAlgorithms {
 
 					WeightType w = weight.value_or(static_cast<WeightType>(1));
 
-					auto& root1CheapestEdge = cheapestEdges[root1];
 					auto& root2CheapestEdge = cheapestEdges[root2];
 
 					if (!root1CheapestEdge.has_value() || internal::lessThan(w, std::get<2>(root1CheapestEdge.value()))) {
@@ -2807,7 +2703,7 @@ namespace GraphAlgorithms {
 
 				totalCost += cheapEdgeWeight;
 
-				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+				if (isUnweighted) {
 					spanningTree.addEdge(cheapEdgeStart, cheapEdgeEnd);
 					spanningTree.addEdge(cheapEdgeEnd, cheapEdgeStart);
 				}
@@ -2879,6 +2775,8 @@ namespace GraphAlgorithms {
 		auto spanningTreeDirections = g.getGraphDirections();
 		auto spanningTreeWeights = g.getGraphWeights();
 
+		const bool isUnweighted = internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted);
+
 		GraphClasses::Graph<NodeType, WeightType> spanningTree(spanningTreeDirections, spanningTreeWeights);
 
 		WeightType totalCost = static_cast<WeightType>(0);
@@ -2897,7 +2795,7 @@ namespace GraphAlgorithms {
 			if (!internal::equals(root1, root2)) {
 				totalCost += edgeWeight;
 
-				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+				if (isUnweighted) {
 					spanningTree.addEdge(node1, node2);
 					spanningTree.addEdge(node2, node1);
 				}
@@ -2987,6 +2885,8 @@ namespace GraphAlgorithms {
 		auto spanningTreeDirections = g.getGraphDirections();
 		auto spanningTreeWeights = g.getGraphWeights();
 
+		const bool isUnweighted = internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted);
+
 		GraphClasses::Graph<NodeType, WeightType> spanningTree(spanningTreeDirections, spanningTreeWeights);
 
 		WeightType totalCost = static_cast<WeightType>(0);
@@ -2999,7 +2899,7 @@ namespace GraphAlgorithms {
 
 				auto& parentValue = parents[node].value();
 
-				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+				if (isUnweighted) {
 					spanningTree.addEdge(parentValue, node);
 					spanningTree.addEdge(node, parentValue);
 				}
@@ -3038,6 +2938,8 @@ namespace GraphAlgorithms {
 		GraphClasses::Graph<NodeType, WeightType> spanningTree = g;
 		auto spanningTreeWeights = spanningTree.getGraphWeights();
 
+		const bool isUnweighted = internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted);
+
 		auto neighborList = spanningTree.getNeighborList();
 		auto nodeCount = spanningTree.getNodeCount();
 
@@ -3072,7 +2974,7 @@ namespace GraphAlgorithms {
 		while (!internal::equals(itRBegin, itREnd)) {
 			auto& [node, neighbor, weight] = *itRBegin;
 
-			if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+			if (isUnweighted) {
 				spanningTree.deleteEdge(node, neighbor);
 			}
 			else {
@@ -3084,7 +2986,7 @@ namespace GraphAlgorithms {
 			if (internal::lessThan(traversalOrder.size(), nodeCount)) {
 				totalCost += weight;
 
-				if (internal::equals(spanningTreeWeights, GraphClasses::GraphWeights::Unweighted)) {
+				if (isUnweighted) {
 					spanningTree.addEdge(node, neighbor);
 					spanningTree.addEdge(neighbor, node);
 				}
@@ -3237,7 +3139,9 @@ namespace GraphAlgorithms {
 				while (!stack.empty()) {
 					current = stack.top();
 
-					if (internal::equals(numUnvisitedChildren[current], static_cast<size_t>(0))) {
+					auto& currenUnvisitedChildren = numUnvisitedChildren[current];
+
+					if (internal::equals(currenUnvisitedChildren, static_cast<size_t>(0))) {
 						visited[current] = true;
 						inStack[current] = false;
 
@@ -3250,7 +3154,7 @@ namespace GraphAlgorithms {
 
 					auto& currentNeighbors = neighborList[current];
 
-					numUnvisitedChildren[current] = currentNeighbors.size();
+					currenUnvisitedChildren = currentNeighbors.size();
 
 					for (auto& [neighbor, __] : currentNeighbors) {
 						if (!inStack[neighbor] && !visited[neighbor]) {
@@ -3258,7 +3162,7 @@ namespace GraphAlgorithms {
 							inStack[neighbor] = true;
 						}	
 						else {
-							--numUnvisitedChildren[current];
+							--currenUnvisitedChildren;
 						}
 					}
 				}
@@ -3340,16 +3244,19 @@ namespace GraphAlgorithms {
 		auto& neighborList = internalData.neighborList;
 		neighborList = g.getNeighborList();
 
+		auto& discoveryTimes = internalData.discoveryTimes;
+		auto& lowerTimes = internalData.lowerTimes;
+
 		for (auto& [node, _] : neighborList) {
-			internalData.discoveryTimes[node] = static_cast<size_t>(0);
-			internalData.lowerTimes[node] = static_cast<size_t>(0);
+			discoveryTimes[node] = static_cast<size_t>(0);
+			lowerTimes[node] = static_cast<size_t>(0);
 		}
 
 		auto& stack = internalData.stack;
 		auto& biconnectedComponents = internalData.biconnectedComponents;
 
 		for (auto& [node, _] : neighborList) {
-			if (internal::equals(internalData.discoveryTimes[node], static_cast<size_t>(0))) {
+			if (internal::equals(discoveryTimes[node], static_cast<size_t>(0))) {
 				// start node will have empty optional as parent
 				internalData.parents[node];
 
@@ -3493,7 +3400,8 @@ namespace GraphAlgorithms {
 				for (auto& [cycle, weight] : allCycles) {
 					out << "{ ";
 					
-					size_t limit = cycle.size() - 1;
+					size_t limit = static_cast<size_t>(1);
+
 					for (size_t i = static_cast<size_t>(0); internal::lessThan(i, limit); ++i) {
 						out << "[" << cycle[i] << "] -> ";
 					}
@@ -3569,7 +3477,8 @@ namespace GraphAlgorithms {
 				for (auto& [cycle, weight] : allCycles) {
 					out << "{ ";
 					
-					size_t limit = cycle.size() - 1;
+					size_t limit = cycle.size() - static_cast<size_t>(1);
+
 					for (size_t i = static_cast<size_t>(0); internal::lessThan(i, limit); ++i) {
 						out << "[" << cycle[i] << "] -> ";
 					}
@@ -3752,6 +3661,7 @@ namespace GraphAlgorithms {
 						maxHeight = height[node];
 						maxHeightNodes.clear();
 					}
+
 					if (maxHeightNodes.empty() || internal::equals(height[node], maxHeight)) {
 						maxHeightNodes.emplace_back(node);
 					}
@@ -3763,20 +3673,22 @@ namespace GraphAlgorithms {
 			}
 
 			for (auto& maxHeightNode : maxHeightNodes) {
+				auto& maxHeightNodeExcessFlow = excessFlow[maxHeightNode];
+				auto& maxHeightNodeHeight = height[maxHeightNode];
+
 				bool pushed = false;
 
 				for (auto& [node, _] : neighborList) { 
-					if (internal::equals(excessFlow[maxHeightNode], static_cast<WeightType>(0))) {
+					if (internal::equals(maxHeightNodeExcessFlow, static_cast<WeightType>(0))) {
 						break;
 					}
-					else if (internal::greaterThan(capacity[maxHeightNode][node] - flow[maxHeightNode][node], static_cast<WeightType>(0)) 
-							 && internal::equals(height[maxHeightNode], height[node] + static_cast<size_t>(1))) {
+					else if (internal::greaterThan(capacity[maxHeightNode][node] - flow[maxHeightNode][node], static_cast<WeightType>(0)) && internal::equals(maxHeightNodeHeight, height[node] + static_cast<size_t>(1))) {
 						// push (maxHeightNode, node)
-						WeightType min = std::min(excessFlow[maxHeightNode], capacity[maxHeightNode][node] - flow[maxHeightNode][node]);
+						WeightType min = std::min(maxHeightNodeExcessFlow, capacity[maxHeightNode][node] - flow[maxHeightNode][node]);
 
 						flow[maxHeightNode][node] += min;
 						flow[node][maxHeightNode] -= min;
-						excessFlow[maxHeightNode] -= min;
+						maxHeightNodeExcessFlow -= min;
 						excessFlow[node] += min;
 
 						pushed = true;
@@ -3794,7 +3706,7 @@ namespace GraphAlgorithms {
 					}
 
 					if (internal::lessThan(minHeight, std::numeric_limits<size_t>::max())) {
-						height[maxHeightNode] = minHeight + static_cast<size_t>(1);
+						maxHeightNodeHeight = minHeight + static_cast<size_t>(1);
 					}
 
 					break;
@@ -3841,7 +3753,7 @@ namespace GraphAlgorithms {
 			}
 		#endif
 
-		bool isUndirected = internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected);
+		const bool isUndirected = internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected);
 
 		std::vector<NodeType> eulerianCycle;
 		if (isUndirected) {
@@ -4028,44 +3940,38 @@ namespace GraphAlgorithms {
 
 // internal namespace for helper funcitons, not inteded for end user
 namespace internal {
-	template<typename WeightType>
-	std::enable_if_t<std::is_floating_point_v<WeightType>, bool>
-	equals(const WeightType lhs, const WeightType rhs) {
-		return std::fabs(rhs - lhs) < FLOATING_POINT_EPSIOLON<WeightType>;
+	template<typename T>
+	bool equals(const T lhs, const T rhs) {
+		if constexpr (std::is_floating_point_v<T>) {
+			return std::fabs(rhs - lhs) < FLOATING_POINT_EPSIOLON<T>;
+		}
+		else {
+			return lhs == rhs;
+		}
 	}
 
-	template<typename WeightType>
-	std::enable_if_t<!std::is_floating_point_v<WeightType>, bool>
-	equals(const WeightType lhs, const WeightType rhs) {
-		return lhs == rhs;
+	template<typename T>
+	bool lessThan(const T lhs, const T rhs) {
+		if constexpr (std::is_floating_point_v<T>) {
+			return lhs < (rhs - FLOATING_POINT_EPSIOLON<T>);
+		}
+		else {
+			return lhs < rhs;
+		}
 	}
 
-	template<typename WeightType>
-	std::enable_if_t<std::is_floating_point_v<WeightType>, bool>
-	lessThan(const WeightType lhs, const WeightType rhs) {
-		return lhs < (rhs - FLOATING_POINT_EPSIOLON<WeightType>);
-	}
-
-	template<typename WeightType>
-	std::enable_if_t<!std::is_floating_point_v<WeightType>, bool>
-	lessThan(const WeightType lhs, const WeightType rhs) {
-		return lhs < rhs;
-	}
-
-	template<typename WeightType>
-	std::enable_if_t<std::is_floating_point_v<WeightType>, bool>
-	greaterThan(const WeightType lhs, const WeightType rhs) {
-		return (lhs - FLOATING_POINT_EPSIOLON<WeightType>) > rhs;
-	}
-
-	template<typename WeightType>
-	std::enable_if_t<!std::is_floating_point_v<WeightType>, bool>
-	greaterThan(const WeightType lhs, const WeightType rhs) {
-		return lhs > rhs;
+	template<typename T>
+	bool greaterThan(const T lhs, const T rhs) {
+		if constexpr (std::is_floating_point_v<T>) {
+			return (lhs - FLOATING_POINT_EPSIOLON<T>) > rhs;
+		}
+		else {
+			return lhs > rhs;
+		}
 	}
 
 	template<typename NodeType, typename WeightType>
-	void exportDirectedGraph(const GraphClasses::Graph<NodeType, WeightType>& g, const char* filePath) {
+	void exportDirectedGraph__internal(const GraphClasses::Graph<NodeType, WeightType>& g, const char* filePath) {
 		std::ofstream file(filePath);
 
 		#ifdef CHECK_FOR_ERRORS
@@ -4096,7 +4002,7 @@ namespace internal {
 	}
 
 	template<typename NodeType, typename WeightType>
-	void exportUndirectedGraph(const GraphClasses::Graph<NodeType, WeightType>& g, const char* filePath) {
+	void exportUndirectedGraph__internal(const GraphClasses::Graph<NodeType, WeightType>& g, const char* filePath) {
 		std::ofstream file(filePath);
 		
 		#ifdef CHECK_FOR_ERRORS
@@ -4132,6 +4038,137 @@ namespace internal {
 		file.close();
 
 		return;
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<bool, bool> hasEulerianCycleOrPathUndirected__internal(const GraphClasses::Graph<NodeType, WeightType>& g) {
+		bool hasEulerianCycle = false;
+		bool hasEulerianPath = false;
+		
+		auto degrees = g.getDegreesOfNodes();
+
+		size_t numNonZeroDegreeNodes = static_cast<size_t>(0);
+		size_t numEvenDegreeNodes = static_cast<size_t>(0);
+		size_t numOddDegreeNodes = static_cast<size_t>(0);
+
+		NodeType traversalStartNode;
+
+		for (auto& [node, degree] : degrees) {
+			if (!internal::equals(degree, static_cast<size_t>(0))) {
+				traversalStartNode = node;
+				++numNonZeroDegreeNodes;
+			}
+
+			if (internal::equals(degree % static_cast<size_t>(2), static_cast<size_t>(0))) {
+				++numEvenDegreeNodes;
+			}
+			else {
+				++numOddDegreeNodes;
+			}
+		}
+
+		auto traversedNodes = GraphAlgorithms::depthFirstTraverse(g, traversalStartNode, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+		if (internal::equals(traversedNodes.size(), numNonZeroDegreeNodes)) {
+			if (internal::equals(numEvenDegreeNodes, degrees.size())) {
+				hasEulerianCycle = true;
+				hasEulerianPath = true;
+			}
+			else if (internal::equals(numOddDegreeNodes, static_cast<size_t>(2))) {
+				hasEulerianPath = true;
+			}
+		}
+
+		return std::make_pair(hasEulerianCycle, hasEulerianPath);
+	}
+
+	template<typename NodeType, typename WeightType>
+	std::pair<bool, bool> hasEulerianCycleOrPathDirected__internal(const GraphClasses::Graph<NodeType, WeightType>& g) {
+		bool hasEulerianCycle = false;
+		bool hasEulerianPath = false;
+
+		auto inDegrees = g.getInDegreesOfNodes();
+		auto outDegrees = g.getOutDegreesOfNodes();
+
+		auto stronglyConnectedComponents = GraphAlgorithms::tarjanFindStronglyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+		size_t numIsolatedNodes = static_cast<size_t>(0);
+
+		bool eulerianCycleCanExist = true;
+
+		for (auto& component : stronglyConnectedComponents) {
+			for (auto& node : component) {
+				if (!internal::equals(inDegrees[node], outDegrees[node])) {
+					eulerianCycleCanExist = false;
+				}
+				else {
+					if (internal::equals(inDegrees[node], static_cast<size_t>(0))) {
+						++numIsolatedNodes;
+					}
+				}
+			}
+		}
+
+		if (eulerianCycleCanExist && internal::equals(stronglyConnectedComponents.size(), numIsolatedNodes + static_cast<size_t>(1))) {
+			hasEulerianCycle = true;
+			hasEulerianPath = true;
+
+			return std::make_pair(hasEulerianCycle, hasEulerianPath);
+		}
+		else {
+			hasEulerianCycle = false;
+
+			auto weaklyConnectedComponents = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+
+			numIsolatedNodes = static_cast<size_t>(0);
+
+			bool pathStartNodeFound = false;
+			bool pathEndNodeFound = false;
+			bool eulerianPathCanExist = true;
+
+			for (auto& component : weaklyConnectedComponents) {
+				if (internal::equals(component.size(), static_cast<size_t>(1))) {
+					++numIsolatedNodes;
+
+					continue;
+				}
+
+				for (auto& node : component) {
+					auto& nodeInDegree = inDegrees[node];
+					auto& nodeOutDegree = outDegrees[node];
+
+					if (!internal::equals(nodeInDegree, nodeOutDegree)) {
+						if (internal::equals(nodeInDegree, nodeOutDegree + static_cast<size_t>(1))) {
+							if (pathEndNodeFound) {
+								eulerianPathCanExist = false;
+
+								break;
+							}
+
+							pathEndNodeFound = true;
+						}
+						else if (internal::equals(nodeOutDegree, nodeInDegree + static_cast<size_t>(1))) {
+							if (pathStartNodeFound) {
+								eulerianPathCanExist = false;
+
+								break;
+							}
+
+							pathStartNodeFound = true;
+						}
+						else {
+							eulerianPathCanExist = false;
+							break;
+						}
+					}
+				}
+			}
+
+			if (eulerianPathCanExist && internal::equals(weaklyConnectedComponents.size(), numIsolatedNodes + static_cast<size_t>(1)) && internal::equals(pathStartNodeFound, pathEndNodeFound)) {
+				hasEulerianPath = true;
+			}
+		}
+
+		return std::make_pair(hasEulerianCycle, hasEulerianPath);
 	}
 
 	template<typename NodeType, typename WeightType>
@@ -4548,7 +4585,9 @@ namespace internal {
 				auto itCurrentPathBegin = std::begin(currentPath);
 				auto itCurrentPathEnd = std::end(currentPath);
 
-				auto itFindNeighbor = std::find(itCurrentPathBegin, itCurrentPathEnd, neighbor);
+				// in c++ lambda can't caputre values of structured binding
+				auto cmp = [neighbor = neighbor](const auto& node){ return internal::equals(node, neighbor); };
+				auto itFindNeighbor = std::find_if(itCurrentPathBegin, itCurrentPathEnd, cmp);
 
 				if (!internal::equals(itFindNeighbor, itCurrentPathEnd)) {
 					std::vector<NodeType> cycle(itFindNeighbor, itCurrentPathEnd);
