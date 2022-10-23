@@ -1161,8 +1161,8 @@ void string_double() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
-    std::string startNode = "node1";
-    std::string endNode = "node6";
+    // std::string startNode = "node1";
+    // std::string endNode = "node6";
 
     auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g);
 }
@@ -1175,8 +1175,8 @@ void int_int() {
     g.readFromTxt(fileName);
 
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
-    int startNode = 1;
-    int endNode = 8;
+    // int startNode = 1;
+    // int endNode = 8;
     
     auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g);
 }
@@ -1188,8 +1188,8 @@ void custom_float() {
     const char* fileName = "testInputs/custom_float.txt";
     g.readFromTxt(fileName);
 
-    CustomClass startNode = CustomClass(1, 2, 3);
-    CustomClass endNode = CustomClass(2, 2, 2);
+    // CustomClass startNode = CustomClass(1, 2, 3);
+    // CustomClass endNode = CustomClass(2, 2, 2);
     
     auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g);
 }
@@ -1201,8 +1201,8 @@ void char_ull() {
     const char* fileName = "testInputs/char_ull_d_u.txt";
     g.readFromTxt(fileName);
 
-    char startNode = 'a';
-    char endNode = 'd';
+    // char startNode = 'a';
+    // char endNode = 'd';
 
     auto ret = GraphAlgorithms::kosarajuFindStronglyConnectedComponents(g);
 }

@@ -7,14 +7,14 @@
 // In order for a custom class to be used a node in SimpleGraphs, it must have the following implemented:
 //      - default constructor
 //      - copy constructor
-//      - move constructor          (works without this, but this will improve performance)
+//      - move constructor          (works without this, but this may improve performance)
 //      - copy assignment operator
-//      - move asignment operator   (works without this, but this will improve performance)
+//      - move asignment operator   (works without this, but this may improve performance)
 //      - operator==
 //      - operator<
-//      - operator<< (only needed if printing of a node to an output stream/file is needed by user)
-//      - operator>> (only needed if it will be loaded from a file)
 //      - std::hash specialization for the custom class
+//      - operator<<                (only needed if printing of a node to an output stream/file is needed by user)
+//      - operator>>                (only needed if it will be loaded from an input stream/file)
 
 
 class CustomClass{
