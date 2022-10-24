@@ -3021,26 +3021,16 @@ namespace GraphAlgorithms {
 			}
 		#endif
 
-		GraphClasses::Graph<NodeType, WeightType> gCopy;
-		std::unordered_map<NodeType, std::vector<GraphClasses::Edge<NodeType, WeightType>>> neighborList;
-
-		// TODO: can be optimized to not use gCopy at all, but insert edges directly into the neighborList
+		auto neighborList = g.getNeighborList();
+		
 		if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Directed)) {
-			gCopy = g;
-
-			neighborList = gCopy.getNeighborList();
-
+			// this loop will result in there beeing some duplicated edges but it does not matter for the rest of the algorithm
 			for (auto& [node, neighbors] : neighborList) {
 				for (auto& [neighbor, weight] : neighbors) {
-					gCopy.addEdge(neighbor, GraphClasses::Edge(node, weight));
+					neighborList[neighbor].emplace_back(node, weight);
 				}
 			}
-
-			neighborList = gCopy.getNeighborList();
-		}
-		else {
-			neighborList = g.getNeighborList();
-		}
+		}	
 
 		std::unordered_map<NodeType, bool> visited;
 
