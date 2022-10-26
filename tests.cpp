@@ -1,10 +1,12 @@
+#include <cassert>
+#include <chrono>
+#include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <string>
+
 #include "CustomClass/customClass.hpp"
 #include "SimpleGraphs.hpp"
-#include <cassert>
-#include <iomanip>
-#include <cmath>
 
 // apart from these tests, all functions were tested arbitrarily and seem to be working
 // this DOES NOT guarantee correctness
@@ -383,6 +385,12 @@ void test_hierholzerFindEulerianPath(GraphClasses::Graph<NodeType, WeightType> &
 // ----- other algorithms tests -----
 
 template<typename NodeType, typename WeightType>
+void test_countTriangles(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfTriangles) {
+    auto ret = GraphAlgorithms::countTriangles(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    assert(ret == numOfTriangles);
+}
+
+template<typename NodeType, typename WeightType>
 void test_findIsolatedNodes(GraphClasses::Graph<NodeType, WeightType> &g, size_t numOfIsolatedNodes) {
     auto ret = GraphAlgorithms::findIsolatedNodes(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
     assert(ret.size() == numOfIsolatedNodes);
@@ -755,6 +763,7 @@ void test_string_double_undirected_weighted() {
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing other algorithms";
+    test_countTriangles(g1, 0);
     test_findIsolatedNodes(g1, 0);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
@@ -872,6 +881,7 @@ void test_int_int_undirected_unweighted() {
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing other algorithms";
+    test_countTriangles(g1, 4);
     test_findIsolatedNodes(g1, 0);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
@@ -990,6 +1000,7 @@ void test_custom_float_directed_weighted() {
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing other algorithms";
+    test_countTriangles(g1, 1);
     test_findIsolatedNodes(g1, 0);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
@@ -1125,6 +1136,7 @@ void test_char_ull_directed_unweighted() {
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
     std::cout << '\t' <<std::left << std::setw(50) << "Testing other algorithms";
+    test_countTriangles(g1, 2);
     test_findIsolatedNodes(g1, 0);
     std::cout << std::right << std::setw(10) << "SUCCESS" << std::endl;
 
@@ -1160,11 +1172,20 @@ void string_double() {
     const char* fileName = "testInputs/string_double.txt";
     g.readFromTxt(fileName);
 
+    // std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << " Density: " << g.getDensity() << std::endl;
+    // std::cout << g << std::endl;
+
     // std::unordered_set<std::string> someNodes{"node1", "node2", "node5", "node7"};
     // std::string startNode = "node1";
     // std::string endNode = "node6";
 
-    auto ret = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto start = std::chrono::high_resolution_clock::now();
+
+    auto ret = GraphAlgorithms::countTriangles(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> diff = end - start;
+    // std::cout << "TIME: " << diff.count() << std::endl;
 }
 
 void int_int() {
@@ -1174,11 +1195,20 @@ void int_int() {
     const char* fileName = "testInputs/int_int_u_u.txt";
     g.readFromTxt(fileName);
 
+    // std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << " Density: " << g.getDensity() << std::endl;
+    // std::cout << g << std::endl;
+
     // std::unordered_set<int> someNodes{2, 5, 3, 7};
     // int startNode = 1;
     // int endNode = 8;
     
-    auto ret = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto start = std::chrono::high_resolution_clock::now();
+
+    auto ret = GraphAlgorithms::countTriangles(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> diff = end - start;
+    // std::cout << "TIME: " << diff.count() << std::endl;
 }
 
 void custom_float() {
@@ -1188,10 +1218,19 @@ void custom_float() {
     const char* fileName = "testInputs/custom_float.txt";
     g.readFromTxt(fileName);
 
+    // std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << " Density: " << g.getDensity() << std::endl;
+    // std::cout << g << std::endl;
+
     // CustomClass startNode = CustomClass(1, 2, 3);
     // CustomClass endNode = CustomClass(2, 2, 2);
     
-    auto ret = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto start = std::chrono::high_resolution_clock::now();
+
+    auto ret = GraphAlgorithms::countTriangles(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> diff = end - start;
+    // std::cout << "TIME: " << diff.count() << std::endl;
 }
 
 void char_ull() {
@@ -1201,10 +1240,19 @@ void char_ull() {
     const char* fileName = "testInputs/char_ull_d_u.txt";
     g.readFromTxt(fileName);
 
+    // std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << " Density: " << g.getDensity() << std::endl;
+    // std::cout << g << std::endl;
+
     // char startNode = 'a';
     // char endNode = 'd';
 
-    auto ret = GraphAlgorithms::findWeaklyConnectedComponents(g, GraphAlgorithms::AlgorithmBehavior::ReturnOnly);
+    // auto start = std::chrono::high_resolution_clock::now();
+
+    auto ret = GraphAlgorithms::countTriangles(g, GraphAlgorithms::AlgorithmBehavior::PrintAndReturn);
+
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> diff = end - start;
+    // std::cout << "TIME: " << diff.count() << std::endl;
 }
 
 int main() {
@@ -1225,7 +1273,7 @@ int main() {
     // string_double();
     // int_int();
     // custom_float();
-    // char_ull();              
+    // char_ull();         
 
     return 0;
 }

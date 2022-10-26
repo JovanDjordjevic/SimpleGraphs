@@ -386,8 +386,12 @@ namespace GraphAlgorithms {
 	// ----- other algorithms -----
 
 	template<typename NodeType, typename WeightType>
+	size_t countTriangles(const GraphClasses::Graph<NodeType, WeightType>& g,
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
+
+	template<typename NodeType, typename WeightType>
 	std::unordered_set<NodeType> findIsolatedNodes(const GraphClasses::Graph<NodeType, WeightType>& g,
-		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream); 
+		const AlgorithmBehavior behavior = defaultBehavior, std::ostream& out = defaultOutputStream);
 
 	// TODO:
 	// coloring
@@ -3876,6 +3880,56 @@ namespace GraphAlgorithms {
 	}
 
 	// ----- other algorithms -----
+
+	template<typename NodeType, typename WeightType>
+	size_t countTriangles(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
+		#ifdef CHECK_FOR_ERRORS
+			if (!g.isConfigured()) {
+				GRAPH_ERROR(__FILE__, __LINE__, "Graph type and graph weights must be configured before calling this function");
+				exit(EXIT_FAILURE);
+			}
+		#endif
+
+		auto neighborList = g.getNeighborList();
+
+		std::unordered_map<NodeType, bool> visited;
+
+		for (auto& [node, _] : neighborList) {
+			visited[node] = false;
+		}
+
+		size_t triangleCount = static_cast<size_t>(0);
+
+		for (auto& [node1, neighbors1] : neighborList) {
+			if (!visited[node1]) {
+				for (auto& [node2, _] : neighbors1) { 
+					if (!visited[node2] && !internal::equals(node1, node2)) {
+						for (auto& [node3, __] : neighborList[node2]) {
+							if (!visited[node3] && !internal::equals(node3, node1) && !internal::equals(node3, node2)) {
+								for (auto& [neighbor, ___] : neighborList[node3]) {
+									if (internal::equals(neighbor, node1)) {
+										++triangleCount;
+									}
+								}
+							}
+						}
+					}
+				}
+
+				visited[node1] = true;
+			}
+		}
+
+		if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected)) {
+			triangleCount /= 2;
+		}
+
+		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+			out << "Graph has " << triangleCount << " triangles\n" << std::endl;
+		}
+
+		return triangleCount;
+	}
 
 	template<typename NodeType, typename WeightType>
 	std::unordered_set<NodeType> findIsolatedNodes(const GraphClasses::Graph<NodeType, WeightType>& g, const AlgorithmBehavior behavior, std::ostream& out) {
