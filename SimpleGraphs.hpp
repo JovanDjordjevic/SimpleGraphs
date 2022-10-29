@@ -3890,41 +3890,52 @@ namespace GraphAlgorithms {
 			}
 		#endif
 
+		auto nodeCount = g.getNodeCount();
+
+		if (nodeCount < static_cast<size_t>(3)) {
+			if (behavior == AlgorithmBehavior::PrintAndReturn) {
+				out << "Graph has 0 triangles\n" << std::endl;
+			}
+
+			return static_cast<size_t>(0);
+		}
+
 		auto neighborList = g.getNeighborList();
 
-		std::unordered_map<NodeType, bool> visited;
+		size_t mappingCounter = static_cast<size_t>(0);
+		std::unordered_map<NodeType, size_t> mapping;
 
 		for (auto& [node, _] : neighborList) {
-			visited[node] = false;
+			mapping[node] = mappingCounter;
+			++mappingCounter;
+		}
+
+		// char instead of bool to mark true/false because it is faster
+		std::vector<std::vector<char>> adjMatrix(nodeCount, std::vector<char>(nodeCount, static_cast<char>(0)));
+
+		for (auto& [node, neighbors] : neighborList) {
+			for (auto& [neighbor, weight] : neighbors) {
+				adjMatrix[mapping[node]][mapping[neighbor]] = static_cast<char>(1);
+			}
 		}
 
 		size_t triangleCount = static_cast<size_t>(0);
 
-		for (auto& [node1, neighbors1] : neighborList) {
-			if (!visited[node1]) {
-				for (auto& [node2, _] : neighbors1) { 
-					if (!visited[node2] && !internal::equals(node1, node2)) {
-						for (auto& [node3, __] : neighborList[node2]) {
-							if (!visited[node3] && !internal::equals(node3, node1) && !internal::equals(node3, node2)) {
-								for (auto& [neighbor, ___] : neighborList[node3]) {
-									if (internal::equals(neighbor, node1)) {
-										++triangleCount;
-									}
-								}
-							}
+		for (size_t i = static_cast<size_t>(0); i < nodeCount - static_cast<size_t>(2); ++i) {
+			for (size_t j = i + static_cast<size_t>(1); j < nodeCount - static_cast<size_t>(1); ++j) {
+				if (adjMatrix[i][j] || adjMatrix[j][i]) {
+					for (size_t k = j + static_cast<size_t>(1); k < nodeCount; ++k) {
+						if ((i != j && k != i && k != j) && 
+							((adjMatrix[i][j] && adjMatrix[j][k] && adjMatrix[k][i]) || 
+							(adjMatrix[i][k] && adjMatrix[k][j] && adjMatrix[j][i]))) {
+							++triangleCount;
 						}
 					}
 				}
-
-				visited[node1] = true;
 			}
 		}
 
-		if (internal::equals(g.getGraphDirections(), GraphClasses::GraphDirections::Undirected)) {
-			triangleCount /= 2;
-		}
-
-		if (internal::equals(behavior, AlgorithmBehavior::PrintAndReturn)) {
+		if (behavior == AlgorithmBehavior::PrintAndReturn) {
 			out << "Graph has " << triangleCount << " triangles\n" << std::endl;
 		}
 
