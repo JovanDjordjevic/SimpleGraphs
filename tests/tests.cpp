@@ -6,7 +6,7 @@
 #include <string>
 
 #include "CustomClass/customClass.hpp"
-#include "SimpleGraphs.hpp"
+#include "simpleGraphs/simpleGraphs.hpp"
 
 // apart from these tests, all functions were tested arbitrarily and seem to be working
 // this DOES NOT guarantee correctness
@@ -543,7 +543,7 @@ void test_graph_class_member_functions() {
     GraphClasses::Graph<unsigned, unsigned> g1;
     g1.configureDirections(GraphClasses::GraphDirections::Undirected);
     g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName1 = "testInputs/int_int.txt";
+    const char* fileName1 = "../../tests/testInputs/int_int.txt";
     g1.readFromTxt(fileName1);
     // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
     // std::cout << g1 << std::endl;
@@ -653,7 +653,7 @@ void test_graph_class_member_functions() {
     GraphClasses::Graph<CustomClass, float> g2;
     g2.configureDirections(GraphClasses::GraphDirections::Directed);
     g2.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName2 = "testInputs/custom_float.txt";
+    const char* fileName2 = "../../tests/testInputs/custom_float.txt";
     g2.readFromTxt(fileName2);
     // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
     // std::cout << g2 << std::endl;
@@ -676,7 +676,7 @@ void test_string_double_undirected_weighted() {
     GraphClasses::Graph<std::string, double> g1;
     g1.configureDirections(GraphClasses::GraphDirections::Undirected);
     g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName1 = "testInputs/string_double.txt";
+    const char* fileName1 = "../../tests/testInputs/string_double.txt";
     g1.readFromTxt(fileName1);
     // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
     // std::cout << g1 << std::endl;
@@ -770,7 +770,7 @@ void test_string_double_undirected_weighted() {
     GraphClasses::Graph<std::string, double> g2;
     g2.configureDirections(GraphClasses::GraphDirections::Undirected);
     g2.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName2 = "testInputs/string_double.txt";
+    const char* fileName2 = "../../tests/testInputs/string_double.txt";
     g2.readFromTxt(fileName2);
     // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
     // std::cout << g2 << std::endl;
@@ -798,7 +798,7 @@ void test_int_int_undirected_unweighted() {
     GraphClasses::Graph<int, int> g1;
     g1.configureDirections(GraphClasses::GraphDirections::Undirected);
     g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    const char* fileName1 = "testInputs/int_int_u_u.txt";
+    const char* fileName1 = "../../tests/testInputs/int_int_u_u.txt";
     g1.readFromTxt(fileName1);
     // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
     // std::cout << g1 << std::endl;
@@ -888,7 +888,7 @@ void test_int_int_undirected_unweighted() {
     GraphClasses::Graph<int, int> g2;
     g2.configureDirections(GraphClasses::GraphDirections::Undirected);
     g2.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    const char* fileName2 = "testInputs/int_int_u_u.txt";
+    const char* fileName2 = "../../tests/testInputs/int_int_u_u.txt";
     g2.readFromTxt(fileName2);
     // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
     // std::cout << g2 << std::endl;
@@ -916,7 +916,7 @@ void test_custom_float_directed_weighted() {
     GraphClasses::Graph<CustomClass, float> g1;
     g1.configureDirections(GraphClasses::GraphDirections::Directed);
     g1.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName1 = "testInputs/custom_float.txt";
+    const char* fileName1 = "../../tests/testInputs/custom_float.txt";
     g1.readFromTxt(fileName1);
     // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
     // std::cout << g1 << std::endl;
@@ -1007,7 +1007,7 @@ void test_custom_float_directed_weighted() {
     GraphClasses::Graph<CustomClass, float> g2;
     g2.configureDirections(GraphClasses::GraphDirections::Directed);
     g2.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName2 = "testInputs/custom_float.txt";
+    const char* fileName2 = "../../tests/testInputs/custom_float.txt";
     g2.readFromTxt(fileName2);
     // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
     // std::cout << g2 << std::endl;
@@ -1034,7 +1034,7 @@ void test_char_ull_directed_unweighted() {
     GraphClasses::Graph<char, unsigned long long> g1;
     g1.configureDirections(GraphClasses::GraphDirections::Directed);
     g1.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    const char* fileName1 = "testInputs/char_ull_d_u.txt";
+    const char* fileName1 = "../../tests/testInputs/char_ull_d_u.txt";
     g1.readFromTxt(fileName1);
     // std::cout << "Node count: " << g1.getNodeCount() << " Edge count: " << g1.getEdgeCount() << " Density: " << g1.getDensity() << std::endl;
     // std::cout << g1 << std::endl;
@@ -1143,7 +1143,7 @@ void test_char_ull_directed_unweighted() {
     GraphClasses::Graph<char, unsigned long long> g2;
     g2.configureDirections(GraphClasses::GraphDirections::Directed);
     g2.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    const char* fileName2 = "testInputs/char_ull_d_u.txt";
+    const char* fileName2 = "../../tests/testInputs/char_ull_d_u.txt";
     g2.readFromTxt(fileName2);
     // std::cout << "Node count: " << g2.getNodeCount() << " Edge count: " << g2.getEdgeCount() << " Density: " << g2.getDensity() << std::endl;
     // std::cout << g2 << std::endl;
@@ -1169,7 +1169,7 @@ void string_double() {
     GraphClasses::Graph<std::string, double> g;
     g.configureDirections(GraphClasses::GraphDirections::Undirected);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName = "testInputs/string_double.txt";
+    const char* fileName = "../../tests/testInputs/string_double.txt";
     g.readFromTxt(fileName);
 
     // std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << " Density: " << g.getDensity() << std::endl;
@@ -1192,7 +1192,7 @@ void int_int() {
     GraphClasses::Graph<int, int> g;
     g.configureDirections(GraphClasses::GraphDirections::Undirected);
     g.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    const char* fileName = "testInputs/int_int_u_u.txt";
+    const char* fileName = "../../tests/testInputs/int_int_u_u.txt";
     g.readFromTxt(fileName);
 
     // std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << " Density: " << g.getDensity() << std::endl;
@@ -1215,7 +1215,7 @@ void custom_float() {
     GraphClasses::Graph<CustomClass, float> g;
     g.configureDirections(GraphClasses::GraphDirections::Directed);
     g.configureWeights(GraphClasses::GraphWeights::Weighted);
-    const char* fileName = "testInputs/custom_float.txt";
+    const char* fileName = "../../tests/testInputs/custom_float.txt";
     g.readFromTxt(fileName);
 
     // std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << " Density: " << g.getDensity() << std::endl;
@@ -1237,7 +1237,7 @@ void char_ull() {
     GraphClasses::Graph<char, unsigned long long> g;
     g.configureDirections(GraphClasses::GraphDirections::Directed);
     g.configureWeights(GraphClasses::GraphWeights::Unweighted);
-    const char* fileName = "testInputs/char_ull_d_u.txt";
+    const char* fileName = "../../tests/testInputs/char_ull_d_u.txt";
     g.readFromTxt(fileName);
 
     // std::cout << "Node count: " << g.getNodeCount() << " Edge count: " << g.getEdgeCount() << " Density: " << g.getDensity() << std::endl;
