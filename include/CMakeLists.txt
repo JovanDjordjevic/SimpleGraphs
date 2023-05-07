@@ -1,6 +1,6 @@
-set(LIBRARY_HEADERS "simpleGraphs.hpp")
-set(LIBRARY_INCLUDES  "./")
+set(SIMPLE_GRAPHS_HEADERS "simpleGraphs.hpp")
+set(SIMPLE_GRAPHS_INCLUDES  "./")
 
 add_library(simpleGraphs INTERFACE)
 
-target_include_directories(simpleGraphs INTERFACE ${LIBRARY_INCLUDES})
+target_include_directories(simpleGraphs INTERFACE ${SIMPLE_GRAPHS_INCLUDES})

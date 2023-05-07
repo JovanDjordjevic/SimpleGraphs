@@ -57,7 +57,7 @@ jobs:
           retention-days: 1
       - name: "Run tests"          # runs tests again, so results will be readable at the bottom of output
         working-directory: build
-        run: ctest
+        run: ctest --verbose
 
   deploy:
     environment:
